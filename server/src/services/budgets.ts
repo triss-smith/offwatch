@@ -143,8 +143,6 @@ async function computeObservedAmount(
   db: Db,
   policy: Pick<PolicyRow, "companyId" | "scopeType" | "scopeId" | "windowKind" | "metric">,
 ) {
-  if (policy.metric !== "billed_cents") return 0;
-
   const conditions = [eq(costEvents.companyId, policy.companyId)];
   if (policy.scopeType === "agent") conditions.push(eq(costEvents.agentId, policy.scopeId));
   if (policy.scopeType === "project") conditions.push(eq(costEvents.projectId, policy.scopeId));
@@ -154,6 +152,17 @@ async function computeObservedAmount(
     conditions.push(lt(costEvents.occurredAt, end));
   }
 
+  if (policy.metric === "total_tokens") {
+    const [row] = await db
+      .select({
+        total: sql<number>`coalesce(sum(${costEvents.inputTokens} + ${costEvents.outputTokens}), 0)::int`,
+      })
+      .from(costEvents)
+      .where(and(...conditions));
+    return Number(row?.total ?? 0);
+  }
+
+  // billed_cents (default)
   const [row] = await db
     .select({
       total: sql<number>`coalesce(sum(${costEvents.costCents}), 0)::int`,
@@ -663,8 +672,15 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
         return false;
       });
 
+      const companyRow = await db
+        .select({ budgetMetric: companies.budgetMetric })
+        .from(companies)
+        .where(eq(companies.id, event.companyId))
+        .then((rows) => rows[0] ?? null);
+      const activeMetric = companyRow?.budgetMetric ?? "billed_cents";
+
       for (const policy of relevantPolicies) {
-        if (policy.metric !== "billed_cents" || policy.amount <= 0) continue;
+        if (policy.metric !== activeMetric || policy.amount <= 0) continue;
         const observedAmount = await computeObservedAmount(db, policy);
         const softThreshold = Math.ceil((policy.amount * policy.warnPercent) / 100);
 
@@ -735,11 +751,13 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
           status: companies.status,
           pauseReason: companies.pauseReason,
           name: companies.name,
+          budgetMetric: companies.budgetMetric,
         })
         .from(companies)
         .where(eq(companies.id, companyId))
         .then((rows) => rows[0] ?? null);
       if (!company) throw notFound("Company not found");
+      const activeMetric = company.budgetMetric ?? "billed_cents";
       if (company.status === "paused") {
         return {
           scopeType: "company" as const,
@@ -761,7 +779,7 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
             eq(budgetPolicies.scopeType, "company"),
             eq(budgetPolicies.scopeId, companyId),
             eq(budgetPolicies.isActive, true),
-            eq(budgetPolicies.metric, "billed_cents"),
+            eq(budgetPolicies.metric, activeMetric),
           ),
         )
         .then((rows) => rows[0] ?? null);
@@ -795,7 +813,7 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
             eq(budgetPolicies.scopeType, "agent"),
             eq(budgetPolicies.scopeId, agentId),
             eq(budgetPolicies.isActive, true),
-            eq(budgetPolicies.metric, "billed_cents"),
+            eq(budgetPolicies.metric, activeMetric),
           ),
         )
         .then((rows) => rows[0] ?? null);
@@ -836,7 +854,7 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
             eq(budgetPolicies.scopeType, "project"),
             eq(budgetPolicies.scopeId, project.id),
             eq(budgetPolicies.isActive, true),
-            eq(budgetPolicies.metric, "billed_cents"),
+            eq(budgetPolicies.metric, activeMetric),
           ),
         )
         .then((rows) => rows[0] ?? null);
