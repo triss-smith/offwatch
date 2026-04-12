@@ -68,9 +68,12 @@ If `PAPERCLIP_WAKE_PAYLOAD_JSON` is present, inspect that payload before calling
 
 Use comments incrementally:
 
-- if `PAPERCLIP_WAKE_COMMENT_ID` is set, fetch that exact comment first with `GET /api/issues/{issueId}/comments/{commentId}`
-- if you already know the thread and only need updates, use `GET /api/issues/{issueId}/comments?after={last-seen-comment-id}&order=asc`
-- use the full `GET /api/issues/{issueId}/comments` route only when you are cold-starting, when session memory is unreliable, or when the incremental path is not enough
+- Call `paperclipGetHeartbeatContext` with `afterCommentId` set to the `latestCommentId` stored from your previous wake (saved in session memory). On the very first wake for a task, omit `afterCommentId`.
+- The response includes a `comments` array with embedded comments and `hasMoreComments: boolean`. Use these directly — no separate `paperclipListComments` call needed for the normal case.
+- Save `commentCursor.latestCommentId` to session memory at the end of each wake so you can pass it as `afterCommentId` next time.
+- If `hasMoreComments: true` and you need older history, call `paperclipListComments` with `after=<oldest-embedded-comment-id>&order=asc` to page back.
+- If `PAPERCLIP_WAKE_COMMENT_ID` is set and the wake comment is not already in the embedded `comments`, fetch it directly with `GET /api/issues/{issueId}/comments/{commentId}`.
+- If `issue.descriptionTruncated` is true and you need the full description, fetch it with `paperclipGetIssue`. This is typically a one-time read per task — cache it in session memory.
 
 Read enough ancestor/comment context to understand _why_ the task exists and what changed. Do not reflexively reload the whole thread on every heartbeat.
 
