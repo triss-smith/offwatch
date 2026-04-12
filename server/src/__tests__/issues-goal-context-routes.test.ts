@@ -12,6 +12,7 @@ const mockIssueService = vi.hoisted(() => ({
   getCommentCursor: vi.fn(),
   getComment: vi.fn(),
   listAttachments: vi.fn(),
+  listComments: vi.fn(),
 }));
 
 const mockProjectService = vi.hoisted(() => ({
@@ -133,6 +134,7 @@ describe("issue goal context routes", () => {
     });
     mockIssueService.getComment.mockResolvedValue(null);
     mockIssueService.listAttachments.mockResolvedValue([]);
+    mockIssueService.listComments.mockResolvedValue([]);
     mockProjectService.getById.mockResolvedValue({
       id: legacyProjectLinkedIssue.projectId,
       companyId: "company-1",
@@ -231,5 +233,82 @@ describe("issue goal context routes", () => {
         identifier: "PAP-580",
       }),
     ]);
+  });
+
+  it("truncates description at 8192 chars and sets descriptionTruncated + descriptionLength", async () => {
+    const longDescription = "x".repeat(10_000);
+    mockIssueService.getById.mockResolvedValue({
+      ...legacyProjectLinkedIssue,
+      description: longDescription,
+    });
+
+    const res = await request(createApp()).get(
+      "/api/issues/11111111-1111-4111-8111-111111111111/heartbeat-context",
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.issue.description).toHaveLength(8192);
+    expect(res.body.issue.descriptionTruncated).toBe(true);
+    expect(res.body.issue.descriptionLength).toBe(10_000);
+  });
+
+  it("does not set descriptionTruncated when description fits within 8192 chars", async () => {
+    const res = await request(createApp()).get(
+      "/api/issues/11111111-1111-4111-8111-111111111111/heartbeat-context",
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.issue.description).toBe(legacyProjectLinkedIssue.description);
+    expect(res.body.issue.descriptionTruncated).toBe(false);
+    expect(res.body.issue.descriptionLength).toBe(legacyProjectLinkedIssue.description.length);
+  });
+
+  it("embeds comments and sets hasMoreComments false when listComments returns ≤20", async () => {
+    const comments = Array.from({ length: 5 }, (_, i) => ({
+      id: `aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaa${String(i).padStart(3, "0")}`,
+      issueId: legacyProjectLinkedIssue.id,
+      body: `Comment ${i}`,
+      createdAt: new Date().toISOString(),
+    }));
+    mockIssueService.listComments.mockResolvedValue(comments);
+
+    const res = await request(createApp()).get(
+      "/api/issues/11111111-1111-4111-8111-111111111111/heartbeat-context",
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.comments).toHaveLength(5);
+    expect(res.body.hasMoreComments).toBe(false);
+  });
+
+  it("caps embedded comments at 20 and sets hasMoreComments true when listComments returns 21", async () => {
+    const comments = Array.from({ length: 21 }, (_, i) => ({
+      id: `bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbb${String(i).padStart(3, "0")}`,
+      issueId: legacyProjectLinkedIssue.id,
+      body: `Comment ${i}`,
+      createdAt: new Date().toISOString(),
+    }));
+    mockIssueService.listComments.mockResolvedValue(comments);
+
+    const res = await request(createApp()).get(
+      "/api/issues/11111111-1111-4111-8111-111111111111/heartbeat-context",
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.body.comments).toHaveLength(20);
+    expect(res.body.hasMoreComments).toBe(true);
+  });
+
+  it("passes afterCommentId and order=asc to listComments when afterCommentId query param is set", async () => {
+    const afterId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+
+    await request(createApp()).get(
+      `/api/issues/11111111-1111-4111-8111-111111111111/heartbeat-context?afterCommentId=${afterId}`,
+    );
+
+    expect(mockIssueService.listComments).toHaveBeenCalledWith(
+      legacyProjectLinkedIssue.id,
+      expect.objectContaining({ afterCommentId: afterId, order: "asc" }),
+    );
   });
 });

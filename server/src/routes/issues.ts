@@ -63,6 +63,8 @@ import {
 } from "../services/issue-execution-policy.js";
 
 const MAX_ISSUE_COMMENT_LIMIT = 500;
+const HEARTBEAT_CONTEXT_MAX_DESCRIPTION_CHARS = 8192;
+const HEARTBEAT_CONTEXT_COLD_START_COMMENT_LIMIT = 20;
 const updateIssueRouteSchema = updateIssueSchema.extend({
   interrupt: z.boolean().optional(),
 });
@@ -700,22 +702,46 @@ export function issueRoutes(
         ? req.query.wakeCommentId.trim()
         : null;
 
-    const [{ project, goal }, ancestors, commentCursor, wakeComment, relations, attachments] =
+    const afterCommentId =
+      typeof req.query.afterCommentId === "string" && req.query.afterCommentId.trim().length > 0
+        ? req.query.afterCommentId.trim()
+        : null;
+
+    const [{ project, goal }, ancestors, commentCursor, wakeComment, relations, attachments, rawComments] =
       await Promise.all([
-      resolveIssueProjectAndGoal(issue),
-      svc.getAncestors(issue.id),
-      svc.getCommentCursor(issue.id),
-      wakeCommentId ? svc.getComment(wakeCommentId) : null,
-      svc.getRelationSummaries(issue.id),
-      svc.listAttachments(issue.id),
-    ]);
+        resolveIssueProjectAndGoal(issue),
+        svc.getAncestors(issue.id),
+        svc.getCommentCursor(issue.id),
+        wakeCommentId ? svc.getComment(wakeCommentId) : null,
+        svc.getRelationSummaries(issue.id),
+        svc.listAttachments(issue.id),
+        svc.listComments(issue.id, {
+          afterCommentId,
+          order: afterCommentId ? "asc" : "desc",
+          limit: HEARTBEAT_CONTEXT_COLD_START_COMMENT_LIMIT + 1,
+        }),
+      ]);
+
+    const hasMoreComments = rawComments.length > HEARTBEAT_CONTEXT_COLD_START_COMMENT_LIMIT;
+    const comments = hasMoreComments
+      ? rawComments.slice(0, HEARTBEAT_CONTEXT_COLD_START_COMMENT_LIMIT)
+      : rawComments;
+
+    const description = issue.description ?? null;
+    const descriptionTruncated =
+      description !== null && description.length > HEARTBEAT_CONTEXT_MAX_DESCRIPTION_CHARS;
+    const truncatedDescription = descriptionTruncated
+      ? description.slice(0, HEARTBEAT_CONTEXT_MAX_DESCRIPTION_CHARS)
+      : description;
 
     res.json({
       issue: {
         id: issue.id,
         identifier: issue.identifier,
         title: issue.title,
-        description: issue.description,
+        description: truncatedDescription,
+        descriptionTruncated,
+        descriptionLength: description !== null ? description.length : null,
         status: issue.status,
         priority: issue.priority,
         projectId: issue.projectId,
@@ -752,6 +778,8 @@ export function issueRoutes(
           }
         : null,
       commentCursor,
+      comments,
+      hasMoreComments,
       wakeComment:
         wakeComment && wakeComment.issueId === issue.id
           ? wakeComment
