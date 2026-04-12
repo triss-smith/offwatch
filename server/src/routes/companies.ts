@@ -1,5 +1,7 @@
 import { Router, type Request } from "express";
+import { and, eq } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
+import { budgetPolicies } from "@paperclipai/db";
 import {
   DEFAULT_FEEDBACK_DATA_SHARING_TERMS_VERSION,
   companyPortabilityExportSchema,
@@ -339,6 +341,19 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     if (!company) {
       res.status(404).json({ error: "Company not found" });
       return;
+    }
+    // When budgetMetric changes, deactivate all policies using the old metric
+    const newMetric = typeof body.budgetMetric === "string" ? body.budgetMetric : null;
+    if (newMetric && newMetric !== existingCompany.budgetMetric) {
+      await db
+        .update(budgetPolicies)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(
+          and(
+            eq(budgetPolicies.companyId, companyId),
+            eq(budgetPolicies.metric, existingCompany.budgetMetric),
+          ),
+        );
     }
     await logActivity(db, {
       companyId,
