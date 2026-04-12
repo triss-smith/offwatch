@@ -1,10 +1,10 @@
 {
-  "name": "paperclipai",
+  "name": "paperclip-lite",
   "version": "0.3.1",
-  "description": "Paperclip CLI — orchestrate AI agent teams to run a business",
+  "description": "Paperclip Lite — orchestrate AI agent teams to run a business... on a budget",
   "type": "module",
   "bin": {
-    "paperclipai": "./dist/index.js"
+    "paperclipai": "dist/index.js"
   },
   "keywords": [
     "paperclip",
@@ -16,12 +16,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/paperclipai/paperclip",
+    "url": "git+https://github.com/triss-smith/paperclip-lite.git",
     "directory": "cli"
   },
-  "homepage": "https://github.com/paperclipai/paperclip",
+  "homepage": "https://github.com/triss-smith/paperclip-lite",
   "bugs": {
-    "url": "https://github.com/paperclipai/paperclip/issues"
+    "url": "https://github.com/triss-smith/paperclip-lite/issues"
   },
   "files": [
     "dist"
