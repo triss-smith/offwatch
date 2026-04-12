@@ -176,22 +176,29 @@ export function createToolDefinitions(client: PaperclipApiClient): ToolDefinitio
     ),
     makeTool(
       "paperclipGetHeartbeatContext",
-      "Get compact heartbeat context for an issue",
-      z.object({ issueId: issueIdSchema, wakeCommentId: z.string().uuid().optional() }),
-      async ({ issueId, wakeCommentId }) => {
-        const qs = wakeCommentId ? `?wakeCommentId=${encodeURIComponent(wakeCommentId)}` : "";
-        return client.requestJson("GET", `/issues/${encodeURIComponent(issueId)}/heartbeat-context${qs}`);
+      "Get compact heartbeat context for an issue. On the first wake omit afterCommentId to receive the 20 most recent comments embedded. On subsequent wakes pass afterCommentId=latestCommentId from the previous commentCursor to receive only new comments (zero tokens when nothing changed).",
+      z.object({
+        issueId: issueIdSchema,
+        wakeCommentId: z.string().uuid().optional(),
+        afterCommentId: z.string().uuid().optional(),
+      }),
+      async ({ issueId, wakeCommentId, afterCommentId }) => {
+        const params = new URLSearchParams();
+        if (wakeCommentId) params.set("wakeCommentId", wakeCommentId);
+        if (afterCommentId) params.set("afterCommentId", afterCommentId);
+        const qs = params.toString();
+        return client.requestJson("GET", `/issues/${encodeURIComponent(issueId)}/heartbeat-context${qs ? `?${qs}` : ""}`);
       },
     ),
     makeTool(
       "paperclipListComments",
-      "List issue comments with incremental options",
+      "List issue comments with incremental options. Defaults to 50 most recent when no limit specified. Use after+order=asc to page forward through older history.",
       listCommentsSchema,
       async ({ issueId, after, order, limit }) => {
         const params = new URLSearchParams();
         if (after) params.set("after", after);
         if (order) params.set("order", order);
-        if (limit) params.set("limit", String(limit));
+        params.set("limit", String(limit ?? 50));
         const qs = params.toString();
         return client.requestJson("GET", `/issues/${encodeURIComponent(issueId)}/comments${qs ? `?${qs}` : ""}`);
       },
