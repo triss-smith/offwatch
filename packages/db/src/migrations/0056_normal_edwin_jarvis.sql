@@ -1,0 +1,1 @@
+ALTER TABLE "companies" ADD COLUMN "budget_metric" text DEFAULT 'billed_cents' NOT NULL;
