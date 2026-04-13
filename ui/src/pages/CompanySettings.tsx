@@ -105,6 +105,22 @@ export function CompanySettings() {
     },
   });
 
+  const budgetMetricMutation = useMutation({
+    mutationFn: (metric: string) =>
+      companiesApi.update(selectedCompanyId!, { budgetMetric: metric }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
+      pushToast({ title: "Budget mode updated", tone: "success" });
+    },
+    onError: (err) => {
+      pushToast({
+        title: "Failed to update budget mode",
+        body: err instanceof Error ? err.message : "Unknown error",
+        tone: "error",
+      });
+    },
+  });
+
   const inviteMutation = useMutation({
     mutationFn: () =>
       accessApi.createOpenClawInvitePrompt(selectedCompanyId!),
@@ -400,6 +416,22 @@ export function CompanySettings() {
           )}
         </div>
       )}
+
+      <div className="space-y-4">
+        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          Budget Mode
+        </div>
+        <div className="rounded-md border border-border px-4 py-3 space-y-3">
+          <ToggleField
+            label="Track budgets by token usage"
+            hint="When enabled, budgets are set and enforced in tokens instead of dollar amounts. Existing dollar-based policies will be deactivated."
+            checked={selectedCompany.budgetMetric === "total_tokens"}
+            onChange={(checked) =>
+              budgetMetricMutation.mutate(checked ? "total_tokens" : "billed_cents")
+            }
+          />
+        </div>
+      </div>
 
       {/* Hiring */}
       <div className="space-y-4" data-testid="company-settings-team-section">
