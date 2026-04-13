@@ -80,6 +80,46 @@ export function ClaudeLocalAdvancedFields({
 }: AdapterConfigFieldsProps) {
   return (
     <>
+      <Field
+        label="API base URL"
+        hint="Override the Anthropic API endpoint. Use this to point Claude at Ollama, LM Studio, Minimax, or any Anthropic-compatible provider (e.g. http://localhost:11434/api)."
+      >
+        <DraftInput
+          value={
+            isCreate
+              ? values!.baseUrl ?? ""
+              : eff("adapterConfig", "baseUrl", String(config.baseUrl ?? ""))
+          }
+          onCommit={(v) =>
+            isCreate
+              ? set!({ baseUrl: v || undefined })
+              : mark("adapterConfig", "baseUrl", v || undefined)
+          }
+          immediate
+          className={inputClass}
+          placeholder="https://api.anthropic.com (default)"
+        />
+      </Field>
+      <Field
+        label="API key"
+        hint="API key injected as ANTHROPIC_API_KEY. Required for most non-subscription providers. Leave blank to use your Claude subscription."
+      >
+        <DraftInput
+          value={
+            isCreate
+              ? values!.apiKey ?? ""
+              : eff("adapterConfig", "apiKey", String(config.apiKey ?? ""))
+          }
+          onCommit={(v) =>
+            isCreate
+              ? set!({ apiKey: v || undefined })
+              : mark("adapterConfig", "apiKey", v || undefined)
+          }
+          immediate
+          className={inputClass}
+          placeholder="sk-ant-... or provider key"
+        />
+      </Field>
       <ToggleField
         label="Enable Chrome"
         hint={help.chrome}
