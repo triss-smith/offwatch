@@ -24,11 +24,7 @@ interface WorkspaceContextValue {
   error: Error | null;
   setSelectedCompanyId: (workspaceId: string, options?: WorkspaceSelectionOptions) => void;
   reloadCompanies: () => Promise<void>;
-  createCompany: (data: {
-    name: string;
-    description?: string | null;
-    budgetMonthlyCents?: number;
-  }) => Promise<Workspace>;
+  createCompany: (data: { name: string }) => Promise<Workspace>;
 }
 
 const STORAGE_KEY = "paperclip.selectedCompanyId";
@@ -85,11 +81,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   const createMutation = useMutation({
-    mutationFn: (data: {
-      name: string;
-      description?: string | null;
-      budgetMonthlyCents?: number;
-    }) =>
+    mutationFn: (data: { name: string }) =>
       workspacesApi.create(data),
     onSuccess: (workspace) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
@@ -98,11 +90,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   });
 
   const createCompany = useCallback(
-    async (data: {
-      name: string;
-      description?: string | null;
-      budgetMonthlyCents?: number;
-    }) => {
+    async (data: { name: string }) => {
       return createMutation.mutateAsync(data);
     },
     [createMutation],

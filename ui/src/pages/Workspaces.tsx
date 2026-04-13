@@ -5,7 +5,7 @@ import { useDialog } from "../context/DialogContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { workspacesApi } from "../api/workspaces";
 import { queryKeys } from "../lib/queryKeys";
-import { formatCents, relativeTime } from "../lib/utils";
+import { relativeTime } from "../lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +24,6 @@ import {
   Trash2,
   Users,
   CircleDot,
-  DollarSign,
   Calendar,
 } from "lucide-react";
 
@@ -109,13 +108,6 @@ export function Workspaces() {
           const workspaceStats = stats?.[workspace.id];
           const agentCount = workspaceStats?.agentCount ?? 0;
           const issueCount = workspaceStats?.issueCount ?? 0;
-          const budgetPct =
-            workspace.budgetMonthlyCents > 0
-              ? Math.round(
-                  (workspace.spentMonthlyCents / workspace.budgetMonthlyCents) * 100,
-                )
-              : 0;
-
           return (
             <div
               key={workspace.id}
@@ -242,15 +234,6 @@ export function Workspaces() {
                   <CircleDot className="h-3.5 w-3.5" />
                   <span>
                     {issueCount} {issueCount === 1 ? "issue" : "issues"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 tabular-nums">
-                  <DollarSign className="h-3.5 w-3.5" />
-                  <span>
-                    {formatCents(workspace.spentMonthlyCents)}
-                    {workspace.budgetMonthlyCents > 0
-                      ? <> / {formatCents(workspace.budgetMonthlyCents)} <span className="text-xs">({budgetPct}%)</span></>
-                      : <span className="text-xs ml-1">Unlimited budget</span>}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 ml-auto">
