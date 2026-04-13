@@ -16,7 +16,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { useDialog } from "../context/DialogContext";
 import { cn } from "../lib/utils";
 import { queryKeys } from "../lib/queryKeys";
@@ -154,7 +154,7 @@ function SortableCompanyItem({
 }
 
 export function CompanyRail() {
-  const { companies, selectedCompanyId, setSelectedCompanyId } = useCompany();
+  const { companies, selectedCompanyId, setSelectedCompanyId } = useWorkspace();
   const { openOnboarding } = useDialog();
   const navigate = useNavigate();
   const location = useLocation();
@@ -164,36 +164,36 @@ export function CompanyRail() {
     () => companies.filter((company) => company.status !== "archived"),
     [companies],
   );
-  const companyIds = useMemo(() => sidebarCompanies.map((company) => company.id), [sidebarCompanies]);
+  const workspaceIds = useMemo(() => sidebarCompanies.map((company) => company.id), [sidebarCompanies]);
 
   const liveRunsQueries = useQueries({
-    queries: companyIds.map((companyId) => ({
-      queryKey: queryKeys.liveRuns(companyId),
-      queryFn: () => heartbeatsApi.liveRunsForCompany(companyId),
+    queries: workspaceIds.map((workspaceId) => ({
+      queryKey: queryKeys.liveRuns(workspaceId),
+      queryFn: () => heartbeatsApi.liveRunsForCompany(workspaceId),
       refetchInterval: 10_000,
     })),
   });
   const sidebarBadgeQueries = useQueries({
-    queries: companyIds.map((companyId) => ({
-      queryKey: queryKeys.sidebarBadges(companyId),
-      queryFn: () => sidebarBadgesApi.get(companyId),
+    queries: workspaceIds.map((workspaceId) => ({
+      queryKey: queryKeys.sidebarBadges(workspaceId),
+      queryFn: () => sidebarBadgesApi.get(workspaceId),
       refetchInterval: 15_000,
     })),
   });
   const hasLiveAgentsByCompanyId = useMemo(() => {
     const result = new Map<string, boolean>();
-    companyIds.forEach((companyId, index) => {
-      result.set(companyId, (liveRunsQueries[index]?.data?.length ?? 0) > 0);
+    workspaceIds.forEach((workspaceId, index) => {
+      result.set(workspaceId, (liveRunsQueries[index]?.data?.length ?? 0) > 0);
     });
     return result;
-  }, [companyIds, liveRunsQueries]);
+  }, [workspaceIds, liveRunsQueries]);
   const hasUnreadInboxByCompanyId = useMemo(() => {
     const result = new Map<string, boolean>();
-    companyIds.forEach((companyId, index) => {
-      result.set(companyId, (sidebarBadgeQueries[index]?.data?.inbox ?? 0) > 0);
+    workspaceIds.forEach((workspaceId, index) => {
+      result.set(workspaceId, (sidebarBadgeQueries[index]?.data?.inbox ?? 0) > 0);
     });
     return result;
-  }, [companyIds, sidebarBadgeQueries]);
+  }, [workspaceIds, sidebarBadgeQueries]);
 
   // Maintain sorted order in local state, synced from companies + localStorage
   const [orderedIds, setOrderedIds] = useState<string[]>(() =>

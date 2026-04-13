@@ -3,8 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AdapterEnvironmentTestResult } from "@paperclipai/shared";
 import { useLocation, useNavigate, useParams } from "@/lib/router";
 import { useDialog } from "../context/DialogContext";
-import { useCompany } from "../context/CompanyContext";
-import { companiesApi } from "../api/companies";
+import { useWorkspace } from "../context/WorkspaceContext";
+import { workspacesApi } from "../api/workspaces";
 import { goalsApi } from "../api/goals";
 import { agentsApi } from "../api/agents";
 import { issuesApi } from "../api/issues";
@@ -67,7 +67,7 @@ const DEFAULT_TASK_DESCRIPTION = `You are the CEO. You set the direction for the
 
 export function OnboardingWizard() {
   const { onboardingOpen, onboardingOptions, closeOnboarding } = useDialog();
-  const { companies, setSelectedCompanyId, loading: companiesLoading } = useCompany();
+  const { companies, setSelectedCompanyId, loading: companiesLoading } = useWorkspace();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
@@ -92,7 +92,7 @@ export function OnboardingWizard() {
     : routeOnboardingOptions ?? {};
 
   const initialStep = effectiveOnboardingOptions.initialStep ?? 1;
-  const existingCompanyId = effectiveOnboardingOptions.companyId;
+  const existingCompanyId = effectiveOnboardingOptions.workspaceId;
 
   const [step, setStep] = useState<Step>(initialStep);
   const [loading, setLoading] = useState(false);
@@ -160,7 +160,7 @@ export function OnboardingWizard() {
   // doesn't get reset after creating a company.
   useEffect(() => {
     if (!effectiveOnboardingOpen) return;
-    const cId = effectiveOnboardingOptions.companyId ?? null;
+    const cId = effectiveOnboardingOptions.workspaceId ?? null;
     setStep(effectiveOnboardingOptions.initialStep ?? 1);
     setCreatedCompanyId(cId);
     setCreatedCompanyPrefix(null);
@@ -170,7 +170,7 @@ export function OnboardingWizard() {
     setCreatedIssueRef(null);
   }, [
     effectiveOnboardingOpen,
-    effectiveOnboardingOptions.companyId,
+    effectiveOnboardingOptions.workspaceId,
     effectiveOnboardingOptions.initialStep
   ]);
 
@@ -381,7 +381,7 @@ export function OnboardingWizard() {
     setLoading(true);
     setError(null);
     try {
-      const company = await companiesApi.create({ name: companyName.trim() });
+      const company = await workspacesApi.create({ name: companyName.trim() });
       setCreatedCompanyId(company.id);
       setCreatedCompanyPrefix(company.issuePrefix);
       setSelectedCompanyId(company.id);

@@ -12,7 +12,7 @@ import type {
   CompanySkillUpdateStatus,
 } from "@paperclipai/shared";
 import { companySkillsApi } from "../api/companySkills";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useToast } from "../context/ToastContext";
 import { queryKeys } from "../lib/queryKeys";
@@ -757,7 +757,7 @@ export function CompanySkills() {
   const { "*": routePath } = useParams<{ "*": string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { selectedCompanyId } = useCompany();
+  const { selectedCompanyId } = useWorkspace();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { pushToast } = useToast();
   const [skillFilter, setSkillFilter] = useState("");

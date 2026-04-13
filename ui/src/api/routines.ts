@@ -22,9 +22,9 @@ export interface RotateRoutineTriggerResponse {
 }
 
 export const routinesApi = {
-  list: (companyId: string) => api.get<RoutineListItem[]>(`/companies/${companyId}/routines`),
-  create: (companyId: string, data: Record<string, unknown>) =>
-    api.post<Routine>(`/companies/${companyId}/routines`, data),
+  list: (workspaceId: string) => api.get<RoutineListItem[]>(`/workspaces/${workspaceId}/routines`),
+  create: (workspaceId: string, data: Record<string, unknown>) =>
+    api.post<Routine>(`/workspaces/${workspaceId}/routines`, data),
   get: (id: string) => api.get<RoutineDetail>(`/routines/${id}`),
   update: (id: string, data: Record<string, unknown>) => api.patch<Routine>(`/routines/${id}`, data),
   listRuns: (id: string, limit: number = 50) => api.get<RoutineRunSummary[]>(`/routines/${id}/runs?limit=${limit}`),
@@ -38,16 +38,16 @@ export const routinesApi = {
   run: (id: string, data?: Record<string, unknown>) =>
     api.post<RoutineRun>(`/routines/${id}/run`, data ?? {}),
   activity: async (
-    companyId: string,
+    workspaceId: string,
     routineId: string,
     related?: { triggerIds?: string[]; runIds?: string[] },
   ) => {
     const requests = [
-      activityApi.list(companyId, { entityType: "routine", entityId: routineId }),
+      activityApi.list(workspaceId, { entityType: "routine", entityId: routineId }),
       ...(related?.triggerIds ?? []).map((triggerId) =>
-        activityApi.list(companyId, { entityType: "routine_trigger", entityId: triggerId })),
+        activityApi.list(workspaceId, { entityType: "routine_trigger", entityId: triggerId })),
       ...(related?.runIds ?? []).map((runId) =>
-        activityApi.list(companyId, { entityType: "routine_run", entityId: runId })),
+        activityApi.list(workspaceId, { entityType: "routine_run", entityId: runId })),
     ];
     const events = (await Promise.all(requests)).flat();
     const deduped = new Map(events.map((event) => [event.id, event]));

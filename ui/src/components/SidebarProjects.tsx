@@ -12,7 +12,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { useDialog } from "../context/DialogContext";
 import { useSidebar } from "../context/SidebarContext";
 import { authApi } from "../api/auth";
@@ -34,7 +34,7 @@ type ProjectSidebarSlot = ReturnType<typeof usePluginSlots>["slots"][number];
 
 function SortableProjectItem({
   activeProjectRef,
-  companyId,
+  workspaceId,
   companyPrefix,
   isMobile,
   project,
@@ -42,7 +42,7 @@ function SortableProjectItem({
   setSidebarOpen,
 }: {
   activeProjectRef: string | null;
-  companyId: string | null;
+  workspaceId: string | null;
   companyPrefix: string | null;
   isMobile: boolean;
   project: Project;
@@ -100,7 +100,7 @@ function SortableProjectItem({
                 key={`${project.id}:${slot.pluginKey}:${slot.id}`}
                 slot={slot}
                 context={{
-                  companyId,
+                  workspaceId,
                   companyPrefix,
                   projectId: project.id,
                   projectRef: routeRef,
@@ -119,7 +119,7 @@ function SortableProjectItem({
 
 export function SidebarProjects() {
   const [open, setOpen] = useState(true);
-  const { selectedCompany, selectedCompanyId } = useCompany();
+  const { selectedCompany, selectedCompanyId } = useWorkspace();
   const { openNewProject } = useDialog();
   const { isMobile, setSidebarOpen } = useSidebar();
   const location = useLocation();
@@ -136,7 +136,7 @@ export function SidebarProjects() {
   const { slots: projectSidebarSlots } = usePluginSlots({
     slotTypes: ["projectSidebarItem"],
     entityType: "project",
-    companyId: selectedCompanyId,
+    workspaceId: selectedCompanyId,
     enabled: !!selectedCompanyId,
   });
 
@@ -148,7 +148,7 @@ export function SidebarProjects() {
   );
   const { orderedProjects, persistOrder } = useProjectOrder({
     projects: visibleProjects,
-    companyId: selectedCompanyId,
+    workspaceId: selectedCompanyId,
     userId: currentUserId,
   });
 
@@ -219,7 +219,7 @@ export function SidebarProjects() {
                 <SortableProjectItem
                   key={project.id}
                   activeProjectRef={activeProjectRef}
-                  companyId={selectedCompanyId}
+                  workspaceId={selectedCompanyId}
                   companyPrefix={selectedCompany?.issuePrefix ?? null}
                   isMobile={isMobile}
                   project={project}

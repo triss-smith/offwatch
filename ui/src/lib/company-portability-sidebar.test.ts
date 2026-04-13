@@ -9,7 +9,7 @@ import {
 function makeAgent(id: string, name: string): Agent {
   return {
     id,
-    companyId: "company-1",
+    workspaceId: "company-1",
     name,
     role: "engineer",
     title: null,
@@ -36,7 +36,7 @@ function makeAgent(id: string, name: string): Agent {
 function makeProject(id: string, name: string): Project {
   return {
     id,
-    companyId: "company-1",
+    workspaceId: "company-1",
     goalId: null,
     urlKey: name.toLowerCase(),
     name,

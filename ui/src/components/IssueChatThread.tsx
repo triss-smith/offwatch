@@ -187,7 +187,7 @@ interface IssueChatThreadProps {
   timelineEvents?: IssueTimelineEvent[];
   liveRuns?: LiveRunForIssue[];
   activeRun?: ActiveRunForIssue | null;
-  companyId?: string | null;
+  workspaceId?: string | null;
   projectId?: string | null;
   issueStatus?: string;
   agentMap?: Map<string, Agent>;
@@ -1773,7 +1773,7 @@ export function IssueChatThread({
   timelineEvents = [],
   liveRuns = [],
   activeRun = null,
-  companyId,
+  workspaceId,
   projectId,
   issueStatus,
   agentMap,
@@ -1836,7 +1836,7 @@ export function IssueChatThread({
   }, [activeRun, displayLiveRuns, linkedRuns]);
   const { transcriptByRun, hasOutputForRun } = useLiveRunTranscripts({
     runs: enableLiveTranscriptPolling ? transcriptRuns : [],
-    companyId,
+    workspaceId,
   });
   const resolvedTranscriptByRun = transcriptsByRunId ?? transcriptByRun;
   const resolvedHasOutputForRun = hasOutputForRunOverride ?? hasOutputForRun;
@@ -1852,7 +1852,7 @@ export function IssueChatThread({
         transcriptsByRunId: resolvedTranscriptByRun,
         hasOutputForRun: resolvedHasOutputForRun,
         includeSucceededRunsWithoutOutput,
-        companyId,
+        workspaceId,
         projectId,
         agentMap,
         currentUserId,
@@ -1866,7 +1866,7 @@ export function IssueChatThread({
       resolvedTranscriptByRun,
       resolvedHasOutputForRun,
       includeSucceededRunsWithoutOutput,
-      companyId,
+      workspaceId,
       projectId,
       agentMap,
       currentUserId,

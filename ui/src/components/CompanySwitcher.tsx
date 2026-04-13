@@ -70,7 +70,7 @@ export function CompanySwitcher() {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/companies" className="no-underline text-inherit">
+          <Link to="/workspaces" className="no-underline text-inherit">
             <Plus className="h-4 w-4 mr-2" />
             Manage Companies
           </Link>

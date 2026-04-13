@@ -13,7 +13,7 @@ import { agentsApi } from "../api/agents";
 import { heartbeatsApi } from "../api/heartbeats";
 import { instanceSettingsApi } from "../api/instanceSettings";
 import { projectsApi } from "../api/projects";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useGeneralSettings } from "../context/GeneralSettingsContext";
 import { useSidebar } from "../context/SidebarContext";
@@ -629,7 +629,7 @@ function JoinRequestInboxRow({
 }
 
 export function Inbox() {
-  const { selectedCompanyId } = useCompany();
+  const { selectedCompanyId } = useWorkspace();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
@@ -1249,8 +1249,8 @@ export function Inbox() {
       setRetryingRunIds((prev) => new Set(prev).add(run.id));
     },
     onSuccess: ({ newRun, originalRun }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(originalRun.companyId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(originalRun.companyId, originalRun.agentId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(originalRun.workspaceId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(originalRun.workspaceId, originalRun.agentId) });
       navigate(`/agents/${originalRun.agentId}/runs/${newRun.id}`);
     },
     onSettled: (_data, _error, run) => {

@@ -18,7 +18,7 @@ function createAgent(
   const now = new Date("2026-04-06T12:00:00.000Z");
   return {
     id,
-    companyId: "company-ux",
+    workspaceId: "company-ux",
     name,
     urlKey,
     role: "engineer",
@@ -45,7 +45,7 @@ function createAgent(
 function createComment(overrides: Partial<IssueChatComment>): IssueChatComment {
   return {
     id: "comment-default",
-    companyId: "company-ux",
+    workspaceId: "company-ux",
     issueId: "issue-ux",
     authorAgentId: null,
     authorUserId: "user-1",
@@ -337,7 +337,7 @@ export const issueChatUxReviewEvents: IssueTimelineEvent[] = [
 export const issueChatUxFeedbackVotes: FeedbackVote[] = [
   {
     id: "feedback-1",
-    companyId: "company-ux",
+    workspaceId: "company-ux",
     issueId: "issue-ux",
     targetType: "issue_comment",
     targetId: "comment-review-agent",

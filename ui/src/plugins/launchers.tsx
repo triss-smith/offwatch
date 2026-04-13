@@ -44,7 +44,7 @@ import {
 } from "./slots";
 
 export type PluginLauncherContext = {
-  companyId?: string | null;
+  workspaceId?: string | null;
   companyPrefix?: string | null;
   projectId?: string | null;
   projectRef?: string | null;
@@ -63,7 +63,7 @@ export type ResolvedPluginLauncher = PluginLauncherDeclaration & {
 type UsePluginLaunchersFilters = {
   placementZones: PluginLauncherPlacementZone[];
   entityType?: PluginUiSlotEntityType | null;
-  companyId?: string | null;
+  workspaceId?: string | null;
   enabled?: boolean;
 };
 
@@ -138,7 +138,7 @@ function buildLauncherHostContext(
   userId: string | null,
 ): PluginHostContext {
   return {
-    companyId: context.companyId ?? null,
+    workspaceId: context.workspaceId ?? null,
     companyPrefix: context.companyPrefix ?? null,
     projectId: context.projectId ?? (context.entityType === "project" ? context.entityId ?? null : null),
     entityId: context.entityId ?? null,
@@ -666,7 +666,7 @@ export function PluginLauncherProvider({ children }: { children: ReactNode }) {
             launcher.pluginId,
             launcher.action.target,
             launcher.action.params,
-            hostContext.companyId ?? null,
+            hostContext.workspaceId ?? null,
           );
           return;
         case "openModal":
@@ -767,8 +767,8 @@ export function PluginLauncherOutlet({
   const { launchers, contributionsByPluginId, errorMessage } = usePluginLaunchers({
     placementZones,
     entityType,
-    companyId: context.companyId,
-    enabled: !!context.companyId,
+    workspaceId: context.workspaceId,
+    enabled: !!context.workspaceId,
   });
 
   if (errorMessage) {

@@ -3,7 +3,7 @@ import { api } from "./client";
 
 export const executionWorkspacesApi = {
   list: (
-    companyId: string,
+    workspaceId: string,
     filters?: {
       projectId?: string;
       projectWorkspaceId?: string;
@@ -19,7 +19,7 @@ export const executionWorkspacesApi = {
     if (filters?.status) params.set("status", filters.status);
     if (filters?.reuseEligible) params.set("reuseEligible", "true");
     const qs = params.toString();
-    return api.get<ExecutionWorkspace[]>(`/companies/${companyId}/execution-workspaces${qs ? `?${qs}` : ""}`);
+    return api.get<ExecutionWorkspace[]>(`/workspaces/${workspaceId}/execution-workspaces${qs ? `?${qs}` : ""}`);
   },
   get: (id: string) => api.get<ExecutionWorkspace>(`/execution-workspaces/${id}`),
   getCloseReadiness: (id: string) =>

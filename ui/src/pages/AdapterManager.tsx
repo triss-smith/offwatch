@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Cpu, Plus, Power, Trash2, FolderOpen, Package, RefreshCw, Download } from "lucide-react";
-import { useCompany } from "@/context/CompanyContext";
+import { useWorkspace } from "@/context/WorkspaceContext";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { adaptersApi } from "@/api/adapters";
 import type { AdapterInfo } from "@/api/adapters";
@@ -252,7 +252,7 @@ function ReinstallDialog({
 }
 
 export function AdapterManager() {
-  const { selectedCompany } = useCompany();
+  const { selectedCompany } = useWorkspace();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();

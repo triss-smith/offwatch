@@ -12,14 +12,14 @@ interface RunChatSurfaceProps {
   run: LiveRunForIssue;
   transcript: TranscriptEntry[];
   hasOutput: boolean;
-  companyId?: string | null;
+  workspaceId?: string | null;
 }
 
 export function RunChatSurface({
   run,
   transcript,
   hasOutput,
-  companyId,
+  workspaceId,
 }: RunChatSurfaceProps) {
   const active = isRunActive(run);
   const liveRuns = active ? [run] : [];
@@ -49,7 +49,7 @@ export function RunChatSurface({
       linkedRuns={linkedRuns}
       timelineEvents={[]}
       liveRuns={liveRuns}
-      companyId={companyId}
+      workspaceId={workspaceId}
       onAdd={async () => {}}
       showComposer={false}
       showJumpToLatest={false}

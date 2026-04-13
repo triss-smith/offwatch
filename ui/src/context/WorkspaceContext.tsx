@@ -8,34 +8,34 @@ import {
   type ReactNode,
 } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Company } from "@paperclipai/shared";
-import { companiesApi } from "../api/companies";
+import type { Workspace } from "@paperclipai/shared";
+import { workspacesApi } from "../api/workspaces";
 import { ApiError } from "../api/client";
 import { queryKeys } from "../lib/queryKeys";
 import type { CompanySelectionSource } from "../lib/company-selection";
-type CompanySelectionOptions = { source?: CompanySelectionSource };
+type WorkspaceSelectionOptions = { source?: CompanySelectionSource };
 
-interface CompanyContextValue {
-  companies: Company[];
+interface WorkspaceContextValue {
+  companies: Workspace[];
   selectedCompanyId: string | null;
-  selectedCompany: Company | null;
+  selectedCompany: Workspace | null;
   selectionSource: CompanySelectionSource;
   loading: boolean;
   error: Error | null;
-  setSelectedCompanyId: (companyId: string, options?: CompanySelectionOptions) => void;
+  setSelectedCompanyId: (workspaceId: string, options?: WorkspaceSelectionOptions) => void;
   reloadCompanies: () => Promise<void>;
   createCompany: (data: {
     name: string;
     description?: string | null;
     budgetMonthlyCents?: number;
-  }) => Promise<Company>;
+  }) => Promise<Workspace>;
 }
 
 const STORAGE_KEY = "paperclip.selectedCompanyId";
 
-const CompanyContext = createContext<CompanyContextValue | null>(null);
+const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 
-export function CompanyProvider({ children }: { children: ReactNode }) {
+export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [selectionSource, setSelectionSource] = useState<CompanySelectionSource>("bootstrap");
   const [selectedCompanyId, setSelectedCompanyIdState] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
@@ -44,7 +44,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     queryKey: queryKeys.companies.all,
     queryFn: async () => {
       try {
-        return await companiesApi.list();
+        return await workspacesApi.list();
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
           return [];
@@ -55,11 +55,11 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     retry: false,
   });
   const sidebarCompanies = useMemo(
-    () => companies.filter((company) => company.status !== "archived"),
+    () => companies.filter((workspace) => workspace.status !== "archived"),
     [companies],
   );
 
-  // Auto-select first company when list loads
+  // Auto-select first workspace when list loads
   useEffect(() => {
     if (companies.length === 0) return;
 
@@ -74,10 +74,10 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, next);
   }, [companies, selectedCompanyId, sidebarCompanies]);
 
-  const setSelectedCompanyId = useCallback((companyId: string, options?: CompanySelectionOptions) => {
-    setSelectedCompanyIdState(companyId);
+  const setSelectedCompanyId = useCallback((workspaceId: string, options?: WorkspaceSelectionOptions) => {
+    setSelectedCompanyIdState(workspaceId);
     setSelectionSource(options?.source ?? "manual");
-    localStorage.setItem(STORAGE_KEY, companyId);
+    localStorage.setItem(STORAGE_KEY, workspaceId);
   }, []);
 
   const reloadCompanies = useCallback(async () => {
@@ -90,10 +90,10 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       description?: string | null;
       budgetMonthlyCents?: number;
     }) =>
-      companiesApi.create(data),
-    onSuccess: (company) => {
+      workspacesApi.create(data),
+    onSuccess: (workspace) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
-      setSelectedCompanyId(company.id);
+      setSelectedCompanyId(workspace.id);
     },
   });
 
@@ -109,7 +109,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   );
 
   const selectedCompany = useMemo(
-    () => companies.find((company) => company.id === selectedCompanyId) ?? null,
+    () => companies.find((workspace) => workspace.id === selectedCompanyId) ?? null,
     [companies, selectedCompanyId],
   );
 
@@ -138,13 +138,13 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return <CompanyContext.Provider value={value}>{children}</CompanyContext.Provider>;
+  return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
 }
 
-export function useCompany() {
-  const ctx = useContext(CompanyContext);
+export function useWorkspace() {
+  const ctx = useContext(WorkspaceContext);
   if (!ctx) {
-    throw new Error("useCompany must be used within CompanyProvider");
+    throw new Error("useWorkspace must be used within WorkspaceProvider");
   }
   return ctx;
 }

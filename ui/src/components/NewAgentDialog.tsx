@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@/lib/router";
 import { useDialog } from "../context/DialogContext";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { agentsApi } from "../api/agents";
 import { adaptersApi } from "../api/adapters";
 import { queryKeys } from "@/lib/queryKeys";
@@ -32,7 +32,7 @@ function isAgentAdapterType(type: string): boolean {
 
 export function NewAgentDialog() {
   const { newAgentOpen, closeNewAgent, openNewIssue } = useDialog();
-  const { selectedCompanyId } = useCompany();
+  const { selectedCompanyId } = useWorkspace();
   const navigate = useNavigate();
   const [showAdvancedCards, setShowAdvancedCards] = useState(false);
   const disabledTypes = useDisabledAdaptersSync();

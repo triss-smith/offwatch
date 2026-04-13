@@ -20,7 +20,7 @@ describe("issuesApi.list", () => {
     await issuesApi.list("company-1", { parentId: "issue-parent-1", limit: 25 });
 
     expect(mockApi.get).toHaveBeenCalledWith(
-      "/companies/company-1/issues?parentId=issue-parent-1&limit=25",
+      "/workspaces/company-1/issues?parentId=issue-parent-1&limit=25",
     );
   });
 });

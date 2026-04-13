@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { NavLink, useLocation } from "@/lib/router";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Plus } from "lucide-react";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { useDialog } from "../context/DialogContext";
 import { useSidebar } from "../context/SidebarContext";
 import { agentsApi } from "../api/agents";
@@ -22,7 +22,7 @@ import {
 import type { Agent } from "@paperclipai/shared";
 export function SidebarAgents() {
   const [open, setOpen] = useState(true);
-  const { selectedCompanyId } = useCompany();
+  const { selectedCompanyId } = useWorkspace();
   const { openNewAgent } = useDialog();
   const { isMobile, setSidebarOpen } = useSidebar();
   const location = useLocation();
@@ -61,7 +61,7 @@ export function SidebarAgents() {
   const currentUserId = session?.user?.id ?? session?.session?.userId ?? null;
   const { orderedAgents } = useAgentOrder({
     agents: visibleAgents,
-    companyId: selectedCompanyId,
+    workspaceId: selectedCompanyId,
     userId: currentUserId,
   });
 

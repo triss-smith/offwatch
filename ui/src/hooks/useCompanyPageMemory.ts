@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "@/lib/router";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { toCompanyRelativePath } from "../lib/company-routes";
 import {
   getRememberedPathOwnerCompanyId,
@@ -20,9 +20,9 @@ function getCompanyPaths(): Record<string, string> {
   return {};
 }
 
-function saveCompanyPath(companyId: string, path: string) {
+function saveCompanyPath(workspaceId: string, path: string) {
   const paths = getCompanyPaths();
-  paths[companyId] = path;
+  paths[workspaceId] = path;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(paths));
 }
 
@@ -31,7 +31,7 @@ function saveCompanyPath(companyId: string, path: string) {
  * Falls back to /dashboard if no page was previously visited for a company.
  */
 export function useCompanyPageMemory() {
-  const { companies, selectedCompanyId, selectedCompany, selectionSource } = useCompany();
+  const { companies, selectedCompanyId, selectedCompany, selectionSource } = useWorkspace();
   const location = useLocation();
   const navigate = useNavigate();
   const prevCompanyId = useRef<string | null>(selectedCompanyId);
@@ -50,10 +50,10 @@ export function useCompanyPageMemory() {
   // during the render where selectedCompanyId has already changed.
   const fullPath = location.pathname + location.search;
   useEffect(() => {
-    const companyId = rememberedPathOwnerCompanyId;
+    const workspaceId = rememberedPathOwnerCompanyId;
     const relativePath = toCompanyRelativePath(fullPath);
-    if (companyId && isRememberableCompanyPath(relativePath)) {
-      saveCompanyPath(companyId, relativePath);
+    if (workspaceId && isRememberableCompanyPath(relativePath)) {
+      saveCompanyPath(workspaceId, relativePath);
     }
   }, [fullPath, rememberedPathOwnerCompanyId]);
 

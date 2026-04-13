@@ -7,7 +7,7 @@ import { agentsApi } from "../api/agents";
 import { projectsApi } from "../api/projects";
 import { issuesApi } from "../api/issues";
 import { heartbeatsApi } from "../api/heartbeats";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useToast } from "../context/ToastContext";
 import { queryKeys } from "../lib/queryKeys";
@@ -288,7 +288,7 @@ function RoutineListRow({
 }
 
 export function Routines() {
-  const { selectedCompanyId } = useCompany();
+  const { selectedCompanyId } = useWorkspace();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -971,7 +971,7 @@ export function Routines() {
         onOpenChange={(next) => {
           if (!next) setRunDialogRoutine(null);
         }}
-        companyId={selectedCompanyId}
+        workspaceId={selectedCompanyId}
         agents={agents ?? []}
         projects={projects ?? []}
         defaultProjectId={runDialogRoutine?.projectId ?? null}

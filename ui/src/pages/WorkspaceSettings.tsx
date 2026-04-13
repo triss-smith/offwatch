@@ -2,10 +2,10 @@ import { ChangeEvent, useEffect, useState } from "react";
 import { Link } from "@/lib/router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DEFAULT_FEEDBACK_DATA_SHARING_TERMS_VERSION } from "@paperclipai/shared";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useToast } from "../context/ToastContext";
-import { companiesApi } from "../api/companies";
+import { workspacesApi } from "../api/workspaces";
 import { accessApi } from "../api/access";
 import { assetsApi } from "../api/assets";
 import { queryKeys } from "../lib/queryKeys";
@@ -26,27 +26,27 @@ type AgentSnippetInput = {
 
 const FEEDBACK_TERMS_URL = import.meta.env.VITE_FEEDBACK_TERMS_URL?.trim() || "https://paperclip.ing/tos";
 
-export function CompanySettings() {
+export function WorkspaceSettings() {
   const {
     companies,
     selectedCompany,
     selectedCompanyId,
     setSelectedCompanyId
-  } = useCompany();
+  } = useWorkspace();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   // General settings local state
-  const [companyName, setCompanyName] = useState("");
+  const [workspaceName, setWorkspaceName] = useState("");
   const [description, setDescription] = useState("");
   const [brandColor, setBrandColor] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
 
-  // Sync local state from selected company
+  // Sync local state from selected workspace
   useEffect(() => {
     if (!selectedCompany) return;
-    setCompanyName(selectedCompany.name);
+    setWorkspaceName(selectedCompany.name);
     setDescription(selectedCompany.description ?? "");
     setBrandColor(selectedCompany.brandColor ?? "");
     setLogoUrl(selectedCompany.logoUrl ?? "");
@@ -59,7 +59,7 @@ export function CompanySettings() {
 
   const generalDirty =
     !!selectedCompany &&
-    (companyName !== selectedCompany.name ||
+    (workspaceName !== selectedCompany.name ||
       description !== (selectedCompany.description ?? "") ||
       brandColor !== (selectedCompany.brandColor ?? ""));
 
@@ -68,7 +68,7 @@ export function CompanySettings() {
       name: string;
       description: string | null;
       brandColor: string | null;
-    }) => companiesApi.update(selectedCompanyId!, data),
+    }) => workspacesApi.update(selectedCompanyId!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
     }
@@ -76,7 +76,7 @@ export function CompanySettings() {
 
   const settingsMutation = useMutation({
     mutationFn: (requireApproval: boolean) =>
-      companiesApi.update(selectedCompanyId!, {
+      workspacesApi.update(selectedCompanyId!, {
         requireBoardApprovalForNewAgents: requireApproval
       }),
     onSuccess: () => {
@@ -86,10 +86,10 @@ export function CompanySettings() {
 
   const feedbackSharingMutation = useMutation({
     mutationFn: (enabled: boolean) =>
-      companiesApi.update(selectedCompanyId!, {
+      workspacesApi.update(selectedCompanyId!, {
         feedbackDataSharingEnabled: enabled,
       }),
-    onSuccess: (_company, enabled) => {
+    onSuccess: (_workspace, enabled) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
       pushToast({
         title: enabled ? "Feedback sharing enabled" : "Feedback sharing disabled",
@@ -107,7 +107,7 @@ export function CompanySettings() {
 
   const budgetMetricMutation = useMutation({
     mutationFn: (metric: string) =>
-      companiesApi.update(selectedCompanyId!, { budgetMetric: metric }),
+      workspacesApi.update(selectedCompanyId!, { budgetMetric: metric }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
       pushToast({ title: "Budget mode updated", tone: "success" });
@@ -183,18 +183,18 @@ export function CompanySettings() {
     mutationFn: (file: File) =>
       assetsApi
         .uploadCompanyLogo(selectedCompanyId!, file)
-        .then((asset) => companiesApi.update(selectedCompanyId!, { logoAssetId: asset.assetId })),
-    onSuccess: (company) => {
-      syncLogoState(company.logoUrl);
+        .then((asset) => workspacesApi.update(selectedCompanyId!, { logoAssetId: asset.assetId })),
+    onSuccess: (workspace) => {
+      syncLogoState(workspace.logoUrl);
       setLogoUploadError(null);
     }
   });
 
   const clearLogoMutation = useMutation({
-    mutationFn: () => companiesApi.update(selectedCompanyId!, { logoAssetId: null }),
-    onSuccess: (company) => {
+    mutationFn: () => workspacesApi.update(selectedCompanyId!, { logoAssetId: null }),
+    onSuccess: (workspace) => {
       setLogoUploadError(null);
-      syncLogoState(company.logoUrl);
+      syncLogoState(workspace.logoUrl);
     }
   });
 
@@ -219,15 +219,15 @@ export function CompanySettings() {
 
   const archiveMutation = useMutation({
     mutationFn: ({
-      companyId,
-      nextCompanyId
+      workspaceId,
+      nextWorkspaceId
     }: {
-      companyId: string;
-      nextCompanyId: string | null;
-    }) => companiesApi.archive(companyId).then(() => ({ nextCompanyId })),
-    onSuccess: async ({ nextCompanyId }) => {
-      if (nextCompanyId) {
-        setSelectedCompanyId(nextCompanyId);
+      workspaceId: string;
+      nextWorkspaceId: string | null;
+    }) => workspacesApi.archive(workspaceId).then(() => ({ nextWorkspaceId })),
+    onSuccess: async ({ nextWorkspaceId }) => {
+      if (nextWorkspaceId) {
+        setSelectedCompanyId(nextWorkspaceId);
       }
       await queryClient.invalidateQueries({
         queryKey: queryKeys.companies.all
@@ -240,7 +240,7 @@ export function CompanySettings() {
 
   useEffect(() => {
     setBreadcrumbs([
-      { label: selectedCompany?.name ?? "Company", href: "/dashboard" },
+      { label: selectedCompany?.name ?? "Workspace", href: "/dashboard" },
       { label: "Settings" }
     ]);
   }, [setBreadcrumbs, selectedCompany?.name]);
@@ -248,14 +248,14 @@ export function CompanySettings() {
   if (!selectedCompany) {
     return (
       <div className="text-sm text-muted-foreground">
-        No company selected. Select a company from the switcher above.
+        No workspace selected. Select a workspace from the switcher above.
       </div>
     );
   }
 
   function handleSaveGeneral() {
     generalMutation.mutate({
-      name: companyName.trim(),
+      name: workspaceName.trim(),
       description: description.trim() || null,
       brandColor: brandColor || null
     });
@@ -265,7 +265,7 @@ export function CompanySettings() {
     <div className="max-w-2xl space-y-6">
       <div className="flex items-center gap-2">
         <Settings className="h-5 w-5 text-muted-foreground" />
-        <h1 className="text-lg font-semibold">Company Settings</h1>
+        <h1 className="text-lg font-semibold">Workspace Settings</h1>
       </div>
 
       {/* General */}
@@ -274,23 +274,23 @@ export function CompanySettings() {
           General
         </div>
         <div className="space-y-3 rounded-md border border-border px-4 py-4">
-          <Field label="Company name" hint="The display name for your company.">
+          <Field label="Workspace name" hint="The display name for your workspace.">
             <input
               className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
               type="text"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
+              value={workspaceName}
+              onChange={(e) => setWorkspaceName(e.target.value)}
             />
           </Field>
           <Field
             label="Description"
-            hint="Optional description shown in the company profile."
+            hint="Optional description shown in the workspace profile."
           >
             <input
               className="w-full rounded-md border border-border bg-transparent px-2.5 py-1.5 text-sm outline-none"
               type="text"
               value={description}
-              placeholder="Optional company description"
+              placeholder="Optional workspace description"
               onChange={(e) => setDescription(e.target.value)}
             />
           </Field>
@@ -306,7 +306,7 @@ export function CompanySettings() {
           <div className="flex items-start gap-4">
             <div className="shrink-0">
               <CompanyPatternIcon
-                companyName={companyName || selectedCompany.name}
+                companyName={workspaceName || selectedCompany.name}
                 logoUrl={logoUrl || null}
                 brandColor={brandColor || null}
                 className="rounded-[14px]"
@@ -356,7 +356,7 @@ export function CompanySettings() {
               </Field>
               <Field
                 label="Brand color"
-                hint="Sets the hue for the company icon. Leave empty for auto-generated color."
+                hint="Sets the hue for the workspace icon. Leave empty for auto-generated color."
               >
                 <div className="flex items-center gap-2">
                   <input
@@ -400,7 +400,7 @@ export function CompanySettings() {
           <Button
             size="sm"
             onClick={handleSaveGeneral}
-            disabled={generalMutation.isPending || !companyName.trim()}
+            disabled={generalMutation.isPending || !workspaceName.trim()}
           >
             {generalMutation.isPending ? "Saving..." : "Save changes"}
           </Button>
@@ -434,7 +434,7 @@ export function CompanySettings() {
       </div>
 
       {/* Hiring */}
-      <div className="space-y-4" data-testid="company-settings-team-section">
+      <div className="space-y-4" data-testid="workspace-settings-team-section">
         <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Hiring
         </div>
@@ -444,7 +444,7 @@ export function CompanySettings() {
             hint="New agent hires stay pending until approved by board."
             checked={!!selectedCompany.requireBoardApprovalForNewAgents}
             onChange={(v) => settingsMutation.mutate(v)}
-            toggleTestId="company-settings-team-approval-toggle"
+            toggleTestId="workspace-settings-team-approval-toggle"
           />
         </div>
       </div>
@@ -492,7 +492,7 @@ export function CompanySettings() {
       </div>
 
       {/* Invites */}
-      <div className="space-y-4" data-testid="company-settings-invites-section">
+      <div className="space-y-4" data-testid="workspace-settings-invites-section">
         <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Invites
         </div>
@@ -505,7 +505,7 @@ export function CompanySettings() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
-              data-testid="company-settings-invites-generate-button"
+              data-testid="workspace-settings-invites-generate-button"
               size="sm"
               onClick={() => inviteMutation.mutate()}
               disabled={inviteMutation.isPending}
@@ -521,7 +521,7 @@ export function CompanySettings() {
           {inviteSnippet && (
             <div
               className="rounded-md border border-border bg-muted/30 p-2"
-              data-testid="company-settings-invites-snippet"
+              data-testid="workspace-settings-invites-snippet"
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="text-xs text-muted-foreground">
@@ -539,14 +539,14 @@ export function CompanySettings() {
               </div>
               <div className="mt-1 space-y-1.5">
                 <textarea
-                  data-testid="company-settings-invites-snippet-textarea"
+                  data-testid="workspace-settings-invites-snippet-textarea"
                   className="h-[28rem] w-full rounded-md border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none"
                   value={inviteSnippet}
                   readOnly
                 />
                 <div className="flex justify-end">
                   <Button
-                    data-testid="company-settings-invites-copy-button"
+                    data-testid="workspace-settings-invites-copy-button"
                     size="sm"
                     variant="ghost"
                     onClick={async () => {
@@ -569,33 +569,6 @@ export function CompanySettings() {
         </div>
       </div>
 
-      {/* Import / Export */}
-      <div className="space-y-4">
-        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          Company Packages
-        </div>
-        <div className="rounded-md border border-border px-4 py-4">
-          <p className="text-sm text-muted-foreground">
-            Import and export have moved to dedicated pages accessible from the{" "}
-            <a href="/org" className="underline hover:text-foreground">Org Chart</a> header.
-          </p>
-          <div className="mt-3 flex items-center gap-2">
-            <Button size="sm" variant="outline" asChild>
-              <Link to="/company/export">
-                <Download className="mr-1.5 h-3.5 w-3.5" />
-                Export
-              </Link>
-            </Button>
-            <Button size="sm" variant="outline" asChild>
-              <Link to="/company/import">
-                <Upload className="mr-1.5 h-3.5 w-3.5" />
-                Import
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Danger Zone */}
       <div className="space-y-4">
         <div className="text-xs font-medium text-destructive uppercase tracking-wide">
@@ -603,7 +576,7 @@ export function CompanySettings() {
         </div>
         <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/5 px-4 py-4">
           <p className="text-sm text-muted-foreground">
-            Archive this company to hide it from the sidebar. This persists in
+            Archive this workspace to hide it from the sidebar. This persists in
             the database.
           </p>
           <div className="flex items-center gap-2">
@@ -617,18 +590,18 @@ export function CompanySettings() {
               onClick={() => {
                 if (!selectedCompanyId) return;
                 const confirmed = window.confirm(
-                  `Archive company "${selectedCompany.name}"? It will be hidden from the sidebar.`
+                  `Archive workspace "${selectedCompany.name}"? It will be hidden from the sidebar.`
                 );
                 if (!confirmed) return;
-                const nextCompanyId =
+                const nextWorkspaceId =
                   companies.find(
-                    (company) =>
-                      company.id !== selectedCompanyId &&
-                      company.status !== "archived"
+                    (workspace) =>
+                      workspace.id !== selectedCompanyId &&
+                      workspace.status !== "archived"
                   )?.id ?? null;
                 archiveMutation.mutate({
-                  companyId: selectedCompanyId,
-                  nextCompanyId
+                  workspaceId: selectedCompanyId,
+                  nextWorkspaceId
                 });
               }}
             >
@@ -636,13 +609,13 @@ export function CompanySettings() {
                 ? "Archiving..."
                 : selectedCompany.status === "archived"
                 ? "Already archived"
-                : "Archive company"}
+                : "Archive workspace"}
             </Button>
             {archiveMutation.isError && (
               <span className="text-xs text-destructive">
                 {archiveMutation.error instanceof Error
                   ? archiveMutation.error.message
-                  : "Failed to archive company"}
+                  : "Failed to archive workspace"}
               </span>
             )}
           </div>

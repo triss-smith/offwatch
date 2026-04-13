@@ -46,7 +46,7 @@ export function InstanceSettings() {
 
   const toggleMutation = useMutation({
     mutationFn: async (agentRow: InstanceSchedulerHeartbeatAgent) => {
-      const agent = await agentsApi.get(agentRow.id, agentRow.companyId);
+      const agent = await agentsApi.get(agentRow.id, agentRow.workspaceId);
       const runtimeConfig = asRecord(agent.runtimeConfig) ?? {};
       const heartbeat = asRecord(runtimeConfig.heartbeat) ?? {};
 
@@ -61,14 +61,14 @@ export function InstanceSettings() {
             },
           },
         },
-        agentRow.companyId,
+        agentRow.workspaceId,
       );
     },
     onSuccess: async (_, agentRow) => {
       setActionError(null);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.instance.schedulerHeartbeats }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.agents.list(agentRow.companyId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.agents.list(agentRow.workspaceId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(agentRow.id) }),
       ]);
     },
@@ -84,7 +84,7 @@ export function InstanceSettings() {
 
       const results = await Promise.allSettled(
         enabled.map(async (agentRow) => {
-          const agent = await agentsApi.get(agentRow.id, agentRow.companyId);
+          const agent = await agentsApi.get(agentRow.id, agentRow.workspaceId);
           const runtimeConfig = asRecord(agent.runtimeConfig) ?? {};
           const heartbeat = asRecord(runtimeConfig.heartbeat) ?? {};
           await agentsApi.update(
@@ -95,7 +95,7 @@ export function InstanceSettings() {
                 heartbeat: { ...heartbeat, enabled: false },
               },
             },
-            agentRow.companyId,
+            agentRow.workspaceId,
           );
         }),
       );
@@ -114,11 +114,11 @@ export function InstanceSettings() {
     },
     onSuccess: async (updatedRows) => {
       setActionError(null);
-      const companies = new Set(updatedRows.map((row) => row.companyId));
+      const companies = new Set(updatedRows.map((row) => row.workspaceId));
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.instance.schedulerHeartbeats }),
-        ...Array.from(companies, (companyId) =>
-          queryClient.invalidateQueries({ queryKey: queryKeys.agents.list(companyId) }),
+        ...Array.from(companies, (workspaceId) =>
+          queryClient.invalidateQueries({ queryKey: queryKeys.agents.list(workspaceId) }),
         ),
         ...updatedRows.map((row) =>
           queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(row.id) }),
@@ -139,10 +139,10 @@ export function InstanceSettings() {
   const grouped = useMemo(() => {
     const map = new Map<string, { companyName: string; agents: InstanceSchedulerHeartbeatAgent[] }>();
     for (const agent of agents) {
-      let group = map.get(agent.companyId);
+      let group = map.get(agent.workspaceId);
       if (!group) {
         group = { companyName: agent.companyName, agents: [] };
-        map.set(agent.companyId, group);
+        map.set(agent.workspaceId, group);
       }
       group.agents.push(agent);
     }

@@ -12,47 +12,47 @@ import type {
 import { api } from "./client";
 
 export const companySkillsApi = {
-  list: (companyId: string) =>
-    api.get<CompanySkillListItem[]>(`/companies/${encodeURIComponent(companyId)}/skills`),
-  detail: (companyId: string, skillId: string) =>
+  list: (workspaceId: string) =>
+    api.get<CompanySkillListItem[]>(`/workspaces/${encodeURIComponent(workspaceId)}/skills`),
+  detail: (workspaceId: string, skillId: string) =>
     api.get<CompanySkillDetail>(
-      `/companies/${encodeURIComponent(companyId)}/skills/${encodeURIComponent(skillId)}`,
+      `/workspaces/${encodeURIComponent(workspaceId)}/skills/${encodeURIComponent(skillId)}`,
     ),
-  updateStatus: (companyId: string, skillId: string) =>
+  updateStatus: (workspaceId: string, skillId: string) =>
     api.get<CompanySkillUpdateStatus>(
-      `/companies/${encodeURIComponent(companyId)}/skills/${encodeURIComponent(skillId)}/update-status`,
+      `/workspaces/${encodeURIComponent(workspaceId)}/skills/${encodeURIComponent(skillId)}/update-status`,
     ),
-  file: (companyId: string, skillId: string, relativePath: string) =>
+  file: (workspaceId: string, skillId: string, relativePath: string) =>
     api.get<CompanySkillFileDetail>(
-      `/companies/${encodeURIComponent(companyId)}/skills/${encodeURIComponent(skillId)}/files?path=${encodeURIComponent(relativePath)}`,
+      `/workspaces/${encodeURIComponent(workspaceId)}/skills/${encodeURIComponent(skillId)}/files?path=${encodeURIComponent(relativePath)}`,
     ),
-  updateFile: (companyId: string, skillId: string, path: string, content: string) =>
+  updateFile: (workspaceId: string, skillId: string, path: string, content: string) =>
     api.patch<CompanySkillFileDetail>(
-      `/companies/${encodeURIComponent(companyId)}/skills/${encodeURIComponent(skillId)}/files`,
+      `/workspaces/${encodeURIComponent(workspaceId)}/skills/${encodeURIComponent(skillId)}/files`,
       { path, content },
     ),
-  create: (companyId: string, payload: CompanySkillCreateRequest) =>
+  create: (workspaceId: string, payload: CompanySkillCreateRequest) =>
     api.post<CompanySkill>(
-      `/companies/${encodeURIComponent(companyId)}/skills`,
+      `/workspaces/${encodeURIComponent(workspaceId)}/skills`,
       payload,
     ),
-  importFromSource: (companyId: string, source: string) =>
+  importFromSource: (workspaceId: string, source: string) =>
     api.post<CompanySkillImportResult>(
-      `/companies/${encodeURIComponent(companyId)}/skills/import`,
+      `/workspaces/${encodeURIComponent(workspaceId)}/skills/import`,
       { source },
     ),
-  scanProjects: (companyId: string, payload: CompanySkillProjectScanRequest = {}) =>
+  scanProjects: (workspaceId: string, payload: CompanySkillProjectScanRequest = {}) =>
     api.post<CompanySkillProjectScanResult>(
-      `/companies/${encodeURIComponent(companyId)}/skills/scan-projects`,
+      `/workspaces/${encodeURIComponent(workspaceId)}/skills/scan-projects`,
       payload,
     ),
-  installUpdate: (companyId: string, skillId: string) =>
+  installUpdate: (workspaceId: string, skillId: string) =>
     api.post<CompanySkill>(
-      `/companies/${encodeURIComponent(companyId)}/skills/${encodeURIComponent(skillId)}/install-update`,
+      `/workspaces/${encodeURIComponent(workspaceId)}/skills/${encodeURIComponent(skillId)}/install-update`,
       {},
     ),
-  delete: (companyId: string, skillId: string) =>
+  delete: (workspaceId: string, skillId: string) =>
     api.delete<CompanySkill>(
-      `/companies/${encodeURIComponent(companyId)}/skills/${encodeURIComponent(skillId)}`,
+      `/workspaces/${encodeURIComponent(workspaceId)}/skills/${encodeURIComponent(skillId)}`,
     ),
 };

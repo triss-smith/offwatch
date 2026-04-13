@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Puzzle, ArrowLeft, ShieldAlert, ActivitySquare, CheckCircle, XCircle, Loader2, Clock, Cpu, Webhook, CalendarClock, AlertTriangle } from "lucide-react";
-import { useCompany } from "@/context/CompanyContext";
+import { useWorkspace } from "@/context/WorkspaceContext";
 import { useBreadcrumbs } from "@/context/BreadcrumbContext";
 import { Link, Navigate, useParams } from "@/lib/router";
 import { PluginSlotMount, usePluginSlots } from "@/plugins/slots";
@@ -58,7 +58,7 @@ import {
  * @see doc/plugins/PLUGIN_SPEC.md §19.8 — Plugin Settings UI.
  */
 export function PluginSettings() {
-  const { selectedCompany, selectedCompanyId } = useCompany();
+  const { selectedCompany, selectedCompanyId } = useWorkspace();
   const { setBreadcrumbs } = useBreadcrumbs();
   const { companyPrefix, pluginId } = useParams<{ companyPrefix?: string; pluginId: string }>();
   const [activeTab, setActiveTab] = useState<"configuration" | "status">("configuration");
@@ -102,7 +102,7 @@ export function PluginSettings() {
 
   const { slots } = usePluginSlots({
     slotTypes: ["settingsPage"],
-    companyId: selectedCompanyId,
+    workspaceId: selectedCompanyId,
     enabled: !!selectedCompanyId,
   });
 
@@ -219,7 +219,7 @@ export function PluginSettings() {
                       key={`${slot.pluginKey}:${slot.id}`}
                       slot={slot}
                       context={{
-                        companyId: selectedCompanyId,
+                        workspaceId: selectedCompanyId,
                         companyPrefix: companyPrefix ?? null,
                       }}
                       missingBehavior="placeholder"

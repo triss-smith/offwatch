@@ -10,7 +10,7 @@ import {
 
 type UseProjectOrderParams = {
   projects: Project[];
-  companyId: string | null | undefined;
+  workspaceId: string | null | undefined;
   userId: string | null | undefined;
 };
 
@@ -31,11 +31,11 @@ function buildOrderIds(projects: Project[], orderedIds: string[]) {
   return sortProjectsByStoredOrder(projects, orderedIds).map((project) => project.id);
 }
 
-export function useProjectOrder({ projects, companyId, userId }: UseProjectOrderParams) {
+export function useProjectOrder({ projects, workspaceId, userId }: UseProjectOrderParams) {
   const storageKey = useMemo(() => {
-    if (!companyId) return null;
-    return getProjectOrderStorageKey(companyId, userId);
-  }, [companyId, userId]);
+    if (!workspaceId) return null;
+    return getProjectOrderStorageKey(workspaceId, userId);
+  }, [workspaceId, userId]);
 
   const [orderedIds, setOrderedIds] = useState<string[]>(() => {
     if (!storageKey) return projects.map((project) => project.id);

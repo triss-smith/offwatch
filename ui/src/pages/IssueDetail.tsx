@@ -10,7 +10,7 @@ import { instanceSettingsApi } from "../api/instanceSettings";
 import { agentsApi } from "../api/agents";
 import { authApi } from "../api/auth";
 import { projectsApi } from "../api/projects";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { useDialog } from "../context/DialogContext";
 import { usePanel } from "../context/PanelContext";
 import { useToast } from "../context/ToastContext";
@@ -203,7 +203,7 @@ function mergeOptimisticFeedbackVote(
     ...existingVotes,
     {
       id: `optimistic:${nextVote.targetType}:${nextVote.targetId}`,
-      companyId: "",
+      workspaceId: "",
       issueId: nextVote.issueId,
       targetType: nextVote.targetType,
       targetId: nextVote.targetId,
@@ -364,7 +364,7 @@ function IssueDetailLoadingState({
 
 export function IssueDetail() {
   const { issueId } = useParams<{ issueId: string }>();
-  const { selectedCompanyId } = useCompany();
+  const { selectedCompanyId } = useWorkspace();
   const { openNewIssue } = useDialog();
   const { openPanel, closePanel, panelVisible, setPanelVisible } = usePanel();
   const { setBreadcrumbs } = useBreadcrumbs();
@@ -401,7 +401,7 @@ export function IssueDetail() {
     queryFn: () => issuesApi.get(issueId!),
     enabled: !!issueId,
   });
-  const resolvedCompanyId = issue?.companyId ?? selectedCompanyId;
+  const resolvedCompanyId = issue?.workspaceId ?? selectedCompanyId;
   const commentComposerDisabledReason = useMemo(() => {
     if (!issue?.currentExecutionWorkspace || !isClosedIsolatedExecutionWorkspace(issue.currentExecutionWorkspace)) {
       return null;
@@ -558,13 +558,13 @@ export function IssueDetail() {
   const feedbackDataSharingPreference = instanceGeneralSettings?.feedbackDataSharingPreference ?? "prompt";
   const { orderedProjects } = useProjectOrder({
     projects: projects ?? [],
-    companyId: selectedCompanyId,
+    workspaceId: selectedCompanyId,
     userId: currentUserId,
   });
   const { slots: issuePluginDetailSlots } = usePluginSlots({
     slotTypes: ["detailTab"],
     entityType: "issue",
-    companyId: resolvedCompanyId,
+    workspaceId: resolvedCompanyId,
     enabled: !!resolvedCompanyId,
   });
   const issuePluginTabItems = useMemo(
@@ -597,7 +597,7 @@ export function IssueDetail() {
     isInitialHydrating: issueChatTranscriptHydrating,
   } = useLiveRunTranscripts({
     runs: transcriptRuns,
-    companyId: issue?.companyId ?? selectedCompanyId,
+    workspaceId: issue?.workspaceId ?? selectedCompanyId,
   });
 
   const mentionOptions = useMemo<MentionOption[]>(() => {
@@ -958,7 +958,7 @@ export function IssueDetail() {
       const queuedComment = !interrupt && runningIssueRun;
       const optimisticComment = issue
         ? createOptimisticIssueComment({
-            companyId: issue.companyId,
+            workspaceId: issue.workspaceId,
             issueId: issue.id,
             body,
             authorUserId: currentUserId,
@@ -1056,7 +1056,7 @@ export function IssueDetail() {
       const queuedComment = !interrupt && runningIssueRun;
       const optimisticComment = issue
         ? createOptimisticIssueComment({
-            companyId: issue.companyId,
+            workspaceId: issue.workspaceId,
             issueId: issue.id,
             body,
             authorUserId: currentUserId,
@@ -1824,7 +1824,7 @@ export function IssueDetail() {
         slotTypes={["toolbarButton", "contextMenuItem"]}
         entityType="issue"
         context={{
-          companyId: issue.companyId,
+          workspaceId: issue.workspaceId,
           projectId: issue.projectId ?? null,
           entityId: issue.id,
           entityType: "issue",
@@ -1838,7 +1838,7 @@ export function IssueDetail() {
         placementZones={["toolbarButton"]}
         entityType="issue"
         context={{
-          companyId: issue.companyId,
+          workspaceId: issue.workspaceId,
           projectId: issue.projectId ?? null,
           entityId: issue.id,
           entityType: "issue",
@@ -1851,7 +1851,7 @@ export function IssueDetail() {
         slotTypes={["taskDetailView"]}
         entityType="issue"
         context={{
-          companyId: issue.companyId,
+          workspaceId: issue.workspaceId,
           projectId: issue.projectId ?? null,
           entityId: issue.id,
           entityType: "issue",
@@ -2138,7 +2138,7 @@ export function IssueDetail() {
                 timelineEvents={timelineEvents}
                 liveRuns={liveRuns}
                 activeRun={activeRun}
-                companyId={issue.companyId}
+                workspaceId={issue.workspaceId}
                 projectId={issue.projectId}
                 issueStatus={issue.status}
                 agentMap={agentMap}
@@ -2263,7 +2263,7 @@ export function IssueDetail() {
             <PluginSlotMount
               slot={activePluginTab.slot}
               context={{
-                companyId: issue.companyId,
+                workspaceId: issue.workspaceId,
                 projectId: issue.projectId ?? null,
                 entityId: issue.id,
                 entityType: "issue",

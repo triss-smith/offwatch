@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { useDialog } from "../context/DialogContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { companiesApi } from "../api/companies";
+import { workspacesApi } from "../api/workspaces";
 import { queryKeys } from "../lib/queryKeys";
 import { formatCents, relativeTime } from "../lib/utils";
 import { Input } from "@/components/ui/input";
@@ -28,21 +28,21 @@ import {
   Calendar,
 } from "lucide-react";
 
-export function Companies() {
+export function Workspaces() {
   const {
     companies,
     selectedCompanyId,
     setSelectedCompanyId,
     loading,
     error,
-  } = useCompany();
+  } = useWorkspace();
   const { openOnboarding } = useDialog();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
 
   const { data: stats } = useQuery({
     queryKey: queryKeys.companies.stats,
-    queryFn: () => companiesApi.stats(),
+    queryFn: () => workspacesApi.stats(),
   });
 
   // Inline edit state
@@ -52,7 +52,7 @@ export function Companies() {
 
   const editMutation = useMutation({
     mutationFn: ({ id, newName }: { id: string; newName: string }) =>
-      companiesApi.update(id, { name: newName }),
+      workspacesApi.update(id, { name: newName }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
       setEditingId(null);
@@ -60,7 +60,7 @@ export function Companies() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => companiesApi.remove(id),
+    mutationFn: (id: string) => workspacesApi.remove(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.companies.stats });
@@ -69,11 +69,11 @@ export function Companies() {
   });
 
   useEffect(() => {
-    setBreadcrumbs([{ label: "Companies" }]);
+    setBreadcrumbs([{ label: "Workspaces" }]);
   }, [setBreadcrumbs]);
 
-  function startEdit(companyId: string, currentName: string) {
-    setEditingId(companyId);
+  function startEdit(workspaceId: string, currentName: string) {
+    setEditingId(workspaceId);
     setEditName(currentName);
   }
 
@@ -92,40 +92,40 @@ export function Companies() {
       <div className="flex items-center justify-end">
         <Button size="sm" onClick={() => openOnboarding()}>
           <Plus className="h-3.5 w-3.5 mr-1.5" />
-          New Company
+          New Workspace
         </Button>
       </div>
 
       <div className="h-6">
-        {loading && <p className="text-sm text-muted-foreground">Loading companies...</p>}
+        {loading && <p className="text-sm text-muted-foreground">Loading workspaces...</p>}
         {error && <p className="text-sm text-destructive">{error.message}</p>}
       </div>
 
       <div className="grid gap-4">
-        {companies.map((company) => {
-          const selected = company.id === selectedCompanyId;
-          const isEditing = editingId === company.id;
-          const isConfirmingDelete = confirmDeleteId === company.id;
-          const companyStats = stats?.[company.id];
-          const agentCount = companyStats?.agentCount ?? 0;
-          const issueCount = companyStats?.issueCount ?? 0;
+        {companies.map((workspace) => {
+          const selected = workspace.id === selectedCompanyId;
+          const isEditing = editingId === workspace.id;
+          const isConfirmingDelete = confirmDeleteId === workspace.id;
+          const workspaceStats = stats?.[workspace.id];
+          const agentCount = workspaceStats?.agentCount ?? 0;
+          const issueCount = workspaceStats?.issueCount ?? 0;
           const budgetPct =
-            company.budgetMonthlyCents > 0
+            workspace.budgetMonthlyCents > 0
               ? Math.round(
-                  (company.spentMonthlyCents / company.budgetMonthlyCents) * 100,
+                  (workspace.spentMonthlyCents / workspace.budgetMonthlyCents) * 100,
                 )
               : 0;
 
           return (
             <div
-              key={company.id}
+              key={workspace.id}
               role="button"
               tabIndex={0}
-              onClick={() => setSelectedCompanyId(company.id)}
+              onClick={() => setSelectedCompanyId(workspace.id)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  setSelectedCompanyId(company.id);
+                  setSelectedCompanyId(workspace.id);
                 }
               }}
               className={`group text-left bg-card border rounded-lg p-5 transition-colors cursor-pointer ${
@@ -166,17 +166,17 @@ export function Companies() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-base">{company.name}</h3>
+                      <h3 className="font-semibold text-base">{workspace.name}</h3>
                       <span
                         className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                          company.status === "active"
+                          workspace.status === "active"
                             ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                            : company.status === "paused"
+                            : workspace.status === "paused"
                               ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
                               : "bg-muted text-muted-foreground"
                         }`}
                       >
-                        {company.status}
+                        {workspace.status}
                       </span>
                       <Button
                         variant="ghost"
@@ -184,16 +184,16 @@ export function Companies() {
                         className="text-muted-foreground opacity-0 group-hover:opacity-100"
                         onClick={(e) => {
                           e.stopPropagation();
-                          startEdit(company.id, company.name);
+                          startEdit(workspace.id, workspace.name);
                         }}
                       >
                         <Pencil className="h-3 w-3" />
                       </Button>
                     </div>
                   )}
-                  {company.description && !isEditing && (
+                  {workspace.description && !isEditing && (
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                      {company.description}
+                      {workspace.description}
                     </p>
                   )}
                 </div>
@@ -212,7 +212,7 @@ export function Companies() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => startEdit(company.id, company.name)}
+                        onClick={() => startEdit(workspace.id, workspace.name)}
                       >
                         <Pencil className="h-3.5 w-3.5" />
                         Rename
@@ -220,10 +220,10 @@ export function Companies() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         variant="destructive"
-                        onClick={() => setConfirmDeleteId(company.id)}
+                        onClick={() => setConfirmDeleteId(workspace.id)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                        Delete Company
+                        Delete Workspace
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -247,15 +247,15 @@ export function Companies() {
                 <div className="flex items-center gap-1.5 tabular-nums">
                   <DollarSign className="h-3.5 w-3.5" />
                   <span>
-                    {formatCents(company.spentMonthlyCents)}
-                    {company.budgetMonthlyCents > 0
-                      ? <> / {formatCents(company.budgetMonthlyCents)} <span className="text-xs">({budgetPct}%)</span></>
+                    {formatCents(workspace.spentMonthlyCents)}
+                    {workspace.budgetMonthlyCents > 0
+                      ? <> / {formatCents(workspace.budgetMonthlyCents)} <span className="text-xs">({budgetPct}%)</span></>
                       : <span className="text-xs ml-1">Unlimited budget</span>}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 ml-auto">
                   <Calendar className="h-3.5 w-3.5" />
-                  <span>Created {relativeTime(company.createdAt)}</span>
+                  <span>Created {relativeTime(workspace.createdAt)}</span>
                 </div>
               </div>
 
@@ -266,7 +266,7 @@ export function Companies() {
                   onClick={(e) => e.stopPropagation()}
                 >
                   <p className="text-sm text-destructive font-medium">
-                    Delete this company and all its data? This cannot be undone.
+                    Delete this workspace and all its data? This cannot be undone.
                   </p>
                   <div className="flex items-center gap-2 ml-4 shrink-0">
                     <Button
@@ -280,7 +280,7 @@ export function Companies() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => deleteMutation.mutate(company.id)}
+                      onClick={() => deleteMutation.mutate(workspace.id)}
                       disabled={deleteMutation.isPending}
                     >
                       {deleteMutation.isPending ? "Deleting…" : "Delete"}

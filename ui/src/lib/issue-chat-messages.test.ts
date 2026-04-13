@@ -12,7 +12,7 @@ import type { LiveRunForIssue } from "../api/heartbeats";
 function createAgent(id: string, name: string): Agent {
   return {
     id,
-    companyId: "company-1",
+    workspaceId: "company-1",
     name,
     role: "engineer",
     title: null,
@@ -39,7 +39,7 @@ function createAgent(id: string, name: string): Agent {
 function createComment(overrides: Partial<IssueChatComment> = {}): IssueChatComment {
   return {
     id: "comment-1",
-    companyId: "company-1",
+    workspaceId: "company-1",
     issueId: "issue-1",
     authorAgentId: null,
     authorUserId: "user-1",
@@ -297,7 +297,7 @@ describe("buildIssueChatMessages", () => {
         ],
       ]),
       hasOutputForRun: (runId) => runId === "run-live-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       projectId: "project-1",
       agentMap,
       currentUserId: "user-1",

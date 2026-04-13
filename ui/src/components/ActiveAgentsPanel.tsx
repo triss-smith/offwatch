@@ -19,19 +19,19 @@ function isRunActive(run: LiveRunForIssue): boolean {
 }
 
 interface ActiveAgentsPanelProps {
-  companyId: string;
+  workspaceId: string;
 }
 
-export function ActiveAgentsPanel({ companyId }: ActiveAgentsPanelProps) {
+export function ActiveAgentsPanel({ workspaceId }: ActiveAgentsPanelProps) {
   const { data: liveRuns } = useQuery({
-    queryKey: [...queryKeys.liveRuns(companyId), "dashboard"],
-    queryFn: () => heartbeatsApi.liveRunsForCompany(companyId, MIN_DASHBOARD_RUNS),
+    queryKey: [...queryKeys.liveRuns(workspaceId), "dashboard"],
+    queryFn: () => heartbeatsApi.liveRunsForCompany(workspaceId, MIN_DASHBOARD_RUNS),
   });
 
   const runs = liveRuns ?? [];
   const { data: issues } = useQuery({
-    queryKey: [...queryKeys.issues.list(companyId), "with-routine-executions"],
-    queryFn: () => issuesApi.list(companyId, { includeRoutineExecutions: true }),
+    queryKey: [...queryKeys.issues.list(workspaceId), "with-routine-executions"],
+    queryFn: () => issuesApi.list(workspaceId, { includeRoutineExecutions: true }),
     enabled: runs.length > 0,
   });
 
@@ -45,7 +45,7 @@ export function ActiveAgentsPanel({ companyId }: ActiveAgentsPanelProps) {
 
   const { transcriptByRun, hasOutputForRun } = useLiveRunTranscripts({
     runs,
-    companyId,
+    workspaceId,
     maxChunksPerRun: 120,
   });
 
@@ -63,7 +63,7 @@ export function ActiveAgentsPanel({ companyId }: ActiveAgentsPanelProps) {
           {runs.map((run) => (
             <AgentRunCard
               key={run.id}
-              companyId={companyId}
+              workspaceId={workspaceId}
               run={run}
               issue={run.issueId ? issueById.get(run.issueId) : undefined}
               transcript={transcriptByRun.get(run.id) ?? []}
@@ -78,14 +78,14 @@ export function ActiveAgentsPanel({ companyId }: ActiveAgentsPanelProps) {
 }
 
 function AgentRunCard({
-  companyId,
+  workspaceId,
   run,
   issue,
   transcript,
   hasOutput,
   isActive,
 }: {
-  companyId: string;
+  workspaceId: string;
   run: LiveRunForIssue;
   issue?: Issue;
   transcript: TranscriptEntry[];
@@ -148,7 +148,7 @@ function AgentRunCard({
           run={run}
           transcript={transcript}
           hasOutput={hasOutput}
-          companyId={companyId}
+          workspaceId={workspaceId}
         />
       </div>
     </div>

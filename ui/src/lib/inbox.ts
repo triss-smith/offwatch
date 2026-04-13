@@ -125,15 +125,15 @@ function normalizeInboxApprovalFilter(value: unknown): InboxApprovalFilter {
   return value === "actionable" || value === "resolved" ? value : "all";
 }
 
-function getInboxFilterPreferencesStorageKey(companyId: string | null | undefined): string | null {
-  if (!companyId) return null;
-  return `${INBOX_FILTER_PREFERENCES_KEY_PREFIX}:${companyId}`;
+function getInboxFilterPreferencesStorageKey(workspaceId: string | null | undefined): string | null {
+  if (!workspaceId) return null;
+  return `${INBOX_FILTER_PREFERENCES_KEY_PREFIX}:${workspaceId}`;
 }
 
 export function loadInboxFilterPreferences(
-  companyId: string | null | undefined,
+  workspaceId: string | null | undefined,
 ): InboxFilterPreferences {
-  const storageKey = getInboxFilterPreferencesStorageKey(companyId);
+  const storageKey = getInboxFilterPreferencesStorageKey(workspaceId);
   if (!storageKey) {
     return {
       ...defaultInboxFilterPreferences,
@@ -164,10 +164,10 @@ export function loadInboxFilterPreferences(
 }
 
 export function saveInboxFilterPreferences(
-  companyId: string | null | undefined,
+  workspaceId: string | null | undefined,
   preferences: InboxFilterPreferences,
 ) {
-  const storageKey = getInboxFilterPreferencesStorageKey(companyId);
+  const storageKey = getInboxFilterPreferencesStorageKey(workspaceId);
   if (!storageKey) return;
 
   try {

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, type ChangeEvent, ty
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { pickTextColorForSolidBg } from "@/lib/color-contrast";
 import { useDialog } from "../context/DialogContext";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { executionWorkspacesApi } from "../api/execution-workspaces";
 import { issuesApi } from "../api/issues";
 import { instanceSettingsApi } from "../api/instanceSettings";
@@ -278,7 +278,7 @@ function issueExecutionWorkspaceModeForExistingWorkspace(mode: string | null | u
 
 export function NewIssueDialog() {
   const { newIssueOpen, newIssueDefaults, closeNewIssue } = useDialog();
-  const { companies, selectedCompanyId, selectedCompany } = useCompany();
+  const { companies, selectedCompanyId, selectedCompany } = useWorkspace();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const [title, setTitle] = useState("");
@@ -366,7 +366,7 @@ export function NewIssueDialog() {
   );
   const { orderedProjects } = useProjectOrder({
     projects: activeProjects,
-    companyId: effectiveCompanyId,
+    workspaceId: effectiveCompanyId,
     userId: currentUserId,
   });
 
@@ -415,11 +415,11 @@ export function NewIssueDialog() {
 
   const createIssue = useMutation({
     mutationFn: async ({
-      companyId,
+      workspaceId,
       stagedFiles: pendingStagedFiles,
       ...data
-    }: { companyId: string; stagedFiles: StagedIssueFile[] } & Record<string, unknown>) => {
-      const issue = await issuesApi.create(companyId, data);
+    }: { workspaceId: string; stagedFiles: StagedIssueFile[] } & Record<string, unknown>) => {
+      const issue = await issuesApi.create(workspaceId, data);
       const failures: string[] = [];
 
       for (const stagedFile of pendingStagedFiles) {
@@ -433,24 +433,24 @@ export function NewIssueDialog() {
               baseRevisionId: null,
             });
           } else {
-            await issuesApi.uploadAttachment(companyId, issue.id, stagedFile.file);
+            await issuesApi.uploadAttachment(workspaceId, issue.id, stagedFile.file);
           }
         } catch {
           failures.push(stagedFile.file.name);
         }
       }
 
-      return { issue, companyId, failures };
+      return { issue, workspaceId, failures };
     },
-    onSuccess: ({ issue, companyId, failures }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(companyId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listMineByMe(companyId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listTouchedByMe(companyId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listUnreadTouchedByMe(companyId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(companyId) });
+    onSuccess: ({ issue, workspaceId, failures }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listMineByMe(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listTouchedByMe(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listUnreadTouchedByMe(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(workspaceId) });
       if (draftTimer.current) clearTimeout(draftTimer.current);
       if (failures.length > 0) {
-        const prefix = (companies.find((company) => company.id === companyId)?.issuePrefix ?? "").trim();
+        const prefix = (companies.find((company) => company.id === workspaceId)?.issuePrefix ?? "").trim();
         const issueRef = issue.identifier ?? issue.id;
         pushToast({
           title: `Created ${issueRef} with upload warnings`,
@@ -672,10 +672,10 @@ export function NewIssueDialog() {
     executionWorkspaceDefaultProjectId.current = null;
   }
 
-  function handleCompanyChange(companyId: string) {
+  function handleCompanyChange(workspaceId: string) {
     if (isSubIssueMode) return;
-    if (companyId === effectiveCompanyId) return;
-    setDialogCompanyId(companyId);
+    if (workspaceId === effectiveCompanyId) return;
+    setDialogCompanyId(workspaceId);
     setAssigneeValue("");
     setReviewerValue("");
     setApproverValue("");
@@ -724,7 +724,7 @@ export function NewIssueDialog() {
       approverValues: approverValue ? [approverValue] : [],
     });
     createIssue.mutate({
-      companyId: effectiveCompanyId,
+      workspaceId: effectiveCompanyId,
       stagedFiles,
       title: title.trim(),
       description: description.trim() || undefined,

@@ -3,7 +3,7 @@ import { api } from "./client";
 
 type InviteSummary = {
   id: string;
-  companyId: string | null;
+  workspaceId: string | null;
   companyName?: string | null;
   inviteType: "company_join" | "bootstrap_ceo";
   allowedJoinTypes: "human" | "agent" | "both";
@@ -96,23 +96,23 @@ type CompanyInviteCreated = {
 
 export const accessApi = {
   createCompanyInvite: (
-    companyId: string,
+    workspaceId: string,
     input: {
       allowedJoinTypes?: "human" | "agent" | "both";
       defaultsPayload?: Record<string, unknown> | null;
       agentMessage?: string | null;
     } = {},
   ) =>
-    api.post<CompanyInviteCreated>(`/companies/${companyId}/invites`, input),
+    api.post<CompanyInviteCreated>(`/workspaces/${workspaceId}/invites`, input),
 
   createOpenClawInvitePrompt: (
-    companyId: string,
+    workspaceId: string,
     input: {
       agentMessage?: string | null;
     } = {},
   ) =>
     api.post<CompanyInviteCreated>(
-      `/companies/${companyId}/openclaw/invite-prompt`,
+      `/workspaces/${workspaceId}/openclaw/invite-prompt`,
       input,
     ),
 
@@ -126,14 +126,14 @@ export const accessApi = {
       input,
     ),
 
-  listJoinRequests: (companyId: string, status: "pending_approval" | "approved" | "rejected" = "pending_approval") =>
-    api.get<JoinRequest[]>(`/companies/${companyId}/join-requests?status=${status}`),
+  listJoinRequests: (workspaceId: string, status: "pending_approval" | "approved" | "rejected" = "pending_approval") =>
+    api.get<JoinRequest[]>(`/workspaces/${workspaceId}/join-requests?status=${status}`),
 
-  approveJoinRequest: (companyId: string, requestId: string) =>
-    api.post<JoinRequest>(`/companies/${companyId}/join-requests/${requestId}/approve`, {}),
+  approveJoinRequest: (workspaceId: string, requestId: string) =>
+    api.post<JoinRequest>(`/workspaces/${workspaceId}/join-requests/${requestId}/approve`, {}),
 
-  rejectJoinRequest: (companyId: string, requestId: string) =>
-    api.post<JoinRequest>(`/companies/${companyId}/join-requests/${requestId}/reject`, {}),
+  rejectJoinRequest: (workspaceId: string, requestId: string) =>
+    api.post<JoinRequest>(`/workspaces/${workspaceId}/join-requests/${requestId}/reject`, {}),
 
   claimJoinRequestApiKey: (requestId: string, claimSecret: string) =>
     api.post<{ keyId: string; token: string; agentId: string; createdAt: string }>(

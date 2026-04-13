@@ -7,7 +7,7 @@ describe("extractIssueTimelineEvents", () => {
     const events = extractIssueTimelineEvents([
       {
         id: "evt-2",
-        companyId: "company-1",
+        workspaceId: "company-1",
         actorType: "user",
         actorId: "local-board",
         action: "issue.updated",
@@ -27,7 +27,7 @@ describe("extractIssueTimelineEvents", () => {
       },
       {
         id: "evt-1",
-        companyId: "company-1",
+        workspaceId: "company-1",
         actorType: "user",
         actorId: "local-board",
         action: "issue.updated",
@@ -45,7 +45,7 @@ describe("extractIssueTimelineEvents", () => {
       },
       {
         id: "evt-ignored",
-        companyId: "company-1",
+        workspaceId: "company-1",
         actorType: "user",
         actorId: "local-board",
         action: "issue.comment_added",
@@ -94,7 +94,7 @@ describe("extractIssueTimelineEvents", () => {
     const events = extractIssueTimelineEvents([
       {
         id: "evt-reopen",
-        companyId: "company-1",
+        workspaceId: "company-1",
         actorType: "agent",
         actorId: "agent-1",
         action: "issue.updated",
@@ -130,7 +130,7 @@ describe("extractIssueTimelineEvents", () => {
     const events = extractIssueTimelineEvents([
       {
         id: "evt-title",
-        companyId: "company-1",
+        workspaceId: "company-1",
         actorType: "user",
         actorId: "local-board",
         action: "issue.updated",

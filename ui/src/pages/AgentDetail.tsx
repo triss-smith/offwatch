@@ -17,7 +17,7 @@ import { activityApi } from "../api/activity";
 import { issuesApi } from "../api/issues";
 import { usePanel } from "../context/PanelContext";
 import { useSidebar } from "../context/SidebarContext";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { useToast } from "../context/ToastContext";
 import { useDialog } from "../context/DialogContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
@@ -619,7 +619,7 @@ export function AgentDetail() {
     tab?: string;
     runId?: string;
   }>();
-  const { companies, selectedCompanyId, setSelectedCompanyId } = useCompany();
+  const { companies, selectedCompanyId, setSelectedCompanyId } = useWorkspace();
   const { closePanel } = usePanel();
   const { openNewIssue } = useDialog();
   const { setBreadcrumbs } = useBreadcrumbs();
@@ -652,7 +652,7 @@ export function AgentDetail() {
     queryFn: () => agentsApi.get(routeAgentRef, lookupCompanyId),
     enabled: canFetchAgent,
   });
-  const resolvedCompanyId = agent?.companyId ?? selectedCompanyId;
+  const resolvedCompanyId = agent?.workspaceId ?? selectedCompanyId;
   const canonicalAgentRef = agent ? agentRouteRef(agent) : routeAgentRef;
   const agentLookupRef = agent?.id ?? routeAgentRef;
   const resolvedAgentId = agent?.id ?? null;
@@ -702,7 +702,7 @@ export function AgentDetail() {
     const spentMonthlyCents = agent?.spentMonthlyCents ?? 0;
     return {
       policyId: "",
-      companyId: resolvedCompanyId ?? "",
+      workspaceId: resolvedCompanyId ?? "",
       scopeType: "agent",
       scopeId: agent?.id ?? routeAgentRef,
       scopeName: agent?.name ?? "Agent",
@@ -756,9 +756,9 @@ export function AgentDetail() {
   }, [agent, routeAgentRef, canonicalAgentRef, urlRunId, urlTab, activeView, navigate]);
 
   useEffect(() => {
-    if (!agent?.companyId || agent.companyId === selectedCompanyId) return;
-    setSelectedCompanyId(agent.companyId, { source: "route_sync" });
-  }, [agent?.companyId, selectedCompanyId, setSelectedCompanyId]);
+    if (!agent?.workspaceId || agent.workspaceId === selectedCompanyId) return;
+    setSelectedCompanyId(agent.workspaceId, { source: "route_sync" });
+  }, [agent?.workspaceId, selectedCompanyId, setSelectedCompanyId]);
 
   const agentAction = useMutation({
     mutationFn: async (action: "invoke" | "pause" | "resume" | "terminate") => {
@@ -1096,7 +1096,7 @@ export function AgentDetail() {
       {activeView === "instructions" && (
         <PromptsTab
           agent={agent}
-          companyId={resolvedCompanyId ?? undefined}
+          workspaceId={resolvedCompanyId ?? undefined}
           onDirtyChange={setConfigDirty}
           onSaveActionChange={setSaveConfigAction}
           onCancelActionChange={setCancelConfigAction}
@@ -1108,7 +1108,7 @@ export function AgentDetail() {
         <AgentConfigurePage
           agent={agent}
           agentId={agent.id}
-          companyId={resolvedCompanyId ?? undefined}
+          workspaceId={resolvedCompanyId ?? undefined}
           onDirtyChange={setConfigDirty}
           onSaveActionChange={setSaveConfigAction}
           onCancelActionChange={setCancelConfigAction}
@@ -1120,14 +1120,14 @@ export function AgentDetail() {
       {activeView === "skills" && (
         <AgentSkillsTab
           agent={agent}
-          companyId={resolvedCompanyId ?? undefined}
+          workspaceId={resolvedCompanyId ?? undefined}
         />
       )}
 
       {activeView === "runs" && (
         <RunsTab
           runs={heartbeats ?? []}
-          companyId={resolvedCompanyId!}
+          workspaceId={resolvedCompanyId!}
           agentId={agent.id}
           agentRouteId={canonicalAgentRef}
           selectedRunId={urlRunId ?? null}
@@ -1411,7 +1411,7 @@ function CostsSection({
 function AgentConfigurePage({
   agent,
   agentId,
-  companyId,
+  workspaceId,
   onDirtyChange,
   onSaveActionChange,
   onCancelActionChange,
@@ -1420,7 +1420,7 @@ function AgentConfigurePage({
 }: {
   agent: AgentDetailRecord;
   agentId: string;
-  companyId?: string;
+  workspaceId?: string;
   onDirtyChange: (dirty: boolean) => void;
   onSaveActionChange: (save: (() => void) | null) => void;
   onCancelActionChange: (cancel: (() => void) | null) => void;
@@ -1432,11 +1432,11 @@ function AgentConfigurePage({
 
   const { data: configRevisions } = useQuery({
     queryKey: queryKeys.agents.configRevisions(agent.id),
-    queryFn: () => agentsApi.listConfigRevisions(agent.id, companyId),
+    queryFn: () => agentsApi.listConfigRevisions(agent.id, workspaceId),
   });
 
   const rollbackConfig = useMutation({
-    mutationFn: (revisionId: string) => agentsApi.rollbackConfigRevision(agent.id, revisionId, companyId),
+    mutationFn: (revisionId: string) => agentsApi.rollbackConfigRevision(agent.id, revisionId, workspaceId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(agent.id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(agent.urlKey) });
@@ -1453,13 +1453,13 @@ function AgentConfigurePage({
         onCancelActionChange={onCancelActionChange}
         onSavingChange={onSavingChange}
         updatePermissions={updatePermissions}
-        companyId={companyId}
+        workspaceId={workspaceId}
         hidePromptTemplate
         hideInstructionsFile
       />
       <div>
         <h3 className="text-sm font-medium mb-3">API Keys</h3>
-        <KeysTab agentId={agentId} companyId={companyId} />
+        <KeysTab agentId={agentId} workspaceId={workspaceId} />
       </div>
 
       {/* Configuration Revisions — collapsible at the bottom */}
@@ -1520,7 +1520,7 @@ function AgentConfigurePage({
 
 function ConfigurationTab({
   agent,
-  companyId,
+  workspaceId,
   onDirtyChange,
   onSaveActionChange,
   onCancelActionChange,
@@ -1530,7 +1530,7 @@ function ConfigurationTab({
   hideInstructionsFile,
 }: {
   agent: AgentDetailRecord;
-  companyId?: string;
+  workspaceId?: string;
   onDirtyChange: (dirty: boolean) => void;
   onSaveActionChange: (save: (() => void) | null) => void;
   onCancelActionChange: (cancel: (() => void) | null) => void;
@@ -1546,15 +1546,15 @@ function ConfigurationTab({
 
   const { data: adapterModels } = useQuery({
     queryKey:
-      companyId
-        ? queryKeys.agents.adapterModels(companyId, agent.adapterType)
+      workspaceId
+        ? queryKeys.agents.adapterModels(workspaceId, agent.adapterType)
         : ["agents", "none", "adapter-models", agent.adapterType],
-    queryFn: () => agentsApi.adapterModels(companyId!, agent.adapterType),
-    enabled: Boolean(companyId),
+    queryFn: () => agentsApi.adapterModels(workspaceId!, agent.adapterType),
+    enabled: Boolean(workspaceId),
   });
 
   const updateAgent = useMutation({
-    mutationFn: (data: Record<string, unknown>) => agentsApi.update(agent.id, data, companyId),
+    mutationFn: (data: Record<string, unknown>) => agentsApi.update(agent.id, data, workspaceId),
     onMutate: () => {
       setAwaitingRefreshAfterSave(true);
     },
@@ -1562,7 +1562,7 @@ function ConfigurationTab({
       queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(agent.id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.agents.detail(agent.urlKey) });
       queryClient.invalidateQueries({ queryKey: queryKeys.agents.configRevisions(agent.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.agents.list(agent.companyId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.agents.list(agent.workspaceId) });
     },
     onError: (err) => {
       setAwaitingRefreshAfterSave(false);
@@ -1667,14 +1667,14 @@ function ConfigurationTab({
 
 function PromptsTab({
   agent,
-  companyId,
+  workspaceId,
   onDirtyChange,
   onSaveActionChange,
   onCancelActionChange,
   onSavingChange,
 }: {
   agent: Agent;
-  companyId?: string;
+  workspaceId?: string;
   onDirtyChange: (dirty: boolean) => void;
   onSaveActionChange: (save: (() => void) | null) => void;
   onCancelActionChange: (cancel: (() => void) | null) => void;
@@ -1729,8 +1729,8 @@ function PromptsTab({
 
   const { data: bundle, isLoading: bundleLoading } = useQuery({
     queryKey: queryKeys.agents.instructionsBundle(agent.id),
-    queryFn: () => agentsApi.instructionsBundle(agent.id, companyId),
-    enabled: Boolean(companyId && isLocal),
+    queryFn: () => agentsApi.instructionsBundle(agent.id, workspaceId),
+    enabled: Boolean(workspaceId && isLocal),
   });
 
   const persistedMode = bundle?.mode ?? "managed";
@@ -1766,8 +1766,8 @@ function PromptsTab({
 
   const { data: selectedFileDetail, isLoading: fileLoading } = useQuery({
     queryKey: queryKeys.agents.instructionsFile(agent.id, selectedOrEntryFile),
-    queryFn: () => agentsApi.instructionsFile(agent.id, selectedOrEntryFile, companyId),
-    enabled: Boolean(companyId && isLocal && selectedFileExists),
+    queryFn: () => agentsApi.instructionsFile(agent.id, selectedOrEntryFile, workspaceId),
+    enabled: Boolean(workspaceId && isLocal && selectedFileExists),
   });
 
   const updateBundle = useMutation({
@@ -1776,7 +1776,7 @@ function PromptsTab({
       rootPath?: string | null;
       entryFile?: string;
       clearLegacyPromptTemplate?: boolean;
-    }) => agentsApi.updateInstructionsBundle(agent.id, data, companyId),
+    }) => agentsApi.updateInstructionsBundle(agent.id, data, workspaceId),
     onMutate: () => setAwaitingRefresh(true),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.agents.instructionsBundle(agent.id) });
@@ -1788,7 +1788,7 @@ function PromptsTab({
 
   const saveFile = useMutation({
     mutationFn: (data: { path: string; content: string; clearLegacyPromptTemplate?: boolean }) =>
-      agentsApi.saveInstructionsFile(agent.id, data, companyId),
+      agentsApi.saveInstructionsFile(agent.id, data, workspaceId),
     onMutate: () => setAwaitingRefresh(true),
     onSuccess: (_, variables) => {
       setPendingFiles((prev) => prev.filter((f) => f !== variables.path));
@@ -1801,7 +1801,7 @@ function PromptsTab({
   });
 
   const deleteFile = useMutation({
-    mutationFn: (relativePath: string) => agentsApi.deleteInstructionsFile(agent.id, relativePath, companyId),
+    mutationFn: (relativePath: string) => agentsApi.deleteInstructionsFile(agent.id, relativePath, workspaceId),
     onMutate: () => setAwaitingRefresh(true),
     onSuccess: (_, relativePath) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.agents.instructionsBundle(agent.id) });
@@ -2418,10 +2418,10 @@ function PromptEditorSkeleton() {
 
 function AgentSkillsTab({
   agent,
-  companyId,
+  workspaceId,
 }: {
   agent: Agent;
-  companyId?: string;
+  workspaceId?: string;
 }) {
   type SkillRow = {
     id: string;
@@ -2446,18 +2446,18 @@ function AgentSkillsTab({
 
   const { data: skillSnapshot, isLoading } = useQuery({
     queryKey: queryKeys.agents.skills(agent.id),
-    queryFn: () => agentsApi.skills(agent.id, companyId),
-    enabled: Boolean(companyId),
+    queryFn: () => agentsApi.skills(agent.id, workspaceId),
+    enabled: Boolean(workspaceId),
   });
 
   const { data: companySkills } = useQuery({
-    queryKey: queryKeys.companySkills.list(companyId ?? ""),
-    queryFn: () => companySkillsApi.list(companyId!),
-    enabled: Boolean(companyId),
+    queryKey: queryKeys.companySkills.list(workspaceId ?? ""),
+    queryFn: () => companySkillsApi.list(workspaceId!),
+    enabled: Boolean(workspaceId),
   });
 
   const syncSkills = useMutation({
-    mutationFn: (desiredSkills: string[]) => agentsApi.syncSkills(agent.id, desiredSkills, companyId),
+    mutationFn: (desiredSkills: string[]) => agentsApi.syncSkills(agent.id, desiredSkills, workspaceId),
     onSuccess: async (snapshot) => {
       queryClient.setQueryData(queryKeys.agents.skills(agent.id), snapshot);
       lastSavedSkillsRef.current = snapshot.desiredSkills;
@@ -2878,7 +2878,7 @@ function RunListItem({ run, isSelected, agentId }: { run: HeartbeatRun; isSelect
 
 function RunsTab({
   runs,
-  companyId,
+  workspaceId,
   agentId,
   agentRouteId,
   selectedRunId,
@@ -2886,7 +2886,7 @@ function RunsTab({
   adapterConfig,
 }: {
   runs: HeartbeatRun[];
-  companyId: string;
+  workspaceId: string;
   agentId: string;
   agentRouteId: string;
   selectedRunId: string | null;
@@ -2980,7 +2980,7 @@ function RunDetail({ run: initialRun, agentRouteId, adapterType, adapterConfig }
   const cancelRun = useMutation({
     mutationFn: () => heartbeatsApi.cancel(run.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(run.companyId, run.agentId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(run.workspaceId, run.agentId) });
     },
   });
   const canResumeLostRun = run.errorCode === "process_lost" && run.status === "failed";
@@ -3007,14 +3007,14 @@ function RunDetail({ run: initialRun, agentRouteId, adapterType, adapterConfig }
         triggerDetail: "manual",
         reason: "resume_process_lost_run",
         payload: resumePayload,
-      }, run.companyId);
+      }, run.workspaceId);
       if (!("id" in result)) {
         throw new Error(result.message ?? "Resume request was skipped.");
       }
       return result;
     },
     onSuccess: (resumedRun) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(run.companyId, run.agentId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(run.workspaceId, run.agentId) });
       navigate(`/agents/${agentRouteId}/runs/${resumedRun.id}`);
     },
   });
@@ -3039,14 +3039,14 @@ function RunDetail({ run: initialRun, agentRouteId, adapterType, adapterConfig }
         triggerDetail: "manual",
         reason: "retry_failed_run",
         payload: retryPayload,
-      }, run.companyId);
+      }, run.workspaceId);
       if (!("id" in result)) {
         throw new Error(result.message ?? "Retry was skipped.");
       }
       return result;
     },
     onSuccess: (newRun) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(run.companyId, run.agentId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.heartbeats(run.workspaceId, run.agentId) });
       navigate(`/agents/${agentRouteId}/runs/${newRun.id}`);
     },
   });
@@ -3063,7 +3063,7 @@ function RunDetail({ run: initialRun, agentRouteId, adapterType, adapterConfig }
   const clearSessionsForTouchedIssues = useMutation({
     mutationFn: async () => {
       if (touchedIssueIds.length === 0) return 0;
-      await Promise.all(touchedIssueIds.map((issueId) => agentsApi.resetSession(run.agentId, issueId, run.companyId)));
+      await Promise.all(touchedIssueIds.map((issueId) => agentsApi.resetSession(run.agentId, issueId, run.workspaceId)));
       return touchedIssueIds.length;
     },
     onSuccess: () => {
@@ -3074,7 +3074,7 @@ function RunDetail({ run: initialRun, agentRouteId, adapterType, adapterConfig }
   });
 
   const runClaudeLogin = useMutation({
-    mutationFn: () => agentsApi.loginWithClaude(run.agentId, run.companyId),
+    mutationFn: () => agentsApi.loginWithClaude(run.agentId, run.workspaceId),
     onSuccess: (data) => {
       setClaudeLoginResult(data);
     },
@@ -3657,7 +3657,7 @@ function LogViewer({ run, adapterType }: { run: HeartbeatRun; adapterType: strin
     const connect = () => {
       if (closed) return;
       const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      const url = `${protocol}://${window.location.host}/api/companies/${encodeURIComponent(run.companyId)}/events/ws`;
+      const url = `${protocol}://${window.location.host}/api/workspaces/${encodeURIComponent(run.workspaceId)}/events/ws`;
       socket = new WebSocket(url);
 
       socket.onopen = () => {
@@ -3675,7 +3675,7 @@ function LogViewer({ run, adapterType }: { run: HeartbeatRun; adapterType: strin
           return;
         }
 
-        if (event.companyId !== run.companyId) return;
+        if (event.workspaceId !== run.workspaceId) return;
         const payload = asRecord(event.payload);
         const eventRunId = asNonEmptyString(payload?.runId);
         if (!payload || eventRunId !== run.id) return;
@@ -3708,7 +3708,7 @@ function LogViewer({ run, adapterType }: { run: HeartbeatRun; adapterType: strin
 
         const liveEvent: HeartbeatRunEvent = {
           id: seq,
-          companyId: run.companyId,
+          workspaceId: run.workspaceId,
           runId: run.id,
           agentId: run.agentId,
           seq,
@@ -3751,7 +3751,7 @@ function LogViewer({ run, adapterType }: { run: HeartbeatRun; adapterType: strin
         socket.close(1000, "run_detail_unmount");
       }
     };
-  }, [isLive, run.companyId, run.id, run.agentId]);
+  }, [isLive, run.workspaceId, run.id, run.agentId]);
 
   const censorUsernameInLogs = useQuery({
     queryKey: queryKeys.instance.generalSettings,
@@ -3949,7 +3949,7 @@ function LogViewer({ run, adapterType }: { run: HeartbeatRun; adapterType: strin
 
 /* ---- Keys Tab ---- */
 
-function KeysTab({ agentId, companyId }: { agentId: string; companyId?: string }) {
+function KeysTab({ agentId, workspaceId }: { agentId: string; workspaceId?: string }) {
   const queryClient = useQueryClient();
   const [newKeyName, setNewKeyName] = useState("");
   const [newToken, setNewToken] = useState<string | null>(null);
@@ -3958,11 +3958,11 @@ function KeysTab({ agentId, companyId }: { agentId: string; companyId?: string }
 
   const { data: keys, isLoading } = useQuery({
     queryKey: queryKeys.agents.keys(agentId),
-    queryFn: () => agentsApi.listKeys(agentId, companyId),
+    queryFn: () => agentsApi.listKeys(agentId, workspaceId),
   });
 
   const createKey = useMutation({
-    mutationFn: () => agentsApi.createKey(agentId, newKeyName.trim() || "Default", companyId),
+    mutationFn: () => agentsApi.createKey(agentId, newKeyName.trim() || "Default", workspaceId),
     onSuccess: (data) => {
       setNewToken(data.token);
       setTokenVisible(true);
@@ -3972,7 +3972,7 @@ function KeysTab({ agentId, companyId }: { agentId: string; companyId?: string }
   });
 
   const revokeKey = useMutation({
-    mutationFn: (keyId: string) => agentsApi.revokeKey(agentId, keyId, companyId),
+    mutationFn: (keyId: string) => agentsApi.revokeKey(agentId, keyId, workspaceId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.agents.keys(agentId) });
     },

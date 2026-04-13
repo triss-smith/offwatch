@@ -184,16 +184,16 @@ interface IssueWorkspaceCardProps {
   issue: Omit<
     Pick<
       Issue,
-      | "companyId"
+      | "workspaceId"
       | "projectId"
       | "projectWorkspaceId"
       | "executionWorkspaceId"
       | "executionWorkspacePreference"
       | "executionWorkspaceSettings"
     >,
-    "companyId"
+    "workspaceId"
   > & {
-    companyId: string | null;
+    workspaceId: string | null;
     currentExecutionWorkspace?: ExecutionWorkspace | null;
   };
   project: { id: string; executionWorkspacePolicy?: { enabled?: boolean; defaultMode?: string | null; defaultProjectWorkspaceId?: string | null } | null; workspaces?: Array<{ id: string; isPrimary: boolean }> } | null;
@@ -212,7 +212,7 @@ export function IssueWorkspaceCard({
   onDraftChange,
 }: IssueWorkspaceCardProps) {
   const { selectedCompanyId } = useCompany();
-  const companyId = issue.companyId ?? selectedCompanyId;
+  const workspaceId = issue.workspaceId ?? selectedCompanyId;
   const [editing, setEditing] = useState(initialEditing);
 
   const { data: experimentalSettings, isLoading: experimentalSettingsLoading } = useQuery({
@@ -228,18 +228,18 @@ export function IssueWorkspaceCard({
   const workspace = issue.currentExecutionWorkspace as ExecutionWorkspace | null | undefined;
 
   const { data: reusableExecutionWorkspaces } = useQuery({
-    queryKey: queryKeys.executionWorkspaces.list(companyId!, {
+    queryKey: queryKeys.executionWorkspaces.list(workspaceId!, {
       projectId: issue.projectId ?? undefined,
       projectWorkspaceId: issue.projectWorkspaceId ?? undefined,
       reuseEligible: true,
     }),
     queryFn: () =>
-      executionWorkspacesApi.list(companyId!, {
+      executionWorkspacesApi.list(workspaceId!, {
         projectId: issue.projectId ?? undefined,
         projectWorkspaceId: issue.projectWorkspaceId ?? undefined,
         reuseEligible: true,
       }),
-    enabled: Boolean(companyId) && Boolean(issue.projectId) && editing,
+    enabled: Boolean(workspaceId) && Boolean(issue.projectId) && editing,
   });
 
   const deduplicatedReusableWorkspaces = useMemo(() => {

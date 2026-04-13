@@ -16,7 +16,7 @@ import { projectsApi } from "../api/projects";
 import { IssuesList } from "../components/IssuesList";
 import { PageTabBar } from "../components/PageTabBar";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { queryKeys } from "../lib/queryKeys";
 import { cn, formatDateTime, issueUrl, projectRouteRef, projectWorkspaceUrl } from "../lib/utils";
 
@@ -232,14 +232,14 @@ function WorkspaceLink({
 }
 
 function ExecutionWorkspaceIssuesList({
-  companyId,
+  workspaceId,
   workspaceId,
   issues,
   isLoading,
   error,
   project,
 }: {
-  companyId: string;
+  workspaceId: string;
   workspaceId: string;
   issues: Issue[];
   isLoading: boolean;
@@ -249,15 +249,15 @@ function ExecutionWorkspaceIssuesList({
   const queryClient = useQueryClient();
 
   const { data: agents } = useQuery({
-    queryKey: queryKeys.agents.list(companyId),
-    queryFn: () => agentsApi.list(companyId),
-    enabled: !!companyId,
+    queryKey: queryKeys.agents.list(workspaceId),
+    queryFn: () => agentsApi.list(workspaceId),
+    enabled: !!workspaceId,
   });
 
   const { data: liveRuns } = useQuery({
-    queryKey: queryKeys.liveRuns(companyId),
-    queryFn: () => heartbeatsApi.liveRunsForCompany(companyId),
-    enabled: !!companyId,
+    queryKey: queryKeys.liveRuns(workspaceId),
+    queryFn: () => heartbeatsApi.liveRunsForCompany(workspaceId),
+    enabled: !!workspaceId,
     refetchInterval: 5000,
   });
 
@@ -272,10 +272,10 @@ function ExecutionWorkspaceIssuesList({
   const updateIssue = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => issuesApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByExecutionWorkspace(companyId, workspaceId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(companyId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByExecutionWorkspace(workspaceId, workspaceId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(workspaceId) });
       if (project?.id) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByProject(companyId, project.id) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByProject(workspaceId, project.id) });
       }
     },
   });
@@ -306,7 +306,7 @@ export function ExecutionWorkspaceDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { setBreadcrumbs } = useBreadcrumbs();
-  const { selectedCompanyId, setSelectedCompanyId } = useCompany();
+  const { selectedCompanyId, setSelectedCompanyId } = useWorkspace();
   const [form, setForm] = useState<WorkspaceFormState | null>(null);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -321,8 +321,8 @@ export function ExecutionWorkspaceDetail() {
   const workspace = workspaceQuery.data ?? null;
 
   const projectQuery = useQuery({
-    queryKey: workspace ? [...queryKeys.projects.detail(workspace.projectId), workspace.companyId] : ["projects", "detail", "__pending__"],
-    queryFn: () => projectsApi.get(workspace!.projectId, workspace!.companyId),
+    queryKey: workspace ? [...queryKeys.projects.detail(workspace.projectId), workspace.workspaceId] : ["projects", "detail", "__pending__"],
+    queryFn: () => projectsApi.get(workspace!.projectId, workspace!.workspaceId),
     enabled: Boolean(workspace?.projectId),
   });
   const project = projectQuery.data ?? null;
@@ -344,10 +344,10 @@ export function ExecutionWorkspaceDetail() {
   const derivedWorkspace = derivedWorkspaceQuery.data ?? null;
   const linkedIssuesQuery = useQuery({
     queryKey: workspace
-      ? queryKeys.issues.listByExecutionWorkspace(workspace.companyId, workspace.id)
+      ? queryKeys.issues.listByExecutionWorkspace(workspace.workspaceId, workspace.id)
       : ["issues", "__execution-workspace__", "__none__"],
-    queryFn: () => issuesApi.list(workspace!.companyId, { executionWorkspaceId: workspace!.id }),
-    enabled: Boolean(workspace?.companyId),
+    queryFn: () => issuesApi.list(workspace!.workspaceId, { executionWorkspaceId: workspace!.id }),
+    enabled: Boolean(workspace?.workspaceId),
   });
   const linkedIssues = linkedIssuesQuery.data ?? [];
 
@@ -369,9 +369,9 @@ export function ExecutionWorkspaceDetail() {
   const projectRef = project ? projectRouteRef(project) : workspace?.projectId ?? "";
 
   useEffect(() => {
-    if (!workspace?.companyId || workspace.companyId === selectedCompanyId) return;
-    setSelectedCompanyId(workspace.companyId, { source: "route_sync" });
-  }, [workspace?.companyId, selectedCompanyId, setSelectedCompanyId]);
+    if (!workspace?.workspaceId || workspace.workspaceId === selectedCompanyId) return;
+    setSelectedCompanyId(workspace.workspaceId, { source: "route_sync" });
+  }, [workspace?.workspaceId, selectedCompanyId, setSelectedCompanyId]);
 
   useEffect(() => {
     if (!workspace) return;
@@ -933,7 +933,7 @@ export function ExecutionWorkspaceDetail() {
           </div>
         ) : (
           <ExecutionWorkspaceIssuesList
-            companyId={workspace.companyId}
+            workspaceId={workspace.workspaceId}
             workspaceId={workspace.id}
             issues={linkedIssues}
             isLoading={linkedIssuesQuery.isLoading}
@@ -954,7 +954,7 @@ export function ExecutionWorkspaceDetail() {
           queryClient.invalidateQueries({ queryKey: queryKeys.executionWorkspaces.workspaceOperations(nextWorkspace.id) });
           if (project) {
             queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(project.id) });
-            queryClient.invalidateQueries({ queryKey: queryKeys.executionWorkspaces.list(project.companyId, { projectId: project.id }) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.executionWorkspaces.list(project.workspaceId, { projectId: project.id }) });
           }
           if (sourceIssue) {
             queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(sourceIssue.id) });

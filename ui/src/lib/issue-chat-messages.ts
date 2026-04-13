@@ -245,10 +245,10 @@ function createCommentMessage(args: {
   comment: IssueChatComment;
   agentMap?: Map<string, Agent>;
   currentUserId?: string | null;
-  companyId?: string | null;
+  workspaceId?: string | null;
   projectId?: string | null;
 }): ThreadMessage {
-  const { comment, agentMap, currentUserId, companyId, projectId } = args;
+  const { comment, agentMap, currentUserId, workspaceId, projectId } = args;
   const createdAt = toDate(comment.createdAt);
   const authorName = authorNameForComment(comment, agentMap, currentUserId);
   const custom = {
@@ -258,7 +258,7 @@ function createCommentMessage(args: {
     authorName,
     authorAgentId: comment.authorAgentId,
     authorUserId: comment.authorUserId,
-    companyId: companyId ?? comment.companyId,
+    workspaceId: workspaceId ?? comment.workspaceId,
     projectId: projectId ?? null,
     runId: comment.runId ?? null,
     runAgentId: comment.runAgentId ?? null,
@@ -699,7 +699,7 @@ export function buildIssueChatMessages(args: {
   hasOutputForRun?: (runId: string) => boolean;
   includeSucceededRunsWithoutOutput?: boolean;
   issueId?: string;
-  companyId?: string | null;
+  workspaceId?: string | null;
   projectId?: string | null;
   agentMap?: Map<string, Agent>;
   currentUserId?: string | null;
@@ -714,7 +714,7 @@ export function buildIssueChatMessages(args: {
     hasOutputForRun,
     includeSucceededRunsWithoutOutput = false,
     issueId,
-    companyId,
+    workspaceId,
     projectId,
     agentMap,
     currentUserId,
@@ -726,7 +726,7 @@ export function buildIssueChatMessages(args: {
     orderedMessages.push({
       createdAtMs: toTimestamp(comment.createdAt),
       order: 1,
-      message: createCommentMessage({ comment, agentMap, currentUserId, companyId, projectId }),
+      message: createCommentMessage({ comment, agentMap, currentUserId, workspaceId, projectId }),
     });
   }
 

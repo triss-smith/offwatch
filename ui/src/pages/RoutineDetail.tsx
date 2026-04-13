@@ -20,7 +20,7 @@ import { heartbeatsApi } from "../api/heartbeats";
 import { LiveRunWidget } from "../components/LiveRunWidget";
 import { agentsApi } from "../api/agents";
 import { projectsApi } from "../api/projects";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useToast } from "../context/ToastContext";
 import { queryKeys } from "../lib/queryKeys";
@@ -263,7 +263,7 @@ function TriggerEditor({
 
 export function RoutineDetail() {
   const { routineId } = useParams<{ routineId: string }>();
-  const { selectedCompanyId } = useCompany();
+  const { selectedCompanyId } = useWorkspace();
   const { setBreadcrumbs } = useBreadcrumbs();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -1052,7 +1052,7 @@ export function RoutineDetail() {
 
         <TabsContent value="runs" className="space-y-4">
           {hasLiveRun && activeIssueId && routine && (
-            <LiveRunWidget issueId={activeIssueId} companyId={routine.companyId} />
+            <LiveRunWidget issueId={activeIssueId} workspaceId={routine.workspaceId} />
           )}
           {(routineRuns ?? []).length === 0 ? (
             <p className="text-xs text-muted-foreground">No runs yet.</p>
@@ -1113,7 +1113,7 @@ export function RoutineDetail() {
       <RoutineRunVariablesDialog
         open={runVariablesOpen}
         onOpenChange={setRunVariablesOpen}
-        companyId={routine.companyId}
+        workspaceId={routine.workspaceId}
         agents={agents ?? []}
         projects={projects ?? []}
         defaultProjectId={routine.projectId}

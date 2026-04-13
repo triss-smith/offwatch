@@ -45,29 +45,29 @@ export function useDismissedInboxAlerts() {
   return { dismissed, dismiss };
 }
 
-export function useInboxDismissals(companyId: string | null | undefined) {
+export function useInboxDismissals(workspaceId: string | null | undefined) {
   const queryClient = useQueryClient();
-  const queryKey = companyId
-    ? queryKeys.inboxDismissals(companyId)
+  const queryKey = workspaceId
+    ? queryKeys.inboxDismissals(workspaceId)
     : ["inbox-dismissals", "__disabled__"] as const;
 
   const { data: dismissals = [] } = useQuery({
     queryKey,
-    queryFn: () => inboxDismissalsApi.list(companyId!),
-    enabled: !!companyId,
+    queryFn: () => inboxDismissalsApi.list(workspaceId!),
+    enabled: !!workspaceId,
   });
 
   const dismissMutation = useMutation({
-    mutationFn: ({ itemKey }: { itemKey: string }) => inboxDismissalsApi.dismiss(companyId!, itemKey),
+    mutationFn: ({ itemKey }: { itemKey: string }) => inboxDismissalsApi.dismiss(workspaceId!, itemKey),
     onMutate: async ({ itemKey }) => {
-      if (!companyId) return { previous: [] as typeof dismissals };
+      if (!workspaceId) return { previous: [] as typeof dismissals };
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<typeof dismissals>(queryKey) ?? [];
       const now = new Date();
       queryClient.setQueryData(queryKey, [
         {
           id: `optimistic:${itemKey}`,
-          companyId,
+          workspaceId,
           userId: "me",
           itemKey,
           dismissedAt: now,
@@ -83,9 +83,9 @@ export function useInboxDismissals(companyId: string | null | undefined) {
       queryClient.setQueryData(queryKey, context.previous);
     },
     onSettled: () => {
-      if (!companyId) return;
+      if (!workspaceId) return;
       queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(companyId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.sidebarBadges(workspaceId) });
     },
   });
 
@@ -135,21 +135,21 @@ export function useReadInboxItems() {
   return { readItems, markRead, markUnread };
 }
 
-export function useInboxBadge(companyId: string | null | undefined) {
+export function useInboxBadge(workspaceId: string | null | undefined) {
   const { dismissed: dismissedAlerts } = useDismissedInboxAlerts();
-  const { dismissedAtByKey } = useInboxDismissals(companyId);
+  const { dismissedAtByKey } = useInboxDismissals(workspaceId);
 
   const { data: approvals = [] } = useQuery({
-    queryKey: queryKeys.approvals.list(companyId!),
-    queryFn: () => approvalsApi.list(companyId!),
-    enabled: !!companyId,
+    queryKey: queryKeys.approvals.list(workspaceId!),
+    queryFn: () => approvalsApi.list(workspaceId!),
+    enabled: !!workspaceId,
   });
 
   const { data: joinRequests = [] } = useQuery({
-    queryKey: queryKeys.access.joinRequests(companyId!),
+    queryKey: queryKeys.access.joinRequests(workspaceId!),
     queryFn: async () => {
       try {
-        return await accessApi.listJoinRequests(companyId!, "pending_approval");
+        return await accessApi.listJoinRequests(workspaceId!, "pending_approval");
       } catch (err) {
         if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
           return [];
@@ -157,33 +157,33 @@ export function useInboxBadge(companyId: string | null | undefined) {
         throw err;
       }
     },
-    enabled: !!companyId,
+    enabled: !!workspaceId,
     retry: false,
   });
 
   const { data: dashboard } = useQuery({
-    queryKey: queryKeys.dashboard(companyId!),
-    queryFn: () => dashboardApi.summary(companyId!),
-    enabled: !!companyId,
+    queryKey: queryKeys.dashboard(workspaceId!),
+    queryFn: () => dashboardApi.summary(workspaceId!),
+    enabled: !!workspaceId,
   });
 
   const { data: mineIssuesRaw = [] } = useQuery({
-    queryKey: queryKeys.issues.listMineByMe(companyId!),
+    queryKey: queryKeys.issues.listMineByMe(workspaceId!),
     queryFn: () =>
-      issuesApi.list(companyId!, {
+      issuesApi.list(workspaceId!, {
         touchedByUserId: "me",
         inboxArchivedByUserId: "me",
         status: INBOX_ISSUE_STATUSES,
       }),
-    enabled: !!companyId,
+    enabled: !!workspaceId,
   });
 
   const mineIssues = useMemo(() => getRecentTouchedIssues(mineIssuesRaw), [mineIssuesRaw]);
 
   const { data: heartbeatRuns = [] } = useQuery({
-    queryKey: queryKeys.heartbeats(companyId!),
-    queryFn: () => heartbeatsApi.list(companyId!),
-    enabled: !!companyId,
+    queryKey: queryKeys.heartbeats(workspaceId!),
+    queryFn: () => heartbeatsApi.list(workspaceId!),
+    enabled: !!workspaceId,
   });
 
   return useMemo(

@@ -160,7 +160,7 @@ export function IssueProperties({
 }: IssuePropertiesProps) {
   const { selectedCompanyId } = useCompany();
   const queryClient = useQueryClient();
-  const companyId = issue.companyId ?? selectedCompanyId;
+  const workspaceId = issue.workspaceId ?? selectedCompanyId;
   const [assigneeOpen, setAssigneeOpen] = useState(false);
   const [assigneeSearch, setAssigneeSearch] = useState("");
   const [projectOpen, setProjectOpen] = useState(false);
@@ -185,15 +185,15 @@ export function IssueProperties({
   const currentUserId = session?.user?.id ?? session?.session?.userId;
 
   const { data: agents } = useQuery({
-    queryKey: queryKeys.agents.list(companyId!),
-    queryFn: () => agentsApi.list(companyId!),
-    enabled: !!companyId,
+    queryKey: queryKeys.agents.list(workspaceId!),
+    queryFn: () => agentsApi.list(workspaceId!),
+    enabled: !!workspaceId,
   });
 
   const { data: projects } = useQuery({
-    queryKey: queryKeys.projects.list(companyId!),
-    queryFn: () => projectsApi.list(companyId!),
-    enabled: !!companyId,
+    queryKey: queryKeys.projects.list(workspaceId!),
+    queryFn: () => projectsApi.list(workspaceId!),
+    enabled: !!workspaceId,
   });
   const activeProjects = useMemo(
     () => (projects ?? []).filter((p) => !p.archivedAt || p.id === issue.projectId),
@@ -201,26 +201,26 @@ export function IssueProperties({
   );
   const { orderedProjects } = useProjectOrder({
     projects: activeProjects,
-    companyId,
+    workspaceId,
     userId: currentUserId,
   });
 
   const { data: labels } = useQuery({
-    queryKey: queryKeys.issues.labels(companyId!),
-    queryFn: () => issuesApi.listLabels(companyId!),
-    enabled: !!companyId,
+    queryKey: queryKeys.issues.labels(workspaceId!),
+    queryFn: () => issuesApi.listLabels(workspaceId!),
+    enabled: !!workspaceId,
   });
 
   const { data: allIssues } = useQuery({
-    queryKey: queryKeys.issues.list(companyId!),
-    queryFn: () => issuesApi.list(companyId!),
-    enabled: !!companyId && (blockedByOpen || parentOpen),
+    queryKey: queryKeys.issues.list(workspaceId!),
+    queryFn: () => issuesApi.list(workspaceId!),
+    enabled: !!workspaceId && (blockedByOpen || parentOpen),
   });
 
   const createLabel = useMutation({
-    mutationFn: (data: { name: string; color: string }) => issuesApi.createLabel(companyId!, data),
+    mutationFn: (data: { name: string; color: string }) => issuesApi.createLabel(workspaceId!, data),
     onSuccess: async (created) => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.issues.labels(companyId!) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.issues.labels(workspaceId!) });
       onUpdate({ labelIds: [...(issue.labelIds ?? []), created.id] });
       setNewLabelName("");
     },

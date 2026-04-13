@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { ChoosePathButton } from "../components/PathInstructionsModal";
 import { projectsApi } from "../api/projects";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { useCompany } from "../context/CompanyContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 import { queryKeys } from "../lib/queryKeys";
 import { projectRouteRef, projectWorkspaceUrl } from "../lib/utils";
 
@@ -214,7 +214,7 @@ export function ProjectWorkspaceDetail() {
     projectId: string;
     workspaceId: string;
   }>();
-  const { companies, selectedCompanyId, setSelectedCompanyId } = useCompany();
+  const { companies, selectedCompanyId, setSelectedCompanyId } = useWorkspace();
   const { setBreadcrumbs } = useBreadcrumbs();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -248,9 +248,9 @@ export function ProjectWorkspaceDetail() {
   const isDirty = Boolean(form && initialState && JSON.stringify(form) !== JSON.stringify(initialState));
 
   useEffect(() => {
-    if (!project?.companyId || project.companyId === selectedCompanyId) return;
-    setSelectedCompanyId(project.companyId, { source: "route_sync" });
-  }, [project?.companyId, selectedCompanyId, setSelectedCompanyId]);
+    if (!project?.workspaceId || project.workspaceId === selectedCompanyId) return;
+    setSelectedCompanyId(project.workspaceId, { source: "route_sync" });
+  }, [project?.workspaceId, selectedCompanyId, setSelectedCompanyId]);
 
   useEffect(() => {
     if (!workspace) return;
