@@ -12,7 +12,7 @@ import {
   budgetService,
   costService,
   financeService,
-  companyService,
+  workspaceService,
   agentService,
   heartbeatService,
   logActivity,
@@ -50,26 +50,26 @@ export function costRoutes(db: Db) {
   const costs = costService(db, budgetHooks);
   const finance = financeService(db);
   const budgets = budgetService(db, budgetHooks);
-  const companies = companyService(db);
+  const companies = workspaceService(db);
   const agents = agentService(db);
 
-  router.post("/companies/:companyId/cost-events", validate(createCostEventSchema), async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.post("/workspaces/:workspaceId/cost-events", validate(createCostEventSchema), async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
 
     if (req.actor.type === "agent" && req.actor.agentId !== req.body.agentId) {
       res.status(403).json({ error: "Agent can only report its own costs" });
       return;
     }
 
-    const event = await costs.createEvent(companyId, {
+    const event = await costs.createEvent(workspaceId, {
       ...req.body,
       occurredAt: new Date(req.body.occurredAt),
     });
 
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId,
+      workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -82,19 +82,19 @@ export function costRoutes(db: Db) {
     res.status(201).json(event);
   });
 
-  router.post("/companies/:companyId/finance-events", validate(createFinanceEventSchema), async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.post("/workspaces/:workspaceId/finance-events", validate(createFinanceEventSchema), async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     assertBoard(req);
 
-    const event = await finance.createEvent(companyId, {
+    const event = await finance.createEvent(workspaceId, {
       ...req.body,
       occurredAt: new Date(req.body.occurredAt),
     });
 
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId,
+      workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -112,93 +112,93 @@ export function costRoutes(db: Db) {
     res.status(201).json(event);
   });
 
-  router.get("/companies/:companyId/costs/summary", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/costs/summary", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const range = parseCostDateRange(req.query);
-    const summary = await costs.summary(companyId, range);
+    const summary = await costs.summary(workspaceId, range);
     res.json(summary);
   });
 
-  router.get("/companies/:companyId/costs/by-agent", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/costs/by-agent", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const range = parseCostDateRange(req.query);
-    const rows = await costs.byAgent(companyId, range);
+    const rows = await costs.byAgent(workspaceId, range);
     res.json(rows);
   });
 
-  router.get("/companies/:companyId/costs/by-agent-model", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/costs/by-agent-model", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const range = parseCostDateRange(req.query);
-    const rows = await costs.byAgentModel(companyId, range);
+    const rows = await costs.byAgentModel(workspaceId, range);
     res.json(rows);
   });
 
-  router.get("/companies/:companyId/costs/by-provider", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/costs/by-provider", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const range = parseCostDateRange(req.query);
-    const rows = await costs.byProvider(companyId, range);
+    const rows = await costs.byProvider(workspaceId, range);
     res.json(rows);
   });
 
-  router.get("/companies/:companyId/costs/by-biller", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/costs/by-biller", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const range = parseCostDateRange(req.query);
-    const rows = await costs.byBiller(companyId, range);
+    const rows = await costs.byBiller(workspaceId, range);
     res.json(rows);
   });
 
-  router.get("/companies/:companyId/costs/finance-summary", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/costs/finance-summary", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const range = parseCostDateRange(req.query);
-    const summary = await finance.summary(companyId, range);
+    const summary = await finance.summary(workspaceId, range);
     res.json(summary);
   });
 
-  router.get("/companies/:companyId/costs/finance-by-biller", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/costs/finance-by-biller", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const range = parseCostDateRange(req.query);
-    const rows = await finance.byBiller(companyId, range);
+    const rows = await finance.byBiller(workspaceId, range);
     res.json(rows);
   });
 
-  router.get("/companies/:companyId/costs/finance-by-kind", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/costs/finance-by-kind", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const range = parseCostDateRange(req.query);
-    const rows = await finance.byKind(companyId, range);
+    const rows = await finance.byKind(workspaceId, range);
     res.json(rows);
   });
 
-  router.get("/companies/:companyId/costs/finance-events", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/costs/finance-events", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const range = parseCostDateRange(req.query);
     const limit = parseCostLimit(req.query);
-    const rows = await finance.list(companyId, range, limit);
+    const rows = await finance.list(workspaceId, range, limit);
     res.json(rows);
   });
 
-  router.get("/companies/:companyId/costs/window-spend", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
-    const rows = await costs.windowSpend(companyId);
+  router.get("/workspaces/:workspaceId/costs/window-spend", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
+    const rows = await costs.windowSpend(workspaceId);
     res.json(rows);
   });
 
-  router.get("/companies/:companyId/costs/quota-windows", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/costs/quota-windows", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     assertBoard(req);
-    // validate companyId resolves to a real company so the "__none__" sentinel
+    // validate workspaceId resolves to a real company so the "__none__" sentinel
     // and any forged ids are rejected before we touch provider credentials
-    const company = await companies.getById(companyId);
+    const company = await companies.getById(workspaceId);
     if (!company) {
       res.status(404).json({ error: "Company not found" });
       return;
@@ -207,71 +207,71 @@ export function costRoutes(db: Db) {
     res.json(results);
   });
 
-  router.get("/companies/:companyId/budgets/overview", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
-    const overview = await budgets.overview(companyId);
+  router.get("/workspaces/:workspaceId/budgets/overview", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
+    const overview = await budgets.overview(workspaceId);
     res.json(overview);
   });
 
   router.post(
-    "/companies/:companyId/budgets/policies",
+    "/workspaces/:workspaceId/budgets/policies",
     validate(upsertBudgetPolicySchema),
     async (req, res) => {
       assertBoard(req);
-      const companyId = req.params.companyId as string;
-      assertCompanyAccess(req, companyId);
-      const summary = await budgets.upsertPolicy(companyId, req.body, req.actor.userId ?? "board");
+      const workspaceId = req.params.workspaceId as string;
+      assertCompanyAccess(req, workspaceId);
+      const summary = await budgets.upsertPolicy(workspaceId, req.body, req.actor.userId ?? "board");
       res.json(summary);
     },
   );
 
   router.post(
-    "/companies/:companyId/budget-incidents/:incidentId/resolve",
+    "/workspaces/:workspaceId/budget-incidents/:incidentId/resolve",
     validate(resolveBudgetIncidentSchema),
     async (req, res) => {
       assertBoard(req);
-      const companyId = req.params.companyId as string;
+      const workspaceId = req.params.workspaceId as string;
       const incidentId = req.params.incidentId as string;
-      assertCompanyAccess(req, companyId);
-      const incident = await budgets.resolveIncident(companyId, incidentId, req.body, req.actor.userId ?? "board");
+      assertCompanyAccess(req, workspaceId);
+      const incident = await budgets.resolveIncident(workspaceId, incidentId, req.body, req.actor.userId ?? "board");
       res.json(incident);
     },
   );
 
-  router.get("/companies/:companyId/costs/by-project", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/costs/by-project", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const range = parseCostDateRange(req.query);
-    const rows = await costs.byProject(companyId, range);
+    const rows = await costs.byProject(workspaceId, range);
     res.json(rows);
   });
 
-  router.patch("/companies/:companyId/budgets", validate(updateBudgetSchema), async (req, res) => {
+  router.patch("/workspaces/:workspaceId/budgets", validate(updateBudgetSchema), async (req, res) => {
     assertBoard(req);
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
-    const company = await companies.update(companyId, { budgetMonthlyCents: req.body.budgetMonthlyCents });
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
+    const company = await companies.update(workspaceId, { budgetMonthlyCents: req.body.budgetMonthlyCents });
     if (!company) {
       res.status(404).json({ error: "Company not found" });
       return;
     }
 
     await logActivity(db, {
-      companyId,
+      workspaceId,
       actorType: "user",
       actorId: req.actor.userId ?? "board",
       action: "company.budget_updated",
       entityType: "company",
-      entityId: companyId,
+      entityId: workspaceId,
       details: { budgetMonthlyCents: req.body.budgetMonthlyCents },
     });
 
     await budgets.upsertPolicy(
-      companyId,
+      workspaceId,
       {
         scopeType: "company",
-        scopeId: companyId,
+        scopeId: workspaceId,
         amount: req.body.budgetMonthlyCents,
         windowKind: "calendar_month_utc",
       },
@@ -289,7 +289,7 @@ export function costRoutes(db: Db) {
       return;
     }
 
-    assertCompanyAccess(req, agent.companyId);
+    assertCompanyAccess(req, agent.workspaceId);
 
     if (req.actor.type === "agent") {
       if (req.actor.agentId !== agentId) {
@@ -306,7 +306,7 @@ export function costRoutes(db: Db) {
 
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId: updated.companyId,
+      workspaceId: updated.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -317,7 +317,7 @@ export function costRoutes(db: Db) {
     });
 
     await budgets.upsertPolicy(
-      updated.companyId,
+      updated.workspaceId,
       {
         scopeType: "agent",
         scopeId: updated.id,

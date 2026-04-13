@@ -15,16 +15,16 @@ export function assertInstanceAdmin(req: Request) {
   throw forbidden("Instance admin access required");
 }
 
-export function assertCompanyAccess(req: Request, companyId: string) {
+export function assertCompanyAccess(req: Request, workspaceId: string) {
   if (req.actor.type === "none") {
     throw unauthorized();
   }
-  if (req.actor.type === "agent" && req.actor.companyId !== companyId) {
+  if (req.actor.type === "agent" && req.actor.workspaceId !== workspaceId) {
     throw forbidden("Agent key cannot access another company");
   }
   if (req.actor.type === "board" && req.actor.source !== "local_implicit" && !req.actor.isInstanceAdmin) {
-    const allowedCompanies = req.actor.companyIds ?? [];
-    if (!allowedCompanies.includes(companyId)) {
+    const allowedCompanies = req.actor.workspaceIds ?? [];
+    if (!allowedCompanies.includes(workspaceId)) {
       throw forbidden("User does not have access to this company");
     }
   }

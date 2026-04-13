@@ -11,10 +11,10 @@ export function goalRoutes(db: Db) {
   const router = Router();
   const svc = goalService(db);
 
-  router.get("/companies/:companyId/goals", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
-    const result = await svc.list(companyId);
+  router.get("/workspaces/:workspaceId/goals", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
+    const result = await svc.list(workspaceId);
     res.json(result);
   });
 
@@ -25,17 +25,17 @@ export function goalRoutes(db: Db) {
       res.status(404).json({ error: "Goal not found" });
       return;
     }
-    assertCompanyAccess(req, goal.companyId);
+    assertCompanyAccess(req, goal.workspaceId);
     res.json(goal);
   });
 
-  router.post("/companies/:companyId/goals", validate(createGoalSchema), async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
-    const goal = await svc.create(companyId, req.body);
+  router.post("/workspaces/:workspaceId/goals", validate(createGoalSchema), async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
+    const goal = await svc.create(workspaceId, req.body);
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId,
+      workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -58,7 +58,7 @@ export function goalRoutes(db: Db) {
       res.status(404).json({ error: "Goal not found" });
       return;
     }
-    assertCompanyAccess(req, existing.companyId);
+    assertCompanyAccess(req, existing.workspaceId);
     const goal = await svc.update(id, req.body);
     if (!goal) {
       res.status(404).json({ error: "Goal not found" });
@@ -67,7 +67,7 @@ export function goalRoutes(db: Db) {
 
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId: goal.companyId,
+      workspaceId: goal.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -87,7 +87,7 @@ export function goalRoutes(db: Db) {
       res.status(404).json({ error: "Goal not found" });
       return;
     }
-    assertCompanyAccess(req, existing.companyId);
+    assertCompanyAccess(req, existing.workspaceId);
     const goal = await svc.remove(id);
     if (!goal) {
       res.status(404).json({ error: "Goal not found" });
@@ -96,7 +96,7 @@ export function goalRoutes(db: Db) {
 
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId: goal.companyId,
+      workspaceId: goal.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,

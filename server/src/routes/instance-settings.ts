@@ -36,11 +36,11 @@ export function instanceSettingsRoutes(db: Db) {
       assertCanManageInstanceSettings(req);
       const updated = await svc.updateGeneral(req.body);
       const actor = getActorInfo(req);
-      const companyIds = await svc.listCompanyIds();
+      const workspaceIds = await svc.listCompanyIds();
       await Promise.all(
-        companyIds.map((companyId) =>
+        workspaceIds.map((workspaceId) =>
           logActivity(db, {
-            companyId,
+            workspaceId,
             actorType: actor.actorType,
             actorId: actor.actorId,
             agentId: actor.agentId,
@@ -75,11 +75,11 @@ export function instanceSettingsRoutes(db: Db) {
       assertCanManageInstanceSettings(req);
       const updated = await svc.updateExperimental(req.body);
       const actor = getActorInfo(req);
-      const companyIds = await svc.listCompanyIds();
+      const workspaceIds = await svc.listCompanyIds();
       await Promise.all(
-        companyIds.map((companyId) =>
+        workspaceIds.map((workspaceId) =>
           logActivity(db, {
-            companyId,
+            workspaceId,
             actorType: actor.actorType,
             actorId: actor.actorId,
             agentId: actor.agentId,

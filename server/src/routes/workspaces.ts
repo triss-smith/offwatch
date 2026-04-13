@@ -7,12 +7,12 @@ import {
   companyPortabilityExportSchema,
   companyPortabilityImportSchema,
   companyPortabilityPreviewSchema,
-  createCompanySchema,
+  createWorkspaceSchema,
   feedbackTargetTypeSchema,
   feedbackTraceStatusSchema,
   feedbackVoteValueSchema,
-  updateCompanyBrandingSchema,
-  updateCompanySchema,
+  updateWorkspaceBrandingSchema,
+  updateWorkspaceSchema,
 } from "@paperclipai/shared";
 import { badRequest, forbidden } from "../errors.js";
 import { validate } from "../middleware/validate.js";
@@ -21,16 +21,16 @@ import {
   agentService,
   budgetService,
   companyPortabilityService,
-  companyService,
+  workspaceService,
   feedbackService,
   logActivity,
 } from "../services/index.js";
 import type { StorageService } from "../storage/types.js";
 import { assertBoard, assertCompanyAccess, assertInstanceAdmin, getActorInfo } from "./authz.js";
 
-export function companyRoutes(db: Db, storage?: StorageService) {
+export function workspaceRoutes(db: Db, storage?: StorageService) {
   const router = Router();
-  const svc = companyService(db);
+  const svc = workspaceService(db);
   const agents = agentService(db);
   const portability = companyPortabilityService(db, storage);
   const access = accessService(db);
@@ -52,22 +52,22 @@ export function companyRoutes(db: Db, storage?: StorageService) {
 
   function assertImportTargetAccess(
     req: Request,
-    target: { mode: "new_company" } | { mode: "existing_company"; companyId: string },
+    target: { mode: "new_company" } | { mode: "existing_company"; workspaceId: string },
   ) {
     if (target.mode === "new_company") {
       assertInstanceAdmin(req);
       return;
     }
-    assertCompanyAccess(req, target.companyId);
+    assertCompanyAccess(req, target.workspaceId);
   }
 
-  async function assertCanUpdateBranding(req: Request, companyId: string) {
-    assertCompanyAccess(req, companyId);
+  async function assertCanUpdateBranding(req: Request, workspaceId: string) {
+    assertCompanyAccess(req, workspaceId);
     if (req.actor.type === "board") return;
     if (!req.actor.agentId) throw forbidden("Agent authentication required");
 
     const actorAgent = await agents.getById(req.actor.agentId);
-    if (!actorAgent || actorAgent.companyId !== companyId) {
+    if (!actorAgent || actorAgent.workspaceId !== workspaceId) {
       throw forbidden("Agent key cannot access another company");
     }
     if (actorAgent.role !== "ceo") {
@@ -75,13 +75,13 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     }
   }
 
-  async function assertCanManagePortability(req: Request, companyId: string, capability: "imports" | "exports") {
-    assertCompanyAccess(req, companyId);
+  async function assertCanManagePortability(req: Request, workspaceId: string, capability: "imports" | "exports") {
+    assertCompanyAccess(req, workspaceId);
     if (req.actor.type === "board") return;
     if (!req.actor.agentId) throw forbidden("Agent authentication required");
 
     const actorAgent = await agents.getById(req.actor.agentId);
-    if (!actorAgent || actorAgent.companyId !== companyId) {
+    if (!actorAgent || actorAgent.workspaceId !== workspaceId) {
       throw forbidden("Agent key cannot access another company");
     }
     if (actorAgent.role !== "ceo") {
@@ -96,7 +96,7 @@ export function companyRoutes(db: Db, storage?: StorageService) {
       res.json(result);
       return;
     }
-    const allowed = new Set(req.actor.companyIds ?? []);
+    const allowed = new Set(req.actor.workspaceIds ?? []);
     res.json(result.filter((company) => allowed.has(company.id)));
   });
 
@@ -104,41 +104,41 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     assertBoard(req);
     const allowed = req.actor.source === "local_implicit" || req.actor.isInstanceAdmin
       ? null
-      : new Set(req.actor.companyIds ?? []);
+      : new Set(req.actor.workspaceIds ?? []);
     const stats = await svc.stats();
     if (!allowed) {
       res.json(stats);
       return;
     }
-    const filtered = Object.fromEntries(Object.entries(stats).filter(([companyId]) => allowed.has(companyId)));
+    const filtered = Object.fromEntries(Object.entries(stats).filter(([workspaceId]) => allowed.has(workspaceId)));
     res.json(filtered);
   });
 
-  // Common malformed path when companyId is empty in "/api/companies/{companyId}/issues".
+  // Common malformed path when workspaceId is empty in "/api/workspaces/{workspaceId}/issues".
   router.get("/issues", (_req, res) => {
     res.status(400).json({
-      error: "Missing companyId in path. Use /api/companies/{companyId}/issues.",
+      error: "Missing workspaceId in path. Use /api/workspaces/{workspaceId}/issues.",
     });
   });
 
-  router.get("/:companyId", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/:workspaceId", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     // Allow agents (CEO) to read their own company; board always allowed
     if (req.actor.type !== "agent") {
       assertBoard(req);
     }
-    const company = await svc.getById(companyId);
+    const company = await svc.getById(workspaceId);
     if (!company) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "Workspace not found" });
       return;
     }
     res.json(company);
   });
 
-  router.get("/:companyId/feedback-traces", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/:workspaceId/feedback-traces", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     assertBoard(req);
 
     const targetTypeRaw = typeof req.query.targetType === "string" ? req.query.targetType : undefined;
@@ -150,7 +150,7 @@ export function companyRoutes(db: Db, storage?: StorageService) {
       : undefined;
 
     const traces = await feedback.listFeedbackTraces({
-      companyId,
+      workspaceId,
       issueId,
       projectId,
       targetType: targetTypeRaw ? feedbackTargetTypeSchema.parse(targetTypeRaw) : undefined,
@@ -164,10 +164,10 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     res.json(traces);
   });
 
-  router.post("/:companyId/export", validate(companyPortabilityExportSchema), async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
-    const result = await portability.exportBundle(companyId, req.body);
+  router.post("/:workspaceId/export", validate(companyPortabilityExportSchema), async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
+    const result = await portability.exportBundle(workspaceId, req.body);
     res.json(result);
   });
 
@@ -184,7 +184,7 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     const actor = getActorInfo(req);
     const result = await portability.importBundle(req.body, req.actor.type === "board" ? req.actor.userId : null);
     await logActivity(db, {
-      companyId: result.company.id,
+      workspaceId: result.company.id,
       actorType: actor.actorType,
       actorId: actor.actorId,
       action: "company.imported",
@@ -202,24 +202,24 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     res.json(result);
   });
 
-  router.post("/:companyId/exports/preview", validate(companyPortabilityExportSchema), async (req, res) => {
-    const companyId = req.params.companyId as string;
-    await assertCanManagePortability(req, companyId, "exports");
-    const preview = await portability.previewExport(companyId, req.body);
+  router.post("/:workspaceId/exports/preview", validate(companyPortabilityExportSchema), async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    await assertCanManagePortability(req, workspaceId, "exports");
+    const preview = await portability.previewExport(workspaceId, req.body);
     res.json(preview);
   });
 
-  router.post("/:companyId/exports", validate(companyPortabilityExportSchema), async (req, res) => {
-    const companyId = req.params.companyId as string;
-    await assertCanManagePortability(req, companyId, "exports");
-    const result = await portability.exportBundle(companyId, req.body);
+  router.post("/:workspaceId/exports", validate(companyPortabilityExportSchema), async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    await assertCanManagePortability(req, workspaceId, "exports");
+    const result = await portability.exportBundle(workspaceId, req.body);
     res.json(result);
   });
 
-  router.post("/:companyId/imports/preview", validate(companyPortabilityPreviewSchema), async (req, res) => {
-    const companyId = req.params.companyId as string;
-    await assertCanManagePortability(req, companyId, "imports");
-    if (req.body.target.mode === "existing_company" && req.body.target.companyId !== companyId) {
+  router.post("/:workspaceId/imports/preview", validate(companyPortabilityPreviewSchema), async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    await assertCanManagePortability(req, workspaceId, "imports");
+    if (req.body.target.mode === "existing_company" && req.body.target.workspaceId !== workspaceId) {
       throw forbidden("Safe import route can only target the route company");
     }
     if (req.body.collisionStrategy === "replace") {
@@ -227,15 +227,15 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     }
     const preview = await portability.previewImport(req.body, {
       mode: "agent_safe",
-      sourceCompanyId: companyId,
+      sourceCompanyId: workspaceId,
     });
     res.json(preview);
   });
 
-  router.post("/:companyId/imports/apply", validate(companyPortabilityImportSchema), async (req, res) => {
-    const companyId = req.params.companyId as string;
-    await assertCanManagePortability(req, companyId, "imports");
-    if (req.body.target.mode === "existing_company" && req.body.target.companyId !== companyId) {
+  router.post("/:workspaceId/imports/apply", validate(companyPortabilityImportSchema), async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    await assertCanManagePortability(req, workspaceId, "imports");
+    if (req.body.target.mode === "existing_company" && req.body.target.workspaceId !== workspaceId) {
       throw forbidden("Safe import route can only target the route company");
     }
     if (req.body.collisionStrategy === "replace") {
@@ -244,10 +244,10 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     const actor = getActorInfo(req);
     const result = await portability.importBundle(req.body, req.actor.type === "board" ? req.actor.userId : null, {
       mode: "agent_safe",
-      sourceCompanyId: companyId,
+      sourceCompanyId: workspaceId,
     });
     await logActivity(db, {
-      companyId: result.company.id,
+      workspaceId: result.company.id,
       actorType: actor.actorType,
       actorId: actor.actorId,
       entityType: "company",
@@ -266,7 +266,7 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     res.json(result);
   });
 
-  router.post("/", validate(createCompanySchema), async (req, res) => {
+  router.post("/", validate(createWorkspaceSchema), async (req, res) => {
     assertBoard(req);
     if (!(req.actor.source === "local_implicit" || req.actor.isInstanceAdmin)) {
       throw forbidden("Instance admin required");
@@ -274,7 +274,7 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     const company = await svc.create(req.body);
     await access.ensureMembership(company.id, "user", req.actor.userId ?? "local-board", "owner", "active");
     await logActivity(db, {
-      companyId: company.id,
+      workspaceId: company.id,
       actorType: "user",
       actorId: req.actor.userId ?? "board",
       action: "company.created",
@@ -297,14 +297,14 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     res.status(201).json(company);
   });
 
-  router.patch("/:companyId", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.patch("/:workspaceId", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
 
     const actor = getActorInfo(req);
-    const existingCompany = await svc.getById(companyId);
+    const existingCompany = await svc.getById(workspaceId);
     if (!existingCompany) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "Workspace not found" });
       return;
     }
     let body: Record<string, unknown>;
@@ -316,13 +316,13 @@ export function companyRoutes(db: Db, storage?: StorageService) {
       if (!actorAgent || actorAgent.role !== "ceo") {
         throw forbidden("Only CEO agents or board users may update company settings");
       }
-      if (actorAgent.companyId !== companyId) {
+      if (actorAgent.workspaceId !== workspaceId) {
         throw forbidden("Agent key cannot access another company");
       }
-      body = updateCompanyBrandingSchema.parse(req.body);
+      body = updateWorkspaceBrandingSchema.parse(req.body);
     } else {
       assertBoard(req);
-      body = updateCompanySchema.parse(req.body);
+      body = updateWorkspaceSchema.parse(req.body);
 
       if (body.feedbackDataSharingEnabled === true && !existingCompany.feedbackDataSharingEnabled) {
         body = {
@@ -337,9 +337,9 @@ export function companyRoutes(db: Db, storage?: StorageService) {
       }
     }
 
-    const company = await svc.update(companyId, body);
+    const company = await svc.update(workspaceId, body);
     if (!company) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "Workspace not found" });
       return;
     }
     // When budgetMetric changes, deactivate all policies using the old metric
@@ -350,75 +350,75 @@ export function companyRoutes(db: Db, storage?: StorageService) {
         .set({ isActive: false, updatedAt: new Date() })
         .where(
           and(
-            eq(budgetPolicies.companyId, companyId),
+            eq(budgetPolicies.workspaceId, workspaceId),
             eq(budgetPolicies.metric, existingCompany.budgetMetric),
           ),
         );
     }
     await logActivity(db, {
-      companyId,
+      workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
       runId: actor.runId,
       action: "company.updated",
       entityType: "company",
-      entityId: companyId,
+      entityId: workspaceId,
       details: body,
     });
     res.json(company);
   });
 
-  router.patch("/:companyId/branding", validate(updateCompanyBrandingSchema), async (req, res) => {
-    const companyId = req.params.companyId as string;
-    await assertCanUpdateBranding(req, companyId);
-    const company = await svc.update(companyId, req.body);
+  router.patch("/:workspaceId/branding", validate(updateWorkspaceBrandingSchema), async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    await assertCanUpdateBranding(req, workspaceId);
+    const company = await svc.update(workspaceId, req.body);
     if (!company) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "Workspace not found" });
       return;
     }
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId,
+      workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
       runId: actor.runId,
       action: "company.branding_updated",
       entityType: "company",
-      entityId: companyId,
+      entityId: workspaceId,
       details: req.body,
     });
     res.json(company);
   });
 
-  router.post("/:companyId/archive", async (req, res) => {
+  router.post("/:workspaceId/archive", async (req, res) => {
     assertBoard(req);
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
-    const company = await svc.archive(companyId);
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
+    const company = await svc.archive(workspaceId);
     if (!company) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "Workspace not found" });
       return;
     }
     await logActivity(db, {
-      companyId,
+      workspaceId,
       actorType: "user",
       actorId: req.actor.userId ?? "board",
       action: "company.archived",
       entityType: "company",
-      entityId: companyId,
+      entityId: workspaceId,
     });
     res.json(company);
   });
 
-  router.delete("/:companyId", async (req, res) => {
+  router.delete("/:workspaceId", async (req, res) => {
     assertBoard(req);
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
-    const company = await svc.remove(companyId);
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
+    const company = await svc.remove(workspaceId);
     if (!company) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "Workspace not found" });
       return;
     }
     res.json({ ok: true });

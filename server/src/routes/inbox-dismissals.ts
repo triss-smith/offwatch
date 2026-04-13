@@ -13,9 +13,9 @@ export function inboxDismissalRoutes(db: Db) {
   const router = Router();
   const svc = inboxDismissalService(db);
 
-  router.get("/companies/:companyId/inbox-dismissals", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/inbox-dismissals", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     if (req.actor.type !== "board") {
       res.status(403).json({ error: "Board authentication required" });
       return;
@@ -24,16 +24,16 @@ export function inboxDismissalRoutes(db: Db) {
       res.status(403).json({ error: "Board user context required" });
       return;
     }
-    const dismissals = await svc.list(companyId, req.actor.userId);
+    const dismissals = await svc.list(workspaceId, req.actor.userId);
     res.json(dismissals);
   });
 
   router.post(
-    "/companies/:companyId/inbox-dismissals",
+    "/workspaces/:workspaceId/inbox-dismissals",
     validate(inboxDismissalSchema),
     async (req, res) => {
-      const companyId = req.params.companyId as string;
-      assertCompanyAccess(req, companyId);
+      const workspaceId = req.params.workspaceId as string;
+      assertCompanyAccess(req, workspaceId);
       if (req.actor.type !== "board") {
         res.status(403).json({ error: "Board authentication required" });
         return;
@@ -43,17 +43,17 @@ export function inboxDismissalRoutes(db: Db) {
         return;
       }
 
-      const dismissal = await svc.dismiss(companyId, req.actor.userId, req.body.itemKey, new Date());
+      const dismissal = await svc.dismiss(workspaceId, req.actor.userId, req.body.itemKey, new Date());
       const actor = getActorInfo(req);
       await logActivity(db, {
-        companyId,
+        workspaceId,
         actorType: actor.actorType,
         actorId: actor.actorId,
         agentId: actor.agentId,
         runId: actor.runId,
         action: "inbox.dismissed",
         entityType: "company",
-        entityId: companyId,
+        entityId: workspaceId,
         details: {
           userId: req.actor.userId,
           itemKey: dismissal.itemKey,

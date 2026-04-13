@@ -118,9 +118,9 @@ export function agentRoutes(db: Db) {
   }
 
   async function buildAgentAccessState(agent: NonNullable<Awaited<ReturnType<typeof svc.getById>>>) {
-    const membership = await access.getMembership(agent.companyId, "agent", agent.id);
+    const membership = await access.getMembership(agent.workspaceId, "agent", agent.id);
     const grants = membership
-      ? await access.listPrincipalGrants(agent.companyId, "agent", agent.id)
+      ? await access.listPrincipalGrants(agent.workspaceId, "agent", agent.id)
       : [];
     const hasExplicitTaskAssignGrant = grants.some((grant) => grant.permissionKey === "tasks:assign");
 
@@ -176,13 +176,13 @@ export function agentRoutes(db: Db) {
   }
 
   async function applyDefaultAgentTaskAssignGrant(
-    companyId: string,
+    workspaceId: string,
     agentId: string,
     grantedByUserId: string | null,
   ) {
-    await access.ensureMembership(companyId, "agent", agentId, "member", "active");
+    await access.ensureMembership(workspaceId, "agent", agentId, "member", "active");
     await access.setPrincipalPermission(
-      companyId,
+      workspaceId,
       "agent",
       agentId,
       "tasks:assign",
@@ -191,11 +191,11 @@ export function agentRoutes(db: Db) {
     );
   }
 
-  async function assertCanCreateAgentsForCompany(req: Request, companyId: string) {
-    assertCompanyAccess(req, companyId);
+  async function assertCanCreateAgentsForCompany(req: Request, workspaceId: string) {
+    assertCompanyAccess(req, workspaceId);
     if (req.actor.type === "board") {
       if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin) return null;
-      const allowed = await access.canUser(companyId, req.actor.userId, "agents:create");
+      const allowed = await access.canUser(workspaceId, req.actor.userId, "agents:create");
       if (!allowed) {
         throw forbidden("Missing permission: agents:create");
       }
@@ -203,30 +203,30 @@ export function agentRoutes(db: Db) {
     }
     if (!req.actor.agentId) throw forbidden("Agent authentication required");
     const actorAgent = await svc.getById(req.actor.agentId);
-    if (!actorAgent || actorAgent.companyId !== companyId) {
+    if (!actorAgent || actorAgent.workspaceId !== workspaceId) {
       throw forbidden("Agent key cannot access another company");
     }
-    const allowedByGrant = await access.hasPermission(companyId, "agent", actorAgent.id, "agents:create");
+    const allowedByGrant = await access.hasPermission(workspaceId, "agent", actorAgent.id, "agents:create");
     if (!allowedByGrant && !canCreateAgents(actorAgent)) {
       throw forbidden("Missing permission: can create agents");
     }
     return actorAgent;
   }
 
-  async function assertCanReadConfigurations(req: Request, companyId: string) {
-    return assertCanCreateAgentsForCompany(req, companyId);
+  async function assertCanReadConfigurations(req: Request, workspaceId: string) {
+    return assertCanCreateAgentsForCompany(req, workspaceId);
   }
 
-  async function actorCanReadConfigurationsForCompany(req: Request, companyId: string) {
-    assertCompanyAccess(req, companyId);
+  async function actorCanReadConfigurationsForCompany(req: Request, workspaceId: string) {
+    assertCompanyAccess(req, workspaceId);
     if (req.actor.type === "board") {
       if (req.actor.source === "local_implicit" || req.actor.isInstanceAdmin) return true;
-      return access.canUser(companyId, req.actor.userId, "agents:create");
+      return access.canUser(workspaceId, req.actor.userId, "agents:create");
     }
     if (!req.actor.agentId) return false;
     const actorAgent = await svc.getById(req.actor.agentId);
-    if (!actorAgent || actorAgent.companyId !== companyId) return false;
-    const allowedByGrant = await access.hasPermission(companyId, "agent", actorAgent.id, "agents:create");
+    if (!actorAgent || actorAgent.workspaceId !== workspaceId) return false;
+    const allowedByGrant = await access.hasPermission(workspaceId, "agent", actorAgent.id, "agents:create");
     return allowedByGrant || canCreateAgents(actorAgent);
   }
 
@@ -253,7 +253,7 @@ export function agentRoutes(db: Db) {
         executionRunId: issuesTable.executionRunId,
       })
       .from(issuesTable)
-      .where(and(eq(issuesTable.id, issueId), eq(issuesTable.companyId, agent.companyId)))
+      .where(and(eq(issuesTable.id, issueId), eq(issuesTable.workspaceId, agent.workspaceId)))
       .then((rows) => rows[0] ?? null);
 
     if (!issue?.executionRunId) {
@@ -297,20 +297,20 @@ export function agentRoutes(db: Db) {
     };
   }
 
-  async function assertCanUpdateAgent(req: Request, targetAgent: { id: string; companyId: string }) {
-    assertCompanyAccess(req, targetAgent.companyId);
+  async function assertCanUpdateAgent(req: Request, targetAgent: { id: string; workspaceId: string }) {
+    assertCompanyAccess(req, targetAgent.workspaceId);
     if (req.actor.type === "board") return;
     if (!req.actor.agentId) throw forbidden("Agent authentication required");
 
     const actorAgent = await svc.getById(req.actor.agentId);
-    if (!actorAgent || actorAgent.companyId !== targetAgent.companyId) {
+    if (!actorAgent || actorAgent.workspaceId !== targetAgent.workspaceId) {
       throw forbidden("Agent key cannot access another company");
     }
 
     if (actorAgent.id === targetAgent.id) return;
     if (actorAgent.role === "ceo") return;
     const allowedByGrant = await access.hasPermission(
-      targetAgent.companyId,
+      targetAgent.workspaceId,
       "agent",
       actorAgent.id,
       "agents:create",
@@ -319,13 +319,13 @@ export function agentRoutes(db: Db) {
     throw forbidden("Only CEO or agent creators can modify other agents");
   }
 
-  async function assertCanReadAgent(req: Request, targetAgent: { companyId: string }) {
-    assertCompanyAccess(req, targetAgent.companyId);
+  async function assertCanReadAgent(req: Request, targetAgent: { workspaceId: string }) {
+    assertCompanyAccess(req, targetAgent.workspaceId);
     if (req.actor.type === "board") return;
     if (!req.actor.agentId) throw forbidden("Agent authentication required");
 
     const actorAgent = await svc.getById(req.actor.agentId);
-    if (!actorAgent || actorAgent.companyId !== targetAgent.companyId) {
+    if (!actorAgent || actorAgent.workspaceId !== targetAgent.workspaceId) {
       throw forbidden("Agent key cannot access another company");
     }
   }
@@ -346,17 +346,17 @@ export function agentRoutes(db: Db) {
   }
 
   async function resolveCompanyIdForAgentReference(req: Request): Promise<string | null> {
-    const companyIdQuery = req.query.companyId;
+    const workspaceIdQuery = req.query.workspaceId;
     const requestedCompanyId =
-      typeof companyIdQuery === "string" && companyIdQuery.trim().length > 0
-        ? companyIdQuery.trim()
+      typeof workspaceIdQuery === "string" && workspaceIdQuery.trim().length > 0
+        ? workspaceIdQuery.trim()
         : null;
     if (requestedCompanyId) {
       assertCompanyAccess(req, requestedCompanyId);
       return requestedCompanyId;
     }
-    if (req.actor.type === "agent" && req.actor.companyId) {
-      return req.actor.companyId;
+    if (req.actor.type === "agent" && req.actor.workspaceId) {
+      return req.actor.workspaceId;
     }
     return null;
   }
@@ -365,12 +365,12 @@ export function agentRoutes(db: Db) {
     const raw = rawId.trim();
     if (isUuidLike(raw)) return raw;
 
-    const companyId = await resolveCompanyIdForAgentReference(req);
-    if (!companyId) {
-      throw unprocessable("Agent shortname lookup requires companyId query parameter");
+    const workspaceId = await resolveCompanyIdForAgentReference(req);
+    if (!workspaceId) {
+      throw unprocessable("Agent shortname lookup requires workspaceId query parameter");
     }
 
-    const resolved = await svc.resolveByReference(companyId, raw);
+    const resolved = await svc.resolveByReference(workspaceId, raw);
     if (resolved.ambiguous) {
       throw conflict("Agent shortname is ambiguous in this company. Use the agent ID.");
     }
@@ -513,12 +513,12 @@ export function agentRoutes(db: Db) {
   }
 
   async function assertAdapterConfigConstraints(
-    companyId: string,
+    workspaceId: string,
     adapterType: string | null | undefined,
     adapterConfig: Record<string, unknown>,
   ) {
     if (adapterType !== "opencode_local") return;
-    const { config: runtimeConfig } = await secretsSvc.resolveAdapterConfigForRuntime(companyId, adapterConfig);
+    const { config: runtimeConfig } = await secretsSvc.resolveAdapterConfigForRuntime(workspaceId, adapterConfig);
     const runtimeEnv = asRecord(runtimeConfig.env) ?? {};
     try {
       await ensureOpenCodeModelConfiguredAndAvailable({
@@ -551,7 +551,7 @@ export function agentRoutes(db: Db) {
 
   async function materializeDefaultInstructionsBundleForNewAgent<T extends {
     id: string;
-    companyId: string;
+    workspaceId: string;
     name: string;
     role: string;
     adapterType: string;
@@ -590,13 +590,13 @@ export function agentRoutes(db: Db) {
     return (updated as T | null) ?? { ...agent, adapterConfig: nextAdapterConfig };
   }
 
-  async function assertCanManageInstructionsPath(req: Request, targetAgent: { id: string; companyId: string }) {
-    assertCompanyAccess(req, targetAgent.companyId);
+  async function assertCanManageInstructionsPath(req: Request, targetAgent: { id: string; workspaceId: string }) {
+    assertCompanyAccess(req, targetAgent.workspaceId);
     if (req.actor.type === "board") return;
     if (!req.actor.agentId) throw forbidden("Agent authentication required");
 
     const actorAgent = await svc.getById(req.actor.agentId);
-    if (!actorAgent || actorAgent.companyId !== targetAgent.companyId) {
+    if (!actorAgent || actorAgent.workspaceId !== targetAgent.workspaceId) {
       throw forbidden("Agent key cannot access another company");
     }
     if (actorAgent.id === targetAgent.id) return;
@@ -650,11 +650,11 @@ export function agentRoutes(db: Db) {
   }
 
   async function buildRuntimeSkillConfig(
-    companyId: string,
+    workspaceId: string,
     adapterType: string,
     config: Record<string, unknown>,
   ) {
-    const runtimeSkillEntries = await companySkills.listRuntimeSkillEntries(companyId, {
+    const runtimeSkillEntries = await companySkills.listRuntimeSkillEntries(workspaceId, {
       materializeMissing: shouldMaterializeRuntimeSkillsForAdapter(adapterType),
     });
     return {
@@ -664,7 +664,7 @@ export function agentRoutes(db: Db) {
   }
 
   async function resolveDesiredSkillAssignment(
-    companyId: string,
+    workspaceId: string,
     adapterType: string,
     adapterConfig: Record<string, unknown>,
     requestedDesiredSkills: string[] | undefined,
@@ -678,10 +678,10 @@ export function agentRoutes(db: Db) {
     }
 
     const resolvedRequestedSkills = await companySkills.resolveRequestedSkillKeys(
-      companyId,
+      workspaceId,
       requestedDesiredSkills,
     );
-    const runtimeSkillEntries = await companySkills.listRuntimeSkillEntries(companyId, {
+    const runtimeSkillEntries = await companySkills.listRuntimeSkillEntries(workspaceId, {
       materializeMissing: shouldMaterializeRuntimeSkillsForAdapter(adapterType),
     });
     const requiredSkills = runtimeSkillEntries
@@ -709,7 +709,7 @@ export function agentRoutes(db: Db) {
     if (!agent) return null;
     return {
       id: agent.id,
-      companyId: agent.companyId,
+      workspaceId: agent.workspaceId,
       name: agent.name,
       role: agent.role,
       title: agent.title,
@@ -777,17 +777,17 @@ export function agentRoutes(db: Db) {
     }
   });
 
-  router.get("/companies/:companyId/adapters/:type/models", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/adapters/:type/models", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const type = assertKnownAdapterType(req.params.type as string);
     const models = await listAdapterModels(type);
     res.json(models);
   });
 
-  router.get("/companies/:companyId/adapters/:type/detect-model", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/adapters/:type/detect-model", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const type = assertKnownAdapterType(req.params.type as string);
 
     const detected = await detectAdapterModel(type);
@@ -795,29 +795,29 @@ export function agentRoutes(db: Db) {
   });
 
   router.post(
-    "/companies/:companyId/adapters/:type/test-environment",
+    "/workspaces/:workspaceId/adapters/:type/test-environment",
     validate(testAdapterEnvironmentSchema),
     async (req, res) => {
-      const companyId = req.params.companyId as string;
+      const workspaceId = req.params.workspaceId as string;
       const type = assertKnownAdapterType(req.params.type as string);
-      await assertCanReadConfigurations(req, companyId);
+      await assertCanReadConfigurations(req, workspaceId);
 
       const adapter = requireServerAdapter(type);
 
       const inputAdapterConfig =
         (req.body?.adapterConfig ?? {}) as Record<string, unknown>;
       const normalizedAdapterConfig = await secretsSvc.normalizeAdapterConfigForPersistence(
-        companyId,
+        workspaceId,
         inputAdapterConfig,
         { strictMode: strictSecretsMode },
       );
       const { config: runtimeAdapterConfig } = await secretsSvc.resolveAdapterConfigForRuntime(
-        companyId,
+        workspaceId,
         normalizedAdapterConfig,
       );
 
       const result = await adapter.testEnvironment({
-        companyId,
+        workspaceId,
         adapterType: type,
         config: runtimeAdapterConfig,
       });
@@ -833,14 +833,14 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Agent not found" });
       return;
     }
-    await assertCanReadConfigurations(req, agent.companyId);
+    await assertCanReadConfigurations(req, agent.workspaceId);
 
     const adapter = findActiveServerAdapter(agent.adapterType);
     if (!adapter?.listSkills) {
       const preference = readPaperclipSkillSyncPreference(
         agent.adapterConfig as Record<string, unknown>,
       );
-      const runtimeSkillEntries = await companySkills.listRuntimeSkillEntries(agent.companyId, {
+      const runtimeSkillEntries = await companySkills.listRuntimeSkillEntries(agent.workspaceId, {
         materializeMissing: false,
       });
       const requiredSkills = runtimeSkillEntries.filter((entry) => entry.required).map((entry) => entry.key);
@@ -849,17 +849,17 @@ export function agentRoutes(db: Db) {
     }
 
     const { config: runtimeConfig } = await secretsSvc.resolveAdapterConfigForRuntime(
-      agent.companyId,
+      agent.workspaceId,
       agent.adapterConfig,
     );
     const runtimeSkillConfig = await buildRuntimeSkillConfig(
-      agent.companyId,
+      agent.workspaceId,
       agent.adapterType,
       runtimeConfig,
     );
     const snapshot = await adapter.listSkills({
       agentId: agent.id,
-      companyId: agent.companyId,
+      workspaceId: agent.workspaceId,
       adapterType: agent.adapterType,
       config: runtimeSkillConfig,
     });
@@ -890,7 +890,7 @@ export function agentRoutes(db: Db) {
         desiredSkills,
         runtimeSkillEntries,
       } = await resolveDesiredSkillAssignment(
-        agent.companyId,
+        agent.workspaceId,
         agent.adapterType,
         agent.adapterConfig as Record<string, unknown>,
         requestedSkills,
@@ -915,7 +915,7 @@ export function agentRoutes(db: Db) {
 
       const adapter = findActiveServerAdapter(updated.adapterType);
       const { config: runtimeConfig } = await secretsSvc.resolveAdapterConfigForRuntime(
-        updated.companyId,
+        updated.workspaceId,
         updated.adapterConfig,
       );
       const runtimeSkillConfig = {
@@ -925,21 +925,21 @@ export function agentRoutes(db: Db) {
       const snapshot = adapter?.syncSkills
         ? await adapter.syncSkills({
             agentId: updated.id,
-            companyId: updated.companyId,
+            workspaceId: updated.workspaceId,
             adapterType: updated.adapterType,
             config: runtimeSkillConfig,
           }, desiredSkills)
         : adapter?.listSkills
           ? await adapter.listSkills({
               agentId: updated.id,
-              companyId: updated.companyId,
+              workspaceId: updated.workspaceId,
               adapterType: updated.adapterType,
               config: runtimeSkillConfig,
             })
           : buildUnsupportedSkillSnapshot(updated.adapterType, desiredSkills);
 
       await logActivity(db, {
-        companyId: updated.companyId,
+        workspaceId: updated.workspaceId,
         actorType: actor.actorType,
         actorId: actor.actorId,
         action: "agent.skills_synced",
@@ -961,11 +961,11 @@ export function agentRoutes(db: Db) {
     },
   );
 
-  router.get("/companies/:companyId/agents", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
-    const result = await svc.list(companyId);
-    const canReadConfigs = await actorCanReadConfigurationsForCompany(req, companyId);
+  router.get("/workspaces/:workspaceId/agents", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
+    const result = await svc.list(workspaceId);
+    const canReadConfigs = await actorCanReadConfigurationsForCompany(req, workspaceId);
     if (canReadConfigs || req.actor.type === "board") {
       res.json(result);
       return;
@@ -979,7 +979,7 @@ export function agentRoutes(db: Db) {
     const rows = await db
       .select({
         id: agentsTable.id,
-        companyId: agentsTable.companyId,
+        workspaceId: agentsTable.workspaceId,
         agentName: agentsTable.name,
         role: agentsTable.role,
         title: agentsTable.title,
@@ -991,7 +991,7 @@ export function agentRoutes(db: Db) {
         companyIssuePrefix: companies.issuePrefix,
       })
       .from(agentsTable)
-      .innerJoin(companies, eq(agentsTable.companyId, companies.id))
+      .innerJoin(companies, eq(agentsTable.workspaceId, companies.id))
       .orderBy(companies.name, agentsTable.name);
 
     const items: InstanceSchedulerHeartbeatAgent[] = rows
@@ -1004,7 +1004,7 @@ export function agentRoutes(db: Db) {
 
         return {
           id: row.id,
-          companyId: row.companyId,
+          workspaceId: row.workspaceId,
           companyName: row.companyName,
           companyIssuePrefix: row.companyIssuePrefix,
           agentName: row.agentName,
@@ -1036,19 +1036,19 @@ export function agentRoutes(db: Db) {
     res.json(items);
   });
 
-  router.get("/companies/:companyId/org", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
-    const tree = await svc.orgForCompany(companyId);
+  router.get("/workspaces/:workspaceId/org", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
+    const tree = await svc.orgForCompany(workspaceId);
     const leanTree = tree.map((node) => toLeanOrgNode(node as Record<string, unknown>));
     res.json(leanTree);
   });
 
-  router.get("/companies/:companyId/org.svg", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/org.svg", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const style = (ORG_CHART_STYLES.includes(req.query.style as OrgChartStyle) ? req.query.style : "warmth") as OrgChartStyle;
-    const tree = await svc.orgForCompany(companyId);
+    const tree = await svc.orgForCompany(workspaceId);
     const leanTree = tree.map((node) => toLeanOrgNode(node as Record<string, unknown>));
     const svg = renderOrgChartSvg(leanTree as unknown as OrgNode[], style);
     res.setHeader("Content-Type", "image/svg+xml");
@@ -1056,11 +1056,11 @@ export function agentRoutes(db: Db) {
     res.send(svg);
   });
 
-  router.get("/companies/:companyId/org.png", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/org.png", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const style = (ORG_CHART_STYLES.includes(req.query.style as OrgChartStyle) ? req.query.style : "warmth") as OrgChartStyle;
-    const tree = await svc.orgForCompany(companyId);
+    const tree = await svc.orgForCompany(workspaceId);
     const leanTree = tree.map((node) => toLeanOrgNode(node as Record<string, unknown>));
     const png = await renderOrgChartPng(leanTree as unknown as OrgNode[], style);
     res.setHeader("Content-Type", "image/png");
@@ -1068,10 +1068,10 @@ export function agentRoutes(db: Db) {
     res.send(png);
   });
 
-  router.get("/companies/:companyId/agent-configurations", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    await assertCanReadConfigurations(req, companyId);
-    const rows = await svc.list(companyId);
+  router.get("/workspaces/:workspaceId/agent-configurations", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    await assertCanReadConfigurations(req, workspaceId);
+    const rows = await svc.list(workspaceId);
     res.json(rows.map((row) => redactAgentConfiguration(row)));
   });
 
@@ -1089,13 +1089,13 @@ export function agentRoutes(db: Db) {
   });
 
   router.get("/agents/me/inbox-lite", async (req, res) => {
-    if (req.actor.type !== "agent" || !req.actor.agentId || !req.actor.companyId) {
+    if (req.actor.type !== "agent" || !req.actor.agentId || !req.actor.workspaceId) {
       res.status(401).json({ error: "Agent authentication required" });
       return;
     }
 
     const issuesSvc = issueService(db);
-    const rows = await issuesSvc.list(req.actor.companyId, {
+    const rows = await issuesSvc.list(req.actor.workspaceId, {
       assigneeAgentId: req.actor.agentId,
       status: "todo,in_progress,blocked",
     });
@@ -1117,14 +1117,14 @@ export function agentRoutes(db: Db) {
   });
 
   router.get("/agents/me/inbox/mine", async (req, res) => {
-    if (req.actor.type !== "agent" || !req.actor.agentId || !req.actor.companyId) {
+    if (req.actor.type !== "agent" || !req.actor.agentId || !req.actor.workspaceId) {
       res.status(401).json({ error: "Agent authentication required" });
       return;
     }
 
     const query = agentMineInboxQuerySchema.parse(req.query);
     const issuesSvc = issueService(db);
-    const rows = await issuesSvc.list(req.actor.companyId, {
+    const rows = await issuesSvc.list(req.actor.workspaceId, {
       touchedByUserId: query.userId,
       inboxArchivedByUserId: query.userId,
       status: query.status,
@@ -1140,9 +1140,9 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Agent not found" });
       return;
     }
-    assertCompanyAccess(req, agent.companyId);
+    assertCompanyAccess(req, agent.workspaceId);
     if (req.actor.type === "agent" && req.actor.agentId !== id) {
-      const canRead = await actorCanReadConfigurationsForCompany(req, agent.companyId);
+      const canRead = await actorCanReadConfigurationsForCompany(req, agent.workspaceId);
       if (!canRead) {
         res.json(await buildAgentDetail(agent, { restricted: true }));
         return;
@@ -1158,7 +1158,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Agent not found" });
       return;
     }
-    await assertCanReadConfigurations(req, agent.companyId);
+    await assertCanReadConfigurations(req, agent.workspaceId);
     res.json(redactAgentConfiguration(agent));
   });
 
@@ -1169,7 +1169,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Agent not found" });
       return;
     }
-    await assertCanReadConfigurations(req, agent.companyId);
+    await assertCanReadConfigurations(req, agent.workspaceId);
     const revisions = await svc.listConfigRevisions(id);
     res.json(revisions.map((revision) => redactConfigRevision(revision)));
   });
@@ -1182,7 +1182,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Agent not found" });
       return;
     }
-    await assertCanReadConfigurations(req, agent.companyId);
+    await assertCanReadConfigurations(req, agent.workspaceId);
     const revision = await svc.getConfigRevision(id, revisionId);
     if (!revision) {
       res.status(404).json({ error: "Revision not found" });
@@ -1212,7 +1212,7 @@ export function agentRoutes(db: Db) {
     }
 
     await logActivity(db, {
-      companyId: updated.companyId,
+      workspaceId: updated.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -1234,7 +1234,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Agent not found" });
       return;
     }
-    assertCompanyAccess(req, agent.companyId);
+    assertCompanyAccess(req, agent.workspaceId);
 
     const state = await heartbeat.getRuntimeState(id);
     res.json(state);
@@ -1248,7 +1248,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Agent not found" });
       return;
     }
-    assertCompanyAccess(req, agent.companyId);
+    assertCompanyAccess(req, agent.workspaceId);
 
     const sessions = await heartbeat.listTaskSessions(id);
     res.json(
@@ -1267,7 +1267,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Agent not found" });
       return;
     }
-    assertCompanyAccess(req, agent.companyId);
+    assertCompanyAccess(req, agent.workspaceId);
 
     const taskKey =
       typeof req.body.taskKey === "string" && req.body.taskKey.trim().length > 0
@@ -1276,7 +1276,7 @@ export function agentRoutes(db: Db) {
     const state = await heartbeat.resetRuntimeSession(id, { taskKey });
 
     await logActivity(db, {
-      companyId: agent.companyId,
+      workspaceId: agent.workspaceId,
       actorType: "user",
       actorId: req.actor.userId ?? "board",
       action: "agent.runtime_session_reset",
@@ -1288,9 +1288,9 @@ export function agentRoutes(db: Db) {
     res.json(state);
   });
 
-  router.post("/companies/:companyId/agent-hires", validate(createAgentHireSchema), async (req, res) => {
-    const companyId = req.params.companyId as string;
-    await assertCanCreateAgentsForCompany(req, companyId);
+  router.post("/workspaces/:workspaceId/agent-hires", validate(createAgentHireSchema), async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    await assertCanCreateAgentsForCompany(req, workspaceId);
     const sourceIssueIds = parseSourceIssueIds(req.body);
     const {
       desiredSkills: requestedDesiredSkills,
@@ -1304,18 +1304,18 @@ export function agentRoutes(db: Db) {
       ((hireInput.adapterConfig ?? {}) as Record<string, unknown>),
     );
     const desiredSkillAssignment = await resolveDesiredSkillAssignment(
-      companyId,
+      workspaceId,
       hireInput.adapterType,
       requestedAdapterConfig,
       Array.isArray(requestedDesiredSkills) ? requestedDesiredSkills : undefined,
     );
     const normalizedAdapterConfig = await secretsSvc.normalizeAdapterConfigForPersistence(
-      companyId,
+      workspaceId,
       desiredSkillAssignment.adapterConfig,
       { strictMode: strictSecretsMode },
     );
     await assertAdapterConfigConstraints(
-      companyId,
+      workspaceId,
       hireInput.adapterType,
       normalizedAdapterConfig,
     );
@@ -1327,20 +1327,20 @@ export function agentRoutes(db: Db) {
 
     const company = await db
       .select()
-      .from(companies)
-      .where(eq(companies.id, companyId))
+      .from(workspaces)
+      .where(eq(workspaces.id, workspaceId))
       .then((rows) => rows[0] ?? null);
     if (!company) {
-      res.status(404).json({ error: "Company not found" });
+      res.status(404).json({ error: "Workspace not found" });
       return;
     }
 
     const requiresApproval = company.requireBoardApprovalForNewAgents;
     const status = requiresApproval ? "pending_approval" : "idle";
-    const createdAgent = await svc.create(companyId, {
+    const createdAgent = await svc.create(workspaceId, {
       ...normalizedHireInput,
       status,
-      spentMonthlyCents: 0,
+      
       lastHeartbeatAt: null,
     });
     const agent = await materializeDefaultInstructionsBundleForNewAgent(createdAgent);
@@ -1362,8 +1362,8 @@ export function agentRoutes(db: Db) {
         redactEventPayload(
           ((normalizedHireInput.metadata ?? agent.metadata ?? {}) as Record<string, unknown>),
         ) ?? {};
-      approval = await approvalsSvc.create(companyId, {
-        type: "hire_agent",
+      approval = await approvalsSvc.create(workspaceId, {
+        type: "create_agent",
         requestedByAgentId: actor.actorType === "agent" ? actor.actorId : null,
         requestedByUserId: actor.actorType === "user" ? actor.actorId : null,
         status: "pending",
@@ -1407,7 +1407,7 @@ export function agentRoutes(db: Db) {
     }
 
     await logActivity(db, {
-      companyId,
+      workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -1430,14 +1430,14 @@ export function agentRoutes(db: Db) {
     }
 
     await applyDefaultAgentTaskAssignGrant(
-      companyId,
+      workspaceId,
       agent.id,
       actor.actorType === "user" ? actor.actorId : null,
     );
 
     if (approval) {
       await logActivity(db, {
-        companyId,
+        workspaceId,
         actorType: actor.actorType,
         actorId: actor.actorId,
         agentId: actor.agentId,
@@ -1452,9 +1452,9 @@ export function agentRoutes(db: Db) {
     res.status(201).json({ agent, approval });
   });
 
-  router.post("/companies/:companyId/agents", validate(createAgentSchema), async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.post("/workspaces/:workspaceId/agents", validate(createAgentSchema), async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
 
     if (req.actor.type === "agent") {
       assertBoard(req);
@@ -1470,35 +1470,35 @@ export function agentRoutes(db: Db) {
       ((createInput.adapterConfig ?? {}) as Record<string, unknown>),
     );
     const desiredSkillAssignment = await resolveDesiredSkillAssignment(
-      companyId,
+      workspaceId,
       createInput.adapterType,
       requestedAdapterConfig,
       Array.isArray(requestedDesiredSkills) ? requestedDesiredSkills : undefined,
     );
     const normalizedAdapterConfig = await secretsSvc.normalizeAdapterConfigForPersistence(
-      companyId,
+      workspaceId,
       desiredSkillAssignment.adapterConfig,
       { strictMode: strictSecretsMode },
     );
     await assertAdapterConfigConstraints(
-      companyId,
+      workspaceId,
       createInput.adapterType,
       normalizedAdapterConfig,
     );
 
-    const createdAgent = await svc.create(companyId, {
+    const createdAgent = await svc.create(workspaceId, {
       ...createInput,
       adapterConfig: normalizedAdapterConfig,
       runtimeConfig: normalizeNewAgentRuntimeConfig(createInput.runtimeConfig),
       status: "idle",
-      spentMonthlyCents: 0,
+      
       lastHeartbeatAt: null,
     });
     const agent = await materializeDefaultInstructionsBundleForNewAgent(createdAgent);
 
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId,
+      workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -1518,14 +1518,14 @@ export function agentRoutes(db: Db) {
     }
 
     await applyDefaultAgentTaskAssignGrant(
-      companyId,
+      workspaceId,
       agent.id,
       req.actor.type === "board" ? (req.actor.userId ?? null) : null,
     );
 
     if (agent.budgetMonthlyCents > 0) {
       await budgets.upsertPolicy(
-        companyId,
+        workspaceId,
         {
           scopeType: "agent",
           scopeId: agent.id,
@@ -1546,11 +1546,11 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Agent not found" });
       return;
     }
-    assertCompanyAccess(req, existing.companyId);
+    assertCompanyAccess(req, existing.workspaceId);
 
     if (req.actor.type === "agent") {
       const actorAgent = req.actor.agentId ? await svc.getById(req.actor.agentId) : null;
-      if (!actorAgent || actorAgent.companyId !== existing.companyId) {
+      if (!actorAgent || actorAgent.workspaceId !== existing.workspaceId) {
         res.status(403).json({ error: "Forbidden" });
         return;
       }
@@ -1568,9 +1568,9 @@ export function agentRoutes(db: Db) {
 
     const effectiveCanAssignTasks =
       agent.role === "ceo" || Boolean(agent.permissions?.canCreateAgents) || req.body.canAssignTasks;
-    await access.ensureMembership(agent.companyId, "agent", agent.id, "member", "active");
+    await access.ensureMembership(agent.workspaceId, "agent", agent.id, "member", "active");
     await access.setPrincipalPermission(
-      agent.companyId,
+      agent.workspaceId,
       "agent",
       agent.id,
       "tasks:assign",
@@ -1580,7 +1580,7 @@ export function agentRoutes(db: Db) {
 
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId: agent.companyId,
+      workspaceId: agent.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -1627,7 +1627,7 @@ export function agentRoutes(db: Db) {
 
     const syncedAdapterConfig = syncInstructionsBundleConfigFromFilePath(existing, nextAdapterConfig);
     const normalizedAdapterConfig = await secretsSvc.normalizeAdapterConfigForPersistence(
-      existing.companyId,
+      existing.workspaceId,
       syncedAdapterConfig,
       { strictMode: strictSecretsMode },
     );
@@ -1652,7 +1652,7 @@ export function agentRoutes(db: Db) {
     const pathValue = asNonEmptyString(updatedAdapterConfig[adapterConfigKey]);
 
     await logActivity(db, {
-      companyId: agent.companyId,
+      workspaceId: agent.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -1698,7 +1698,7 @@ export function agentRoutes(db: Db) {
     const actor = getActorInfo(req);
     const { bundle, adapterConfig } = await instructions.updateBundle(existing, req.body);
     const normalizedAdapterConfig = await secretsSvc.normalizeAdapterConfigForPersistence(
-      existing.companyId,
+      existing.workspaceId,
       adapterConfig,
       { strictMode: strictSecretsMode },
     );
@@ -1715,7 +1715,7 @@ export function agentRoutes(db: Db) {
     );
 
     await logActivity(db, {
-      companyId: existing.companyId,
+      workspaceId: existing.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -1766,7 +1766,7 @@ export function agentRoutes(db: Db) {
       clearLegacyPromptTemplate: req.body.clearLegacyPromptTemplate,
     });
     const normalizedAdapterConfig = await secretsSvc.normalizeAdapterConfigForPersistence(
-      existing.companyId,
+      existing.workspaceId,
       result.adapterConfig,
       { strictMode: strictSecretsMode },
     );
@@ -1783,7 +1783,7 @@ export function agentRoutes(db: Db) {
     );
 
     await logActivity(db, {
-      companyId: existing.companyId,
+      workspaceId: existing.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -1819,7 +1819,7 @@ export function agentRoutes(db: Db) {
     const actor = getActorInfo(req);
     const result = await instructions.deleteFile(existing, relativePath);
     await logActivity(db, {
-      companyId: existing.companyId,
+      workspaceId: existing.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -1916,7 +1916,7 @@ export function agentRoutes(db: Db) {
         rawEffectiveAdapterConfig,
       );
       const normalizedEffectiveAdapterConfig = await secretsSvc.normalizeAdapterConfigForPersistence(
-        existing.companyId,
+        existing.workspaceId,
         effectiveAdapterConfig,
         { strictMode: strictSecretsMode },
       );
@@ -1925,7 +1925,7 @@ export function agentRoutes(db: Db) {
     if (touchesAdapterConfiguration && requestedAdapterType === "opencode_local") {
       const effectiveAdapterConfig = asRecord(patchData.adapterConfig) ?? {};
       await assertAdapterConfigConstraints(
-        existing.companyId,
+        existing.workspaceId,
         requestedAdapterType,
         effectiveAdapterConfig,
       );
@@ -1945,7 +1945,7 @@ export function agentRoutes(db: Db) {
     }
 
     await logActivity(db, {
-      companyId: agent.companyId,
+      workspaceId: agent.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -1971,7 +1971,7 @@ export function agentRoutes(db: Db) {
     await heartbeat.cancelActiveForAgent(id);
 
     await logActivity(db, {
-      companyId: agent.companyId,
+      workspaceId: agent.workspaceId,
       actorType: "user",
       actorId: req.actor.userId ?? "board",
       action: "agent.paused",
@@ -1992,7 +1992,7 @@ export function agentRoutes(db: Db) {
     }
 
     await logActivity(db, {
-      companyId: agent.companyId,
+      workspaceId: agent.workspaceId,
       actorType: "user",
       actorId: req.actor.userId ?? "board",
       action: "agent.resumed",
@@ -2015,7 +2015,7 @@ export function agentRoutes(db: Db) {
     await heartbeat.cancelActiveForAgent(id);
 
     await logActivity(db, {
-      companyId: agent.companyId,
+      workspaceId: agent.workspaceId,
       actorType: "user",
       actorId: req.actor.userId ?? "board",
       action: "agent.terminated",
@@ -2036,7 +2036,7 @@ export function agentRoutes(db: Db) {
     }
 
     await logActivity(db, {
-      companyId: agent.companyId,
+      workspaceId: agent.workspaceId,
       actorType: "user",
       actorId: req.actor.userId ?? "board",
       action: "agent.deleted",
@@ -2062,7 +2062,7 @@ export function agentRoutes(db: Db) {
     const agent = await svc.getById(id);
     if (agent) {
       await logActivity(db, {
-        companyId: agent.companyId,
+        workspaceId: agent.workspaceId,
         actorType: "user",
         actorId: req.actor.userId ?? "board",
         action: "agent.key_created",
@@ -2093,7 +2093,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Agent not found" });
       return;
     }
-    assertCompanyAccess(req, agent.companyId);
+    assertCompanyAccess(req, agent.workspaceId);
 
     if (req.actor.type === "agent" && req.actor.agentId !== id) {
       res.status(403).json({ error: "Agent can only invoke itself" });
@@ -2122,7 +2122,7 @@ export function agentRoutes(db: Db) {
 
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId: agent.companyId,
+      workspaceId: agent.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -2143,7 +2143,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Agent not found" });
       return;
     }
-    assertCompanyAccess(req, agent.companyId);
+    assertCompanyAccess(req, agent.workspaceId);
 
     if (req.actor.type === "agent" && req.actor.agentId !== id) {
       res.status(403).json({ error: "Agent can only invoke itself" });
@@ -2171,7 +2171,7 @@ export function agentRoutes(db: Db) {
 
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId: agent.companyId,
+      workspaceId: agent.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -2193,19 +2193,19 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Agent not found" });
       return;
     }
-    assertCompanyAccess(req, agent.companyId);
+    assertCompanyAccess(req, agent.workspaceId);
     if (agent.adapterType !== "claude_local") {
       res.status(400).json({ error: "Login is only supported for claude_local agents" });
       return;
     }
 
     const config = asRecord(agent.adapterConfig) ?? {};
-    const { config: runtimeConfig } = await secretsSvc.resolveAdapterConfigForRuntime(agent.companyId, config);
+    const { config: runtimeConfig } = await secretsSvc.resolveAdapterConfigForRuntime(agent.workspaceId, config);
     const result = await runClaudeLogin({
       runId: `claude-login-${randomUUID()}`,
       agent: {
         id: agent.id,
-        companyId: agent.companyId,
+        workspaceId: agent.workspaceId,
         name: agent.name,
         adapterType: agent.adapterType,
         adapterConfig: agent.adapterConfig,
@@ -2216,19 +2216,19 @@ export function agentRoutes(db: Db) {
     res.json(result);
   });
 
-  router.get("/companies/:companyId/heartbeat-runs", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/heartbeat-runs", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const agentId = req.query.agentId as string | undefined;
     const limitParam = req.query.limit as string | undefined;
     const limit = limitParam ? Math.max(1, Math.min(1000, parseInt(limitParam, 10) || 200)) : undefined;
-    const runs = await heartbeat.list(companyId, agentId, limit);
+    const runs = await heartbeat.list(workspaceId, agentId, limit);
     res.json(runs);
   });
 
-  router.get("/companies/:companyId/live-runs", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/live-runs", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
 
     const minCountParam = req.query.minCount as string | undefined;
     const minCount = minCountParam ? Math.max(0, Math.min(20, parseInt(minCountParam, 10) || 0)) : 0;
@@ -2253,7 +2253,7 @@ export function agentRoutes(db: Db) {
       .innerJoin(agentsTable, eq(heartbeatRuns.agentId, agentsTable.id))
       .where(
         and(
-          eq(heartbeatRuns.companyId, companyId),
+          eq(heartbeatRuns.workspaceId, workspaceId),
           inArray(heartbeatRuns.status, ["queued", "running"]),
         ),
       )
@@ -2267,7 +2267,7 @@ export function agentRoutes(db: Db) {
         .innerJoin(agentsTable, eq(heartbeatRuns.agentId, agentsTable.id))
         .where(
           and(
-            eq(heartbeatRuns.companyId, companyId),
+            eq(heartbeatRuns.workspaceId, workspaceId),
             not(inArray(heartbeatRuns.status, ["queued", "running"])),
             ...(activeIds.length > 0 ? [not(inArray(heartbeatRuns.id, activeIds))] : []),
           ),
@@ -2289,7 +2289,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Heartbeat run not found" });
       return;
     }
-    assertCompanyAccess(req, run.companyId);
+    assertCompanyAccess(req, run.workspaceId);
     res.json(redactCurrentUserValue(run, await getCurrentUserRedactionOptions()));
   });
 
@@ -2298,13 +2298,13 @@ export function agentRoutes(db: Db) {
     const runId = req.params.runId as string;
     const existing = await heartbeat.getRun(runId);
     if (existing) {
-      assertCompanyAccess(req, existing.companyId);
+      assertCompanyAccess(req, existing.workspaceId);
     }
     const run = await heartbeat.cancelRun(runId);
 
     if (run) {
       await logActivity(db, {
-        companyId: run.companyId,
+        workspaceId: run.workspaceId,
         actorType: "user",
         actorId: req.actor.userId ?? "board",
         action: "heartbeat.cancelled",
@@ -2324,7 +2324,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Heartbeat run not found" });
       return;
     }
-    assertCompanyAccess(req, run.companyId);
+    assertCompanyAccess(req, run.workspaceId);
 
     const afterSeq = Number(req.query.afterSeq ?? 0);
     const limit = Number(req.query.limit ?? 200);
@@ -2346,7 +2346,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Heartbeat run not found" });
       return;
     }
-    assertCompanyAccess(req, run.companyId);
+    assertCompanyAccess(req, run.workspaceId);
 
     const offset = Number(req.query.offset ?? 0);
     const limitBytes = Number(req.query.limitBytes ?? 256000);
@@ -2365,7 +2365,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Heartbeat run not found" });
       return;
     }
-    assertCompanyAccess(req, run.companyId);
+    assertCompanyAccess(req, run.workspaceId);
 
     const context = asRecord(run.contextSnapshot);
     const executionWorkspaceId = asNonEmptyString(context?.executionWorkspaceId);
@@ -2380,7 +2380,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Workspace operation not found" });
       return;
     }
-    assertCompanyAccess(req, operation.companyId);
+    assertCompanyAccess(req, operation.workspaceId);
 
     const offset = Number(req.query.offset ?? 0);
     const limitBytes = Number(req.query.limitBytes ?? 256000);
@@ -2401,7 +2401,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Issue not found" });
       return;
     }
-    assertCompanyAccess(req, issue.companyId);
+    assertCompanyAccess(req, issue.workspaceId);
 
     const liveRuns = await db
       .select({
@@ -2420,7 +2420,7 @@ export function agentRoutes(db: Db) {
       .innerJoin(agentsTable, eq(heartbeatRuns.agentId, agentsTable.id))
       .where(
         and(
-          eq(heartbeatRuns.companyId, issue.companyId),
+          eq(heartbeatRuns.workspaceId, issue.workspaceId),
           inArray(heartbeatRuns.status, ["queued", "running"]),
           sql`${heartbeatRuns.contextSnapshot} ->> 'issueId' = ${issue.id}`,
         ),
@@ -2439,7 +2439,7 @@ export function agentRoutes(db: Db) {
       res.status(404).json({ error: "Issue not found" });
       return;
     }
-    assertCompanyAccess(req, issue.companyId);
+    assertCompanyAccess(req, issue.workspaceId);
 
     let run = issue.executionRunId ? await heartbeat.getRunIssueSummary(issue.executionRunId) : null;
     if (run && run.status !== "queued" && run.status !== "running") {

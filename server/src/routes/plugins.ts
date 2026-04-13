@@ -322,12 +322,12 @@ export function pluginRoutes(
       return rows.map((row) => row.id);
     }
 
-    if (req.actor.type === "agent" && req.actor.companyId) {
-      return [req.actor.companyId];
+    if (req.actor.type === "agent" && req.actor.workspaceId) {
+      return [req.actor.workspaceId];
     }
 
     if (req.actor.type === "board") {
-      return req.actor.companyIds ?? [];
+      return req.actor.workspaceIds ?? [];
     }
 
     return [];
@@ -339,13 +339,13 @@ export function pluginRoutes(
     entityId: string,
     details: Record<string, unknown>,
   ): Promise<void> {
-    const companyIds = await resolvePluginAuditCompanyIds(req);
-    if (companyIds.length === 0) return;
+    const workspaceIds = await resolvePluginAuditCompanyIds(req);
+    if (workspaceIds.length === 0) return;
 
     const actor = getActorInfo(req);
-    await Promise.all(companyIds.map((companyId) =>
+    await Promise.all(workspaceIds.map((workspaceId) =>
       logActivity(db, {
-        companyId,
+        workspaceId,
         actorType: actor.actorType,
         actorId: actor.actorId,
         agentId: actor.agentId,
@@ -507,7 +507,7 @@ export function pluginRoutes(
    * Request body:
    * - `tool`: Fully namespaced tool name (e.g., "acme.linear:search-issues")
    * - `parameters`: Parameters matching the tool's declared JSON Schema
-   * - `runContext`: Agent run context with agentId, runId, companyId, projectId
+   * - `runContext`: Agent run context with agentId, runId, workspaceId, projectId
    *
    * Response: `ToolExecutionResult`
    * Errors:
@@ -543,14 +543,14 @@ export function pluginRoutes(
       return;
     }
 
-    if (!runContext.agentId || !runContext.runId || !runContext.companyId || !runContext.projectId) {
+    if (!runContext.agentId || !runContext.runId || !runContext.workspaceId || !runContext.projectId) {
       res.status(400).json({
-        error: '"runContext" must include agentId, runId, companyId, and projectId',
+        error: '"runContext" must include agentId, runId, workspaceId, and projectId',
       });
       return;
     }
 
-    assertCompanyAccess(req, runContext.companyId);
+    assertCompanyAccess(req, runContext.workspaceId);
 
     // Verify the tool exists
     const registeredTool = toolDeps.toolDispatcher.getTool(tool);
@@ -678,7 +678,7 @@ export function pluginRoutes(
     /** Plugin-defined data key (e.g. `"sync-health"`). */
     key: string;
     /** Optional company scope for authorizing company-context bridge calls. */
-    companyId?: string;
+    workspaceId?: string;
     /** Optional context and query parameters from the UI. */
     params?: Record<string, unknown>;
     /** Optional host launcher/render metadata for the worker bridge call. */
@@ -690,7 +690,7 @@ export function pluginRoutes(
     /** Plugin-defined action key (e.g. `"resync"`). */
     key: string;
     /** Optional company scope for authorizing company-context bridge calls. */
-    companyId?: string;
+    workspaceId?: string;
     /** Optional parameters from the UI. */
     params?: Record<string, unknown>;
     /** Optional host launcher/render metadata for the worker bridge call. */
@@ -826,8 +826,8 @@ export function pluginRoutes(
       return;
     }
 
-    if (body.companyId) {
-      assertCompanyAccess(req, body.companyId);
+    if (body.workspaceId) {
+      assertCompanyAccess(req, body.workspaceId);
     }
 
     try {
@@ -909,8 +909,8 @@ export function pluginRoutes(
       return;
     }
 
-    if (body.companyId) {
-      assertCompanyAccess(req, body.companyId);
+    if (body.workspaceId) {
+      assertCompanyAccess(req, body.workspaceId);
     }
 
     try {
@@ -987,13 +987,13 @@ export function pluginRoutes(
     }
 
     const body = req.body as {
-      companyId?: string;
+      workspaceId?: string;
       params?: Record<string, unknown>;
       renderEnvironment?: PluginLauncherRenderContextSnapshot | null;
     } | undefined;
 
-    if (body?.companyId) {
-      assertCompanyAccess(req, body.companyId);
+    if (body?.workspaceId) {
+      assertCompanyAccess(req, body.workspaceId);
     }
 
     try {
@@ -1066,13 +1066,13 @@ export function pluginRoutes(
     }
 
     const body = req.body as {
-      companyId?: string;
+      workspaceId?: string;
       params?: Record<string, unknown>;
       renderEnvironment?: PluginLauncherRenderContextSnapshot | null;
     } | undefined;
 
-    if (body?.companyId) {
-      assertCompanyAccess(req, body.companyId);
+    if (body?.workspaceId) {
+      assertCompanyAccess(req, body.workspaceId);
     }
 
     try {
@@ -1104,10 +1104,10 @@ export function pluginRoutes(
    * The worker pushes events via `ctx.streams.emit(channel, event)` which arrive
    * as JSON-RPC notifications to the host, get published on the PluginStreamBus,
    * and are fanned out to all connected SSE clients matching (pluginId, channel,
-   * companyId).
+   * workspaceId).
    *
    * Query parameters:
-   * - `companyId` (required): Scope events to a specific company
+   * - `workspaceId` (required): Scope events to a specific company
    *
    * SSE event types:
    * - `message`: A data event from the worker (default)
@@ -1115,7 +1115,7 @@ export function pluginRoutes(
    * - `close`: The worker closed the stream channel — client should disconnect
    *
    * Errors:
-   * - 400 if companyId is missing
+   * - 400 if workspaceId is missing
    * - 404 if plugin not found
    * - 501 if bridge deps or stream bus are not configured
    */
@@ -1128,10 +1128,10 @@ export function pluginRoutes(
     }
 
     const { pluginId, channel } = req.params;
-    const companyId = req.query.companyId as string | undefined;
+    const workspaceId = req.query.workspaceId as string | undefined;
 
-    if (!companyId) {
-      res.status(400).json({ error: '"companyId" query parameter is required' });
+    if (!workspaceId) {
+      res.status(400).json({ error: '"workspaceId" query parameter is required' });
       return;
     }
 
@@ -1141,7 +1141,7 @@ export function pluginRoutes(
       return;
     }
 
-    assertCompanyAccess(req, companyId);
+    assertCompanyAccess(req, workspaceId);
 
     // Set SSE headers
     res.writeHead(200, {
@@ -1166,7 +1166,7 @@ export function pluginRoutes(
     const unsubscribe = bridgeDeps.streamBus.subscribe(
       plugin.id,
       channel,
-      companyId,
+      workspaceId,
       (event, eventType) => {
         if (unsubscribed || !res.writable) return;
         try {

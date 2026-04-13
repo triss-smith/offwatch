@@ -7,10 +7,10 @@ export function dashboardRoutes(db: Db) {
   const router = Router();
   const svc = dashboardService(db);
 
-  router.get("/companies/:companyId/dashboard", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
-    const summary = await svc.summary(companyId);
+  router.get("/workspaces/:workspaceId/dashboard", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
+    const summary = await svc.summary(workspaceId);
     res.json(summary);
   });
 

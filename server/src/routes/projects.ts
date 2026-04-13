@@ -23,26 +23,26 @@ export function projectRoutes(db: Db) {
   const strictSecretsMode = process.env.PAPERCLIP_SECRETS_STRICT_MODE === "true";
 
   async function resolveCompanyIdForProjectReference(req: Request) {
-    const companyIdQuery = req.query.companyId;
+    const workspaceIdQuery = req.query.workspaceId;
     const requestedCompanyId =
-      typeof companyIdQuery === "string" && companyIdQuery.trim().length > 0
-        ? companyIdQuery.trim()
+      typeof workspaceIdQuery === "string" && workspaceIdQuery.trim().length > 0
+        ? workspaceIdQuery.trim()
         : null;
     if (requestedCompanyId) {
       assertCompanyAccess(req, requestedCompanyId);
       return requestedCompanyId;
     }
-    if (req.actor.type === "agent" && req.actor.companyId) {
-      return req.actor.companyId;
+    if (req.actor.type === "agent" && req.actor.workspaceId) {
+      return req.actor.workspaceId;
     }
     return null;
   }
 
   async function normalizeProjectReference(req: Request, rawId: string) {
     if (isUuidLike(rawId)) return rawId;
-    const companyId = await resolveCompanyIdForProjectReference(req);
-    if (!companyId) return rawId;
-    const resolved = await svc.resolveByReference(companyId, rawId);
+    const workspaceId = await resolveCompanyIdForProjectReference(req);
+    if (!workspaceId) return rawId;
+    const resolved = await svc.resolveByReference(workspaceId, rawId);
     if (resolved.ambiguous) {
       throw conflict("Project shortname is ambiguous in this company. Use the project ID.");
     }
@@ -58,10 +58,10 @@ export function projectRoutes(db: Db) {
     }
   });
 
-  router.get("/companies/:companyId/projects", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
-    const result = await svc.list(companyId);
+  router.get("/workspaces/:workspaceId/projects", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
+    const result = await svc.list(workspaceId);
     res.json(result);
   });
 
@@ -72,13 +72,13 @@ export function projectRoutes(db: Db) {
       res.status(404).json({ error: "Project not found" });
       return;
     }
-    assertCompanyAccess(req, project.companyId);
+    assertCompanyAccess(req, project.workspaceId);
     res.json(project);
   });
 
-  router.post("/companies/:companyId/projects", validate(createProjectSchema), async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.post("/workspaces/:workspaceId/projects", validate(createProjectSchema), async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     type CreateProjectPayload = Parameters<typeof svc.create>[1] & {
       workspace?: Parameters<typeof svc.createWorkspace>[1];
     };
@@ -86,12 +86,12 @@ export function projectRoutes(db: Db) {
     const { workspace, ...projectData } = req.body as CreateProjectPayload;
     if (projectData.env !== undefined) {
       projectData.env = await secretsSvc.normalizeEnvBindingsForPersistence(
-        companyId,
+        workspaceId,
         projectData.env,
         { strictMode: strictSecretsMode, fieldPath: "env" },
       );
     }
-    const project = await svc.create(companyId, projectData);
+    const project = await svc.create(workspaceId, projectData);
     let createdWorkspaceId: string | null = null;
     if (workspace) {
       const createdWorkspace = await svc.createWorkspace(project.id, workspace);
@@ -106,7 +106,7 @@ export function projectRoutes(db: Db) {
 
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId,
+      workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -133,13 +133,13 @@ export function projectRoutes(db: Db) {
       res.status(404).json({ error: "Project not found" });
       return;
     }
-    assertCompanyAccess(req, existing.companyId);
+    assertCompanyAccess(req, existing.workspaceId);
     const body = { ...req.body };
     if (typeof body.archivedAt === "string") {
       body.archivedAt = new Date(body.archivedAt);
     }
     if (body.env !== undefined) {
-      body.env = await secretsSvc.normalizeEnvBindingsForPersistence(existing.companyId, body.env, {
+      body.env = await secretsSvc.normalizeEnvBindingsForPersistence(existing.workspaceId, body.env, {
         strictMode: strictSecretsMode,
         fieldPath: "env",
       });
@@ -152,7 +152,7 @@ export function projectRoutes(db: Db) {
 
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId: project.companyId,
+      workspaceId: project.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -178,7 +178,7 @@ export function projectRoutes(db: Db) {
       res.status(404).json({ error: "Project not found" });
       return;
     }
-    assertCompanyAccess(req, existing.companyId);
+    assertCompanyAccess(req, existing.workspaceId);
     const workspaces = await svc.listWorkspaces(id);
     res.json(workspaces);
   });
@@ -190,7 +190,7 @@ export function projectRoutes(db: Db) {
       res.status(404).json({ error: "Project not found" });
       return;
     }
-    assertCompanyAccess(req, existing.companyId);
+    assertCompanyAccess(req, existing.workspaceId);
     const workspace = await svc.createWorkspace(id, req.body);
     if (!workspace) {
       res.status(422).json({ error: "Invalid project workspace payload" });
@@ -199,7 +199,7 @@ export function projectRoutes(db: Db) {
 
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId: existing.companyId,
+      workspaceId: existing.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -228,7 +228,7 @@ export function projectRoutes(db: Db) {
         res.status(404).json({ error: "Project not found" });
         return;
       }
-      assertCompanyAccess(req, existing.companyId);
+      assertCompanyAccess(req, existing.workspaceId);
       const workspaceExists = (await svc.listWorkspaces(id)).some((workspace) => workspace.id === workspaceId);
       if (!workspaceExists) {
         res.status(404).json({ error: "Project workspace not found" });
@@ -242,7 +242,7 @@ export function projectRoutes(db: Db) {
 
       const actor = getActorInfo(req);
       await logActivity(db, {
-        companyId: existing.companyId,
+        workspaceId: existing.workspaceId,
         actorType: actor.actorType,
         actorId: actor.actorId,
         agentId: actor.agentId,
@@ -273,7 +273,7 @@ export function projectRoutes(db: Db) {
       res.status(404).json({ error: "Project not found" });
       return;
     }
-    assertCompanyAccess(req, project.companyId);
+    assertCompanyAccess(req, project.workspaceId);
 
     const workspace = project.workspaces.find((entry) => entry.id === workspaceId) ?? null;
     if (!workspace) {
@@ -294,7 +294,7 @@ export function projectRoutes(db: Db) {
     }
 
     const actor = getActorInfo(req);
-    const recorder = workspaceOperations.createRecorder({ companyId: project.companyId });
+    const recorder = workspaceOperations.createRecorder({ workspaceId: project.workspaceId });
     let runtimeServiceCount = workspace.runtimeServices?.length ?? 0;
     const stdout: string[] = [];
     const stderr: string[] = [];
@@ -327,7 +327,7 @@ export function projectRoutes(db: Db) {
             actor: {
               id: actor.agentId ?? null,
               name: actor.actorType === "user" ? "Board" : "Agent",
-              companyId: project.companyId,
+              workspaceId: project.workspaceId,
             },
             issue: null,
             workspace: {
@@ -379,7 +379,7 @@ export function projectRoutes(db: Db) {
     const updatedWorkspace = (await svc.listWorkspaces(project.id)).find((entry) => entry.id === workspace.id) ?? workspace;
 
     await logActivity(db, {
-      companyId: project.companyId,
+      workspaceId: project.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -406,7 +406,7 @@ export function projectRoutes(db: Db) {
       res.status(404).json({ error: "Project not found" });
       return;
     }
-    assertCompanyAccess(req, existing.companyId);
+    assertCompanyAccess(req, existing.workspaceId);
     const workspace = await svc.removeWorkspace(id, workspaceId);
     if (!workspace) {
       res.status(404).json({ error: "Project workspace not found" });
@@ -415,7 +415,7 @@ export function projectRoutes(db: Db) {
 
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId: existing.companyId,
+      workspaceId: existing.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -438,7 +438,7 @@ export function projectRoutes(db: Db) {
       res.status(404).json({ error: "Project not found" });
       return;
     }
-    assertCompanyAccess(req, existing.companyId);
+    assertCompanyAccess(req, existing.workspaceId);
     const project = await svc.remove(id);
     if (!project) {
       res.status(404).json({ error: "Project not found" });
@@ -447,7 +447,7 @@ export function projectRoutes(db: Db) {
 
     const actor = getActorInfo(req);
     await logActivity(db, {
-      companyId: project.companyId,
+      workspaceId: project.workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,

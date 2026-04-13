@@ -107,9 +107,9 @@ export function assetRoutes(db: Db, storage: StorageService) {
     });
   }
 
-  router.post("/companies/:companyId/assets/images", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.post("/workspaces/:workspaceId/assets/images", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
 
     try {
       await runSingleFileUpload(assetUpload, req, res);
@@ -159,14 +159,14 @@ export function assetRoutes(db: Db, storage: StorageService) {
 
     const actor = getActorInfo(req);
     const stored = await storage.putFile({
-      companyId,
+      workspaceId,
       namespace: `assets/${namespaceSuffix}`,
       originalFilename: file.originalname || null,
       contentType,
       body: fileBody,
     });
 
-    const asset = await svc.create(companyId, {
+    const asset = await svc.create(workspaceId, {
       provider: stored.provider,
       objectKey: stored.objectKey,
       contentType: stored.contentType,
@@ -178,7 +178,7 @@ export function assetRoutes(db: Db, storage: StorageService) {
     });
 
     await logActivity(db, {
-      companyId,
+      workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -195,7 +195,7 @@ export function assetRoutes(db: Db, storage: StorageService) {
 
     res.status(201).json({
       assetId: asset.id,
-      companyId: asset.companyId,
+      workspaceId: asset.workspaceId,
       provider: asset.provider,
       objectKey: asset.objectKey,
       contentType: asset.contentType,
@@ -210,9 +210,9 @@ export function assetRoutes(db: Db, storage: StorageService) {
     });
   });
 
-  router.post("/companies/:companyId/logo", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.post("/workspaces/:workspaceId/logo", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
 
     try {
       await runSingleFileUpload(companyLogoUpload, req, res);
@@ -257,14 +257,14 @@ export function assetRoutes(db: Db, storage: StorageService) {
 
     const actor = getActorInfo(req);
     const stored = await storage.putFile({
-      companyId,
+      workspaceId,
       namespace: "assets/companies",
       originalFilename: file.originalname || null,
       contentType,
       body: fileBody,
     });
 
-    const asset = await svc.create(companyId, {
+    const asset = await svc.create(workspaceId, {
       provider: stored.provider,
       objectKey: stored.objectKey,
       contentType: stored.contentType,
@@ -276,7 +276,7 @@ export function assetRoutes(db: Db, storage: StorageService) {
     });
 
     await logActivity(db, {
-      companyId,
+      workspaceId,
       actorType: actor.actorType,
       actorId: actor.actorId,
       agentId: actor.agentId,
@@ -294,7 +294,7 @@ export function assetRoutes(db: Db, storage: StorageService) {
 
     res.status(201).json({
       assetId: asset.id,
-      companyId: asset.companyId,
+      workspaceId: asset.workspaceId,
       provider: asset.provider,
       objectKey: asset.objectKey,
       contentType: asset.contentType,
@@ -316,9 +316,9 @@ export function assetRoutes(db: Db, storage: StorageService) {
       res.status(404).json({ error: "Asset not found" });
       return;
     }
-    assertCompanyAccess(req, asset.companyId);
+    assertCompanyAccess(req, asset.workspaceId);
 
-    const object = await storage.getObject(asset.companyId, asset.objectKey);
+    const object = await storage.getObject(asset.workspaceId, asset.objectKey);
     const responseContentType = asset.contentType || object.contentType || "application/octet-stream";
     res.setHeader("Content-Type", responseContentType);
     res.setHeader("Content-Length", String(asset.byteSize || object.contentLength || 0));

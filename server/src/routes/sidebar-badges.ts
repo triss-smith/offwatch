@@ -21,17 +21,17 @@ export function sidebarBadgeRoutes(db: Db) {
   const access = accessService(db);
   const dashboard = dashboardService(db);
 
-  router.get("/companies/:companyId/sidebar-badges", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/sidebar-badges", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     let canApproveJoins = false;
     if (req.actor.type === "board") {
       canApproveJoins =
         req.actor.source === "local_implicit" ||
         Boolean(req.actor.isInstanceAdmin) ||
-        (await access.canUser(companyId, req.actor.userId, "joins:approve"));
+        (await access.canUser(workspaceId, req.actor.userId, "joins:approve"));
     } else if (req.actor.type === "agent" && req.actor.agentId) {
-      canApproveJoins = await access.hasPermission(companyId, "agent", req.actor.agentId, "joins:approve");
+      canApproveJoins = await access.hasPermission(workspaceId, "agent", req.actor.agentId, "joins:approve");
     }
 
     const visibleJoinRequests = canApproveJoins
@@ -42,7 +42,7 @@ export function sidebarBadgeRoutes(db: Db) {
           createdAt: joinRequests.createdAt,
         })
         .from(joinRequests)
-        .where(and(eq(joinRequests.companyId, companyId), eq(joinRequests.status, "pending_approval")))
+        .where(and(eq(joinRequests.workspaceId, workspaceId), eq(joinRequests.status, "pending_approval")))
       : [];
 
     const dismissedAtByKey =
@@ -50,15 +50,15 @@ export function sidebarBadgeRoutes(db: Db) {
         ? await db
           .select({ itemKey: inboxDismissals.itemKey, dismissedAt: inboxDismissals.dismissedAt })
           .from(inboxDismissals)
-          .where(and(eq(inboxDismissals.companyId, companyId), eq(inboxDismissals.userId, req.actor.userId)))
+          .where(and(eq(inboxDismissals.workspaceId, workspaceId), eq(inboxDismissals.userId, req.actor.userId)))
           .then(buildDismissedAtByKey)
         : new Map<string, number>();
 
-    const badges = await svc.get(companyId, {
+    const badges = await svc.get(workspaceId, {
       dismissals: dismissedAtByKey,
       joinRequests: visibleJoinRequests,
     });
-    const summary = await dashboard.summary(companyId);
+    const summary = await dashboard.summary(workspaceId);
     const hasFailedRuns = badges.failedRuns > 0;
     const alertsCount =
       (summary.agents.error > 0 && !hasFailedRuns ? 1 : 0) +

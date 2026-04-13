@@ -30,12 +30,12 @@ export function activityRoutes(db: Db) {
     return issueSvc.getById(rawId);
   }
 
-  router.get("/companies/:companyId/activity", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  router.get("/workspaces/:workspaceId/activity", async (req, res) => {
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
 
     const filters = {
-      companyId,
+      workspaceId,
       agentId: req.query.agentId as string | undefined,
       entityType: req.query.entityType as string | undefined,
       entityId: req.query.entityId as string | undefined,
@@ -44,12 +44,12 @@ export function activityRoutes(db: Db) {
     res.json(result);
   });
 
-  router.post("/companies/:companyId/activity", validate(createActivitySchema), async (req, res) => {
+  router.post("/workspaces/:workspaceId/activity", validate(createActivitySchema), async (req, res) => {
     assertBoard(req);
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+    const workspaceId = req.params.workspaceId as string;
+    assertCompanyAccess(req, workspaceId);
     const event = await svc.create({
-      companyId,
+      workspaceId,
       ...req.body,
       details: req.body.details ? sanitizeRecord(req.body.details) : null,
     });
@@ -63,7 +63,7 @@ export function activityRoutes(db: Db) {
       res.status(404).json({ error: "Issue not found" });
       return;
     }
-    assertCompanyAccess(req, issue.companyId);
+    assertCompanyAccess(req, issue.workspaceId);
     const result = await svc.forIssue(issue.id);
     res.json(result);
   });
@@ -75,8 +75,8 @@ export function activityRoutes(db: Db) {
       res.status(404).json({ error: "Issue not found" });
       return;
     }
-    assertCompanyAccess(req, issue.companyId);
-    const result = await svc.runsForIssue(issue.companyId, issue.id);
+    assertCompanyAccess(req, issue.workspaceId);
+    const result = await svc.runsForIssue(issue.workspaceId, issue.id);
     res.json(result);
   });
 
@@ -87,7 +87,7 @@ export function activityRoutes(db: Db) {
       res.json([]);
       return;
     }
-    assertCompanyAccess(req, run.companyId);
+    assertCompanyAccess(req, run.workspaceId);
     const result = await svc.issuesForRun(runId);
     res.json(result);
   });
