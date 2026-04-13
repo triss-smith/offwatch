@@ -56,6 +56,9 @@ import {
   SVG_CONTENT_TYPE,
 } from "../attachment-types.js";
 import { queueIssueAssignmentWakeup } from "../services/issue-assignment-wakeup.js";
+import { emitIssueCheckedOut, emitIssueCompleted } from "../services/issue-events.js";
+import { createWorktree, removeWorktree } from "../services/worktree.js";
+import { workspaceService } from "../services/workspaces.js";
 import {
   applyIssueExecutionPolicyTransition,
   normalizeIssueExecutionPolicy,
@@ -1660,6 +1663,14 @@ export function issueRoutes(
           trackAgentTaskCompleted(tc, { agentRole: actorAgent.role });
         }
       }
+      emitIssueCompleted({
+        issueId: issue.id,
+        workspaceId: issue.workspaceId,
+        agentId: issue.assigneeAgentId ?? null,
+        linkedExternalId: issue.linkedExternalId ?? null,
+        linkedBranchName: issue.linkedBranchName ?? null,
+        worktreePath: issue.worktreePath ?? null,
+      });
     }
 
     let comment = null;
@@ -2006,7 +2017,48 @@ export function issueRoutes(
         .catch((err) => logger.warn({ err, issueId: issue.id }, "failed to wake assignee on issue checkout"));
     }
 
+    // Create git worktree if workspace has repoPath and issue has a linkedBranchName
+    const workspace = await workspaceService(db).getById(updated.workspaceId);
+    if (workspace?.repoPath && updated.linkedBranchName) {
+      const worktreesPath = workspace.worktreesPath ?? `${workspace.repoPath}-worktrees`;
+      try {
+        const { worktreePath } = await createWorktree(
+          workspace.repoPath,
+          worktreesPath,
+          updated.linkedBranchName,
+        );
+        await svc.update(updated.id, { worktreePath });
+        updated.worktreePath = worktreePath;
+      } catch (err) {
+        logger.warn({ err, issueId: updated.id }, "failed to create worktree on checkout");
+      }
+    }
+
+    emitIssueCheckedOut({
+      issueId: updated.id,
+      workspaceId: updated.workspaceId,
+      agentId: req.body.agentId,
+      linkedExternalId: updated.linkedExternalId ?? null,
+      linkedBranchName: updated.linkedBranchName ?? null,
+      worktreePath: updated.worktreePath ?? null,
+    });
+
     res.json(updated);
+  });
+
+  router.post("/issues/:id/worktree/remove", async (req, res) => {
+    const id = req.params.id as string;
+    const issue = await svc.getById(id);
+    if (!issue) { res.status(404).json({ error: "Issue not found" }); return; }
+    assertCompanyAccess(req, issue.workspaceId);
+    if (!issue.worktreePath) { res.status(400).json({ error: "Issue has no worktree" }); return; }
+
+    const workspace = await workspaceService(db).getById(issue.workspaceId);
+    if (!workspace?.repoPath) { res.status(400).json({ error: "Workspace has no repoPath configured" }); return; }
+
+    await removeWorktree(workspace.repoPath, issue.worktreePath);
+    await svc.update(id, { worktreePath: null });
+    res.json({ ok: true });
   });
 
   router.post("/issues/:id/release", async (req, res) => {

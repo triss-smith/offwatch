@@ -683,8 +683,8 @@ export type PluginWebhookDeliveryStatus = (typeof PLUGIN_WEBHOOK_DELIVERY_STATUS
  * @see PLUGIN_SPEC.md §16 — Event System
  */
 export const PLUGIN_EVENT_TYPES = [
-  "company.created",
-  "company.updated",
+  "workspace.created",
+  "workspace.updated",
   "project.created",
   "project.updated",
   "project.workspace_created",
@@ -692,6 +692,8 @@ export const PLUGIN_EVENT_TYPES = [
   "project.workspace_deleted",
   "issue.created",
   "issue.updated",
+  "issue.checkedout",
+  "issue.completed",
   "issue.comment.created",
   "agent.created",
   "agent.updated",
