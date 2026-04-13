@@ -155,8 +155,8 @@ export const portabilityManifestSchema = z.object({
   generatedAt: z.string().datetime(),
   source: z
     .object({
-      companyId: z.string().uuid(),
-      companyName: z.string().min(1),
+      workspaceId: z.string().uuid(),
+      workspaceName: z.string().min(1),
     })
     .nullable(),
   includes: z.object({
@@ -189,12 +189,12 @@ export const portabilitySourceSchema = z.discriminatedUnion("type", [
 
 export const portabilityTargetSchema = z.discriminatedUnion("mode", [
   z.object({
-    mode: z.literal("new_company"),
-    newCompanyName: z.string().min(1).optional().nullable(),
+    mode: z.literal("new_workspace"),
+    newWorkspaceName: z.string().min(1).optional().nullable(),
   }),
   z.object({
-    mode: z.literal("existing_company"),
-    companyId: z.string().uuid(),
+    mode: z.literal("existing_workspace"),
+    workspaceId: z.string().uuid(),
   }),
 ]);
 
@@ -205,7 +205,7 @@ export const portabilityAgentSelectionSchema = z.union([
 
 export const portabilityCollisionStrategySchema = z.enum(["rename", "skip", "replace"]);
 
-export const companyPortabilityExportSchema = z.object({
+export const workspacePortabilityExportSchema = z.object({
   include: portabilityIncludeSchema.optional(),
   agents: z.array(z.string().min(1)).optional(),
   skills: z.array(z.string().min(1)).optional(),
@@ -217,9 +217,9 @@ export const companyPortabilityExportSchema = z.object({
   sidebarOrder: portabilitySidebarOrderSchema.partial().optional(),
 });
 
-export type CompanyPortabilityExport = z.infer<typeof companyPortabilityExportSchema>;
+export type WorkspacePortabilityExport = z.infer<typeof workspacePortabilityExportSchema>;
 
-export const companyPortabilityPreviewSchema = z.object({
+export const workspacePortabilityPreviewSchema = z.object({
   source: portabilitySourceSchema,
   include: portabilityIncludeSchema.optional(),
   target: portabilityTargetSchema,
@@ -229,15 +229,15 @@ export const companyPortabilityPreviewSchema = z.object({
   selectedFiles: z.array(z.string().min(1)).optional(),
 });
 
-export type CompanyPortabilityPreview = z.infer<typeof companyPortabilityPreviewSchema>;
+export type WorkspacePortabilityPreview = z.infer<typeof workspacePortabilityPreviewSchema>;
 
 export const portabilityAdapterOverrideSchema = z.object({
   adapterType: z.string().min(1),
   adapterConfig: z.record(z.unknown()).optional(),
 });
 
-export const companyPortabilityImportSchema = companyPortabilityPreviewSchema.extend({
+export const workspacePortabilityImportSchema = workspacePortabilityPreviewSchema.extend({
   adapterOverrides: z.record(z.string().min(1), portabilityAdapterOverrideSchema).optional(),
 });
 
-export type CompanyPortabilityImport = z.infer<typeof companyPortabilityImportSchema>;
+export type WorkspacePortabilityImport = z.infer<typeof workspacePortabilityImportSchema>;

@@ -86,7 +86,7 @@ export const updateMemberPermissionsSchema = z.object({
 export type UpdateMemberPermissions = z.infer<typeof updateMemberPermissionsSchema>;
 
 export const updateUserCompanyAccessSchema = z.object({
-  companyIds: z.array(z.string().uuid()).default([]),
+  workspaceIds: z.array(z.string().uuid()).default([]),
 });
 
 export type UpdateUserCompanyAccess = z.infer<typeof updateUserCompanyAccessSchema>;

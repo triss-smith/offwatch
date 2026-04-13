@@ -24,7 +24,7 @@ export type AgentEnvConfig = Record<string, EnvBinding>;
 
 export interface CompanySecret {
   id: string;
-  companyId: string;
+  workspaceId: string;
   name: string;
   provider: SecretProvider;
   externalRef: string | null;

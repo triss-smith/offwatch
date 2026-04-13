@@ -32,7 +32,7 @@ export interface AgentInstructionsFileDetail extends AgentInstructionsFileSummar
 
 export interface AgentInstructionsBundle {
   agentId: string;
-  companyId: string;
+  workspaceId: string;
   mode: AgentInstructionsBundleMode | null;
   rootPath: string | null;
   managedRootPath: string;
@@ -61,7 +61,7 @@ export interface AgentChainOfCommandEntry {
 
 export interface Agent {
   id: string;
-  companyId: string;
+  workspaceId: string;
   name: string;
   urlKey: string;
   role: AgentRole;
@@ -98,7 +98,7 @@ export interface AgentKeyCreated {
 
 export interface AgentConfigRevision {
   id: string;
-  companyId: string;
+  workspaceId: string;
   agentId: string;
   createdByAgentId: string | null;
   createdByUserId: string | null;

@@ -1,7 +1,7 @@
 import type { AgentEnvConfig } from "./secrets.js";
 import type { RoutineVariable } from "./routine.js";
 
-export interface CompanyPortabilityInclude {
+export interface WorkspacePortabilityInclude {
   company: boolean;
   agents: boolean;
   projects: boolean;
@@ -9,7 +9,7 @@ export interface CompanyPortabilityInclude {
   skills: boolean;
 }
 
-export interface CompanyPortabilityEnvInput {
+export interface WorkspacePortabilityEnvInput {
   key: string;
   description: string | null;
   agentSlug: string | null;
@@ -20,7 +20,7 @@ export interface CompanyPortabilityEnvInput {
   portability: "portable" | "system_dependent";
 }
 
-export type CompanyPortabilityFileEntry =
+export type WorkspacePortabilityFileEntry =
   | string
   | {
       encoding: "base64";
@@ -28,7 +28,7 @@ export type CompanyPortabilityFileEntry =
       contentType?: string | null;
     };
 
-export interface CompanyPortabilityCompanyManifestEntry {
+export interface WorkspacePortabilityCompanyManifestEntry {
   path: string;
   name: string;
   description: string | null;
@@ -41,12 +41,12 @@ export interface CompanyPortabilityCompanyManifestEntry {
   feedbackDataSharingTermsVersion: string | null;
 }
 
-export interface CompanyPortabilitySidebarOrder {
+export interface WorkspacePortabilitySidebarOrder {
   agents: string[];
   projects: string[];
 }
 
-export interface CompanyPortabilityProjectManifestEntry {
+export interface WorkspacePortabilityProjectManifestEntry {
   slug: string;
   name: string;
   path: string;
@@ -58,11 +58,11 @@ export interface CompanyPortabilityProjectManifestEntry {
   status: string | null;
   env: AgentEnvConfig | null;
   executionWorkspacePolicy: Record<string, unknown> | null;
-  workspaces: CompanyPortabilityProjectWorkspaceManifestEntry[];
+  workspaces: WorkspacePortabilityProjectWorkspaceManifestEntry[];
   metadata: Record<string, unknown> | null;
 }
 
-export interface CompanyPortabilityProjectWorkspaceManifestEntry {
+export interface WorkspacePortabilityProjectWorkspaceManifestEntry {
   key: string;
   name: string;
   sourceType: string | null;
@@ -76,7 +76,7 @@ export interface CompanyPortabilityProjectWorkspaceManifestEntry {
   isPrimary: boolean;
 }
 
-export interface CompanyPortabilityIssueRoutineTriggerManifestEntry {
+export interface WorkspacePortabilityIssueRoutineTriggerManifestEntry {
   kind: string;
   label: string | null;
   enabled: boolean;
@@ -86,14 +86,14 @@ export interface CompanyPortabilityIssueRoutineTriggerManifestEntry {
   replayWindowSec: number | null;
 }
 
-export interface CompanyPortabilityIssueRoutineManifestEntry {
+export interface WorkspacePortabilityIssueRoutineManifestEntry {
   concurrencyPolicy: string | null;
   catchUpPolicy: string | null;
   variables?: RoutineVariable[] | null;
-  triggers: CompanyPortabilityIssueRoutineTriggerManifestEntry[];
+  triggers: WorkspacePortabilityIssueRoutineTriggerManifestEntry[];
 }
 
-export interface CompanyPortabilityIssueManifestEntry {
+export interface WorkspacePortabilityIssueManifestEntry {
   slug: string;
   identifier: string | null;
   title: string;
@@ -103,7 +103,7 @@ export interface CompanyPortabilityIssueManifestEntry {
   assigneeAgentSlug: string | null;
   description: string | null;
   recurring: boolean;
-  routine: CompanyPortabilityIssueRoutineManifestEntry | null;
+  routine: WorkspacePortabilityIssueRoutineManifestEntry | null;
   legacyRecurrence: Record<string, unknown> | null;
   status: string | null;
   priority: string | null;
@@ -114,7 +114,7 @@ export interface CompanyPortabilityIssueManifestEntry {
   metadata: Record<string, unknown> | null;
 }
 
-export interface CompanyPortabilityAgentManifestEntry {
+export interface WorkspacePortabilityAgentManifestEntry {
   slug: string;
   name: string;
   path: string;
@@ -132,7 +132,7 @@ export interface CompanyPortabilityAgentManifestEntry {
   metadata: Record<string, unknown> | null;
 }
 
-export interface CompanyPortabilitySkillManifestEntry {
+export interface WorkspacePortabilitySkillManifestEntry {
   key: string;
   slug: string;
   name: string;
@@ -150,41 +150,41 @@ export interface CompanyPortabilitySkillManifestEntry {
   }>;
 }
 
-export interface CompanyPortabilityManifest {
+export interface WorkspacePortabilityManifest {
   schemaVersion: number;
   generatedAt: string;
   source: {
-    companyId: string;
-    companyName: string;
+    workspaceId: string;
+    workspaceName: string;
   } | null;
-  includes: CompanyPortabilityInclude;
-  company: CompanyPortabilityCompanyManifestEntry | null;
-  sidebar: CompanyPortabilitySidebarOrder | null;
-  agents: CompanyPortabilityAgentManifestEntry[];
-  skills: CompanyPortabilitySkillManifestEntry[];
-  projects: CompanyPortabilityProjectManifestEntry[];
-  issues: CompanyPortabilityIssueManifestEntry[];
-  envInputs: CompanyPortabilityEnvInput[];
+  includes: WorkspacePortabilityInclude;
+  company: WorkspacePortabilityCompanyManifestEntry | null;
+  sidebar: WorkspacePortabilitySidebarOrder | null;
+  agents: WorkspacePortabilityAgentManifestEntry[];
+  skills: WorkspacePortabilitySkillManifestEntry[];
+  projects: WorkspacePortabilityProjectManifestEntry[];
+  issues: WorkspacePortabilityIssueManifestEntry[];
+  envInputs: WorkspacePortabilityEnvInput[];
 }
 
-export interface CompanyPortabilityExportResult {
+export interface WorkspacePortabilityExportResult {
   rootPath: string;
-  manifest: CompanyPortabilityManifest;
-  files: Record<string, CompanyPortabilityFileEntry>;
+  manifest: WorkspacePortabilityManifest;
+  files: Record<string, WorkspacePortabilityFileEntry>;
   warnings: string[];
   paperclipExtensionPath: string;
 }
 
-export interface CompanyPortabilityExportPreviewFile {
+export interface WorkspacePortabilityExportPreviewFile {
   path: string;
   kind: "company" | "agent" | "skill" | "project" | "issue" | "extension" | "readme" | "other";
 }
 
-export interface CompanyPortabilityExportPreviewResult {
+export interface WorkspacePortabilityExportPreviewResult {
   rootPath: string;
-  manifest: CompanyPortabilityManifest;
-  files: Record<string, CompanyPortabilityFileEntry>;
-  fileInventory: CompanyPortabilityExportPreviewFile[];
+  manifest: WorkspacePortabilityManifest;
+  files: Record<string, WorkspacePortabilityFileEntry>;
+  fileInventory: WorkspacePortabilityExportPreviewFile[];
   counts: {
     files: number;
     agents: number;
@@ -196,42 +196,42 @@ export interface CompanyPortabilityExportPreviewResult {
   paperclipExtensionPath: string;
 }
 
-export type CompanyPortabilitySource =
+export type WorkspacePortabilitySource =
   | {
       type: "inline";
       rootPath?: string | null;
-      files: Record<string, CompanyPortabilityFileEntry>;
+      files: Record<string, WorkspacePortabilityFileEntry>;
     }
   | {
       type: "github";
       url: string;
     };
 
-export type CompanyPortabilityImportTarget =
+export type WorkspacePortabilityImportTarget =
   | {
-      mode: "new_company";
-      newCompanyName?: string | null;
+      mode: "new_workspace";
+      newWorkspaceName?: string | null;
     }
   | {
-      mode: "existing_company";
-      companyId: string;
+      mode: "existing_workspace";
+      workspaceId: string;
     };
 
-export type CompanyPortabilityAgentSelection = "all" | string[];
+export type WorkspacePortabilityAgentSelection = "all" | string[];
 
-export type CompanyPortabilityCollisionStrategy = "rename" | "skip" | "replace";
+export type WorkspacePortabilityCollisionStrategy = "rename" | "skip" | "replace";
 
-export interface CompanyPortabilityPreviewRequest {
-  source: CompanyPortabilitySource;
-  include?: Partial<CompanyPortabilityInclude>;
-  target: CompanyPortabilityImportTarget;
-  agents?: CompanyPortabilityAgentSelection;
-  collisionStrategy?: CompanyPortabilityCollisionStrategy;
+export interface WorkspacePortabilityPreviewRequest {
+  source: WorkspacePortabilitySource;
+  include?: Partial<WorkspacePortabilityInclude>;
+  target: WorkspacePortabilityImportTarget;
+  agents?: WorkspacePortabilityAgentSelection;
+  collisionStrategy?: WorkspacePortabilityCollisionStrategy;
   nameOverrides?: Record<string, string>;
   selectedFiles?: string[];
 }
 
-export interface CompanyPortabilityPreviewAgentPlan {
+export interface WorkspacePortabilityPreviewAgentPlan {
   slug: string;
   action: "create" | "update" | "skip";
   plannedName: string;
@@ -239,7 +239,7 @@ export interface CompanyPortabilityPreviewAgentPlan {
   reason: string | null;
 }
 
-export interface CompanyPortabilityPreviewProjectPlan {
+export interface WorkspacePortabilityPreviewProjectPlan {
   slug: string;
   action: "create" | "update" | "skip";
   plannedName: string;
@@ -247,43 +247,43 @@ export interface CompanyPortabilityPreviewProjectPlan {
   reason: string | null;
 }
 
-export interface CompanyPortabilityPreviewIssuePlan {
+export interface WorkspacePortabilityPreviewIssuePlan {
   slug: string;
   action: "create" | "skip";
   plannedTitle: string;
   reason: string | null;
 }
 
-export interface CompanyPortabilityPreviewResult {
-  include: CompanyPortabilityInclude;
-  targetCompanyId: string | null;
-  targetCompanyName: string | null;
-  collisionStrategy: CompanyPortabilityCollisionStrategy;
+export interface WorkspacePortabilityPreviewResult {
+  include: WorkspacePortabilityInclude;
+  targetWorkspaceId: string | null;
+  targetWorkspaceName: string | null;
+  collisionStrategy: WorkspacePortabilityCollisionStrategy;
   selectedAgentSlugs: string[];
   plan: {
-    companyAction: "none" | "create" | "update";
-    agentPlans: CompanyPortabilityPreviewAgentPlan[];
-    projectPlans: CompanyPortabilityPreviewProjectPlan[];
-    issuePlans: CompanyPortabilityPreviewIssuePlan[];
+    workspaceAction: "none" | "create" | "update";
+    agentPlans: WorkspacePortabilityPreviewAgentPlan[];
+    projectPlans: WorkspacePortabilityPreviewProjectPlan[];
+    issuePlans: WorkspacePortabilityPreviewIssuePlan[];
   };
-  manifest: CompanyPortabilityManifest;
-  files: Record<string, CompanyPortabilityFileEntry>;
-  envInputs: CompanyPortabilityEnvInput[];
+  manifest: WorkspacePortabilityManifest;
+  files: Record<string, WorkspacePortabilityFileEntry>;
+  envInputs: WorkspacePortabilityEnvInput[];
   warnings: string[];
   errors: string[];
 }
 
-export interface CompanyPortabilityAdapterOverride {
+export interface WorkspacePortabilityAdapterOverride {
   adapterType: string;
   adapterConfig?: Record<string, unknown>;
 }
 
-export interface CompanyPortabilityImportRequest extends CompanyPortabilityPreviewRequest {
-  adapterOverrides?: Record<string, CompanyPortabilityAdapterOverride>;
+export interface WorkspacePortabilityImportRequest extends WorkspacePortabilityPreviewRequest {
+  adapterOverrides?: Record<string, WorkspacePortabilityAdapterOverride>;
 }
 
-export interface CompanyPortabilityImportResult {
-  company: {
+export interface WorkspacePortabilityImportResult {
+  workspace: {
     id: string;
     name: string;
     action: "created" | "updated" | "unchanged";
@@ -302,12 +302,12 @@ export interface CompanyPortabilityImportResult {
     name: string;
     reason: string | null;
   }[];
-  envInputs: CompanyPortabilityEnvInput[];
+  envInputs: WorkspacePortabilityEnvInput[];
   warnings: string[];
 }
 
-export interface CompanyPortabilityExportRequest {
-  include?: Partial<CompanyPortabilityInclude>;
+export interface WorkspacePortabilityExportRequest {
+  include?: Partial<WorkspacePortabilityInclude>;
   agents?: string[];
   skills?: string[];
   projects?: string[];
@@ -315,5 +315,5 @@ export interface CompanyPortabilityExportRequest {
   projectIssues?: string[];
   selectedFiles?: string[];
   expandReferencedSkills?: boolean;
-  sidebarOrder?: Partial<CompanyPortabilitySidebarOrder>;
+  sidebarOrder?: Partial<WorkspacePortabilitySidebarOrder>;
 }

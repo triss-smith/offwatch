@@ -38,7 +38,7 @@ export interface RoutineVariable {
 
 export interface Routine {
   id: string;
-  companyId: string;
+  workspaceId: string;
   projectId: string | null;
   goalId: string | null;
   parentIssueId: string | null;
@@ -62,7 +62,7 @@ export interface Routine {
 
 export interface RoutineTrigger {
   id: string;
-  companyId: string;
+  workspaceId: string;
   routineId: string;
   kind: string;
   label: string | null;
@@ -87,7 +87,7 @@ export interface RoutineTrigger {
 
 export interface RoutineRun {
   id: string;
-  companyId: string;
+  workspaceId: string;
   routineId: string;
   triggerId: string | null;
   source: string;

@@ -47,7 +47,7 @@ export interface IssueAncestor {
 
 export interface IssueLabel {
   id: string;
-  companyId: string;
+  workspaceId: string;
   name: string;
   color: string;
   createdAt: Date;
@@ -63,7 +63,7 @@ export type DocumentFormat = "markdown";
 
 export interface IssueDocumentSummary {
   id: string;
-  companyId: string;
+  workspaceId: string;
   issueId: string;
   key: string;
   title: string | null;
@@ -84,7 +84,7 @@ export interface IssueDocument extends IssueDocumentSummary {
 
 export interface DocumentRevision {
   id: string;
-  companyId: string;
+  workspaceId: string;
   documentId: string;
   issueId: string;
   key: string;
@@ -116,7 +116,7 @@ export interface IssueRelationIssueSummary {
 
 export interface IssueRelation {
   id: string;
-  companyId: string;
+  workspaceId: string;
   issueId: string;
   relatedIssueId: string;
   type: "blocks";
@@ -160,7 +160,7 @@ export interface IssueExecutionState {
 
 export interface IssueExecutionDecision {
   id: string;
-  companyId: string;
+  workspaceId: string;
   issueId: string;
   stageId: string;
   stageType: IssueExecutionStageType;
@@ -175,7 +175,7 @@ export interface IssueExecutionDecision {
 
 export interface Issue {
   id: string;
-  companyId: string;
+  workspaceId: string;
   projectId: string | null;
   projectWorkspaceId: string | null;
   goalId: string | null;
@@ -232,7 +232,7 @@ export interface Issue {
 
 export interface IssueComment {
   id: string;
-  companyId: string;
+  workspaceId: string;
   issueId: string;
   authorAgentId: string | null;
   authorUserId: string | null;
@@ -243,7 +243,7 @@ export interface IssueComment {
 
 export interface IssueAttachment {
   id: string;
-  companyId: string;
+  workspaceId: string;
   issueId: string;
   issueCommentId: string | null;
   assetId: string;

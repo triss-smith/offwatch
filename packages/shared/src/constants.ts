@@ -216,10 +216,8 @@ export const PROJECT_COLORS = [
 ] as const;
 
 export const APPROVAL_TYPES = [
-  "hire_agent",
-  "approve_ceo_strategy",
-  "budget_override_required",
-  "request_board_approval",
+  "tracker_issue_proposal",
+  "create_agent",
 ] as const;
 export type ApprovalType = (typeof APPROVAL_TYPES)[number];
 

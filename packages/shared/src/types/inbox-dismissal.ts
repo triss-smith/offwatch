@@ -1,6 +1,6 @@
 export interface InboxDismissal {
   id: string;
-  companyId: string;
+  workspaceId: string;
   userId: string;
   itemKey: string;
   dismissedAt: Date;

@@ -1,59 +1,59 @@
-export type CompanySkillSourceType = "local_path" | "github" | "url" | "catalog" | "skills_sh";
+export type WorkspaceSkillSourceType = "local_path" | "github" | "url" | "catalog" | "skills_sh";
 
-export type CompanySkillTrustLevel = "markdown_only" | "assets" | "scripts_executables";
+export type WorkspaceSkillTrustLevel = "markdown_only" | "assets" | "scripts_executables";
 
-export type CompanySkillCompatibility = "compatible" | "unknown" | "invalid";
+export type WorkspaceSkillCompatibility = "compatible" | "unknown" | "invalid";
 
-export type CompanySkillSourceBadge = "paperclip" | "github" | "local" | "url" | "catalog" | "skills_sh";
+export type WorkspaceSkillSourceBadge = "paperclip" | "github" | "local" | "url" | "catalog" | "skills_sh";
 
-export interface CompanySkillFileInventoryEntry {
+export interface WorkspaceSkillFileInventoryEntry {
   path: string;
   kind: "skill" | "markdown" | "reference" | "script" | "asset" | "other";
 }
 
-export interface CompanySkill {
+export interface WorkspaceSkill {
   id: string;
-  companyId: string;
+  workspaceId: string;
   key: string;
   slug: string;
   name: string;
   description: string | null;
   markdown: string;
-  sourceType: CompanySkillSourceType;
+  sourceType: WorkspaceSkillSourceType;
   sourceLocator: string | null;
   sourceRef: string | null;
-  trustLevel: CompanySkillTrustLevel;
-  compatibility: CompanySkillCompatibility;
-  fileInventory: CompanySkillFileInventoryEntry[];
+  trustLevel: WorkspaceSkillTrustLevel;
+  compatibility: WorkspaceSkillCompatibility;
+  fileInventory: WorkspaceSkillFileInventoryEntry[];
   metadata: Record<string, unknown> | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface CompanySkillListItem {
+export interface WorkspaceSkillListItem {
   id: string;
-  companyId: string;
+  workspaceId: string;
   key: string;
   slug: string;
   name: string;
   description: string | null;
-  sourceType: CompanySkillSourceType;
+  sourceType: WorkspaceSkillSourceType;
   sourceLocator: string | null;
   sourceRef: string | null;
-  trustLevel: CompanySkillTrustLevel;
-  compatibility: CompanySkillCompatibility;
-  fileInventory: CompanySkillFileInventoryEntry[];
+  trustLevel: WorkspaceSkillTrustLevel;
+  compatibility: WorkspaceSkillCompatibility;
+  fileInventory: WorkspaceSkillFileInventoryEntry[];
   createdAt: Date;
   updatedAt: Date;
   attachedAgentCount: number;
   editable: boolean;
   editableReason: string | null;
   sourceLabel: string | null;
-  sourceBadge: CompanySkillSourceBadge;
+  sourceBadge: WorkspaceSkillSourceBadge;
   sourcePath: string | null;
 }
 
-export interface CompanySkillUsageAgent {
+export interface WorkspaceSkillUsageAgent {
   id: string;
   name: string;
   urlKey: string;
@@ -62,17 +62,17 @@ export interface CompanySkillUsageAgent {
   actualState: string | null;
 }
 
-export interface CompanySkillDetail extends CompanySkill {
+export interface WorkspaceSkillDetail extends WorkspaceSkill {
   attachedAgentCount: number;
-  usedByAgents: CompanySkillUsageAgent[];
+  usedByAgents: WorkspaceSkillUsageAgent[];
   editable: boolean;
   editableReason: string | null;
   sourceLabel: string | null;
-  sourceBadge: CompanySkillSourceBadge;
+  sourceBadge: WorkspaceSkillSourceBadge;
   sourcePath: string | null;
 }
 
-export interface CompanySkillUpdateStatus {
+export interface WorkspaceSkillUpdateStatus {
   supported: boolean;
   reason: string | null;
   trackingRef: string | null;
@@ -81,21 +81,21 @@ export interface CompanySkillUpdateStatus {
   hasUpdate: boolean;
 }
 
-export interface CompanySkillImportRequest {
+export interface WorkspaceSkillImportRequest {
   source: string;
 }
 
-export interface CompanySkillImportResult {
-  imported: CompanySkill[];
+export interface WorkspaceSkillImportResult {
+  imported: WorkspaceSkill[];
   warnings: string[];
 }
 
-export interface CompanySkillProjectScanRequest {
+export interface WorkspaceSkillProjectScanRequest {
   projectIds?: string[];
   workspaceIds?: string[];
 }
 
-export interface CompanySkillProjectScanSkipped {
+export interface WorkspaceSkillProjectScanSkipped {
   projectId: string;
   projectName: string;
   workspaceId: string | null;
@@ -104,7 +104,7 @@ export interface CompanySkillProjectScanSkipped {
   reason: string;
 }
 
-export interface CompanySkillProjectScanConflict {
+export interface WorkspaceSkillProjectScanConflict {
   slug: string;
   key: string;
   projectId: string;
@@ -118,35 +118,35 @@ export interface CompanySkillProjectScanConflict {
   reason: string;
 }
 
-export interface CompanySkillProjectScanResult {
+export interface WorkspaceSkillProjectScanResult {
   scannedProjects: number;
   scannedWorkspaces: number;
   discovered: number;
-  imported: CompanySkill[];
-  updated: CompanySkill[];
-  skipped: CompanySkillProjectScanSkipped[];
-  conflicts: CompanySkillProjectScanConflict[];
+  imported: WorkspaceSkill[];
+  updated: WorkspaceSkill[];
+  skipped: WorkspaceSkillProjectScanSkipped[];
+  conflicts: WorkspaceSkillProjectScanConflict[];
   warnings: string[];
 }
 
-export interface CompanySkillCreateRequest {
+export interface WorkspaceSkillCreateRequest {
   name: string;
   slug?: string | null;
   description?: string | null;
   markdown?: string | null;
 }
 
-export interface CompanySkillFileDetail {
+export interface WorkspaceSkillFileDetail {
   skillId: string;
   path: string;
-  kind: CompanySkillFileInventoryEntry["kind"];
+  kind: WorkspaceSkillFileInventoryEntry["kind"];
   content: string;
   language: string | null;
   markdown: boolean;
   editable: boolean;
 }
 
-export interface CompanySkillFileUpdateRequest {
+export interface WorkspaceSkillFileUpdateRequest {
   path: string;
   content: string;
 }
