@@ -23,11 +23,11 @@ function currentUtcMonthWindow(now = new Date()) {
 
 async function getMonthlySpendTotal(
   db: Db,
-  scope: { companyId: string; agentId?: string | null },
+  scope: { workspaceId: string; agentId?: string | null },
 ) {
   const { start, end } = currentUtcMonthWindow();
   const conditions = [
-    eq(costEvents.companyId, scope.companyId),
+    eq(costEvents.workspaceId, scope.workspaceId),
     gte(costEvents.occurredAt, start),
     lt(costEvents.occurredAt, end),
   ];
@@ -46,7 +46,7 @@ async function getMonthlySpendTotal(
 export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
   const budgets = budgetService(db, budgetHooks);
   return {
-    createEvent: async (companyId: string, data: Omit<typeof costEvents.$inferInsert, "companyId">) => {
+    createEvent: async (workspaceId: string, data: Omit<typeof costEvents.$inferInsert, "workspaceId">) => {
       const agent = await db
         .select()
         .from(agents)
@@ -54,7 +54,7 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
         .then((rows) => rows[0] ?? null);
 
       if (!agent) throw notFound("Agent not found");
-      if (agent.companyId !== companyId) {
+      if (agent.workspaceId !== workspaceId) {
         throw unprocessable("Agent does not belong to company");
       }
 
@@ -62,7 +62,7 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
         .insert(costEvents)
         .values({
           ...data,
-          companyId,
+          workspaceId,
           biller: data.biller ?? data.provider,
           billingType: data.billingType ?? "unknown",
           cachedInputTokens: data.cachedInputTokens ?? 0,
@@ -71,8 +71,8 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
         .then((rows) => rows[0]);
 
       const [agentMonthSpend, companyMonthSpend] = await Promise.all([
-        getMonthlySpendTotal(db, { companyId, agentId: event.agentId }),
-        getMonthlySpendTotal(db, { companyId }),
+        getMonthlySpendTotal(db, { workspaceId, agentId: event.agentId }),
+        getMonthlySpendTotal(db, { workspaceId }),
       ]);
 
       await db
@@ -89,23 +89,23 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
           spentMonthlyCents: companyMonthSpend,
           updatedAt: new Date(),
         })
-        .where(eq(companies.id, companyId));
+        .where(eq(companies.id, workspaceId));
 
       await budgets.evaluateCostEvent(event);
 
       return event;
     },
 
-    summary: async (companyId: string, range?: CostDateRange) => {
+    summary: async (workspaceId: string, range?: CostDateRange) => {
       const company = await db
         .select()
         .from(companies)
-        .where(eq(companies.id, companyId))
+        .where(eq(companies.id, workspaceId))
         .then((rows) => rows[0] ?? null);
 
       if (!company) throw notFound("Company not found");
 
-      const conditions: ReturnType<typeof eq>[] = [eq(costEvents.companyId, companyId)];
+      const conditions: ReturnType<typeof eq>[] = [eq(costEvents.workspaceId, workspaceId)];
       if (range?.from) conditions.push(gte(costEvents.occurredAt, range.from));
       if (range?.to) conditions.push(lte(costEvents.occurredAt, range.to));
 
@@ -123,15 +123,15 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
           : 0;
 
       return {
-        companyId,
+        workspaceId,
         spendCents,
         budgetCents: company.budgetMonthlyCents,
         utilizationPercent: Number(utilization.toFixed(2)),
       };
     },
 
-    byAgent: async (companyId: string, range?: CostDateRange) => {
-      const conditions: ReturnType<typeof eq>[] = [eq(costEvents.companyId, companyId)];
+    byAgent: async (workspaceId: string, range?: CostDateRange) => {
+      const conditions: ReturnType<typeof eq>[] = [eq(costEvents.workspaceId, workspaceId)];
       if (range?.from) conditions.push(gte(costEvents.occurredAt, range.from));
       if (range?.to) conditions.push(lte(costEvents.occurredAt, range.to));
 
@@ -162,8 +162,8 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
         .orderBy(desc(sql`coalesce(sum(${costEvents.costCents}), 0)::int`));
     },
 
-    byProvider: async (companyId: string, range?: CostDateRange) => {
-      const conditions: ReturnType<typeof eq>[] = [eq(costEvents.companyId, companyId)];
+    byProvider: async (workspaceId: string, range?: CostDateRange) => {
+      const conditions: ReturnType<typeof eq>[] = [eq(costEvents.workspaceId, workspaceId)];
       if (range?.from) conditions.push(gte(costEvents.occurredAt, range.from));
       if (range?.to) conditions.push(lte(costEvents.occurredAt, range.to));
 
@@ -194,8 +194,8 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
         .orderBy(desc(sql`coalesce(sum(${costEvents.costCents}), 0)::int`));
     },
 
-    byBiller: async (companyId: string, range?: CostDateRange) => {
-      const conditions: ReturnType<typeof eq>[] = [eq(costEvents.companyId, companyId)];
+    byBiller: async (workspaceId: string, range?: CostDateRange) => {
+      const conditions: ReturnType<typeof eq>[] = [eq(costEvents.workspaceId, workspaceId)];
       if (range?.from) conditions.push(gte(costEvents.occurredAt, range.from));
       if (range?.to) conditions.push(lte(costEvents.occurredAt, range.to));
 
@@ -230,7 +230,7 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
      * last 5 hours, last 24 hours, last 7 days.
      * purely internal consumption data, no external rate-limit sources.
      */
-    windowSpend: async (companyId: string) => {
+    windowSpend: async (workspaceId: string) => {
       const windows = [
         { label: "5h", hours: 5 },
         { label: "24h", hours: 24 },
@@ -252,7 +252,7 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
             .from(costEvents)
             .where(
               and(
-                eq(costEvents.companyId, companyId),
+                eq(costEvents.workspaceId, workspaceId),
                 gte(costEvents.occurredAt, since),
               ),
             )
@@ -275,13 +275,13 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
       return results.flat();
     },
 
-    byAgentModel: async (companyId: string, range?: CostDateRange) => {
-      const conditions: ReturnType<typeof eq>[] = [eq(costEvents.companyId, companyId)];
+    byAgentModel: async (workspaceId: string, range?: CostDateRange) => {
+      const conditions: ReturnType<typeof eq>[] = [eq(costEvents.workspaceId, workspaceId)];
       if (range?.from) conditions.push(gte(costEvents.occurredAt, range.from));
       if (range?.to) conditions.push(lte(costEvents.occurredAt, range.to));
 
       // single query: group by agent + provider + model.
-      // the (companyId, agentId, occurredAt) composite index covers this well.
+      // the (workspaceId, agentId, occurredAt) composite index covers this well.
       // order by provider + model for stable db-level ordering; cost-desc sort
       // within each agent's sub-rows is done client-side in the ui memo.
       return db
@@ -311,7 +311,7 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
         .orderBy(costEvents.provider, costEvents.biller, costEvents.billingType, costEvents.model);
     },
 
-    byProject: async (companyId: string, range?: CostDateRange) => {
+    byProject: async (workspaceId: string, range?: CostDateRange) => {
       const issueIdAsText = sql<string>`${issues.id}::text`;
       const runProjectLinks = db
         .selectDistinctOn([activityLog.runId, issues.projectId], {
@@ -328,8 +328,8 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
         )
         .where(
           and(
-            eq(activityLog.companyId, companyId),
-            eq(issues.companyId, companyId),
+            eq(activityLog.workspaceId, workspaceId),
+            eq(issues.workspaceId, workspaceId),
             isNotNull(activityLog.runId),
             isNotNull(issues.projectId),
           ),
@@ -338,7 +338,7 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
         .as("run_project_links");
 
       const effectiveProjectId = sql<string | null>`coalesce(${costEvents.projectId}, ${runProjectLinks.projectId})`;
-      const conditions: ReturnType<typeof eq>[] = [eq(costEvents.companyId, companyId)];
+      const conditions: ReturnType<typeof eq>[] = [eq(costEvents.workspaceId, workspaceId)];
       if (range?.from) conditions.push(gte(costEvents.occurredAt, range.from));
       if (range?.to) conditions.push(lte(costEvents.occurredAt, range.to));
 

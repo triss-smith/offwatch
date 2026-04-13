@@ -115,7 +115,7 @@ type IssueUserContextInput = {
 };
 type ProjectGoalReader = Pick<Db, "select">;
 type DbReader = Pick<Db, "select">;
-type IssueCreateInput = Omit<typeof issues.$inferInsert, "companyId"> & {
+type IssueCreateInput = Omit<typeof issues.$inferInsert, "workspaceId"> & {
   labelIds?: string[];
   blockedByIssueIds?: string[];
   inheritExecutionWorkspaceFromIssueId?: string | null;
@@ -138,21 +138,21 @@ function escapeLikePattern(value: string): string {
 
 async function getProjectDefaultGoalId(
   db: ProjectGoalReader,
-  companyId: string,
+  workspaceId: string,
   projectId: string | null | undefined,
 ) {
   if (!projectId) return null;
   const row = await db
     .select({ goalId: projects.goalId })
     .from(projects)
-    .where(and(eq(projects.id, projectId), eq(projects.companyId, companyId)))
+    .where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId)))
     .then((rows) => rows[0] ?? null);
   return row?.goalId ?? null;
 }
 
 async function getWorkspaceInheritanceIssue(
   db: DbReader,
-  companyId: string,
+  workspaceId: string,
   issueId: string,
 ) {
   const issue = await db
@@ -164,7 +164,7 @@ async function getWorkspaceInheritanceIssue(
       executionWorkspaceSettings: issues.executionWorkspaceSettings,
     })
     .from(issues)
-    .where(and(eq(issues.id, issueId), eq(issues.companyId, companyId)))
+    .where(and(eq(issues.id, issueId), eq(issues.workspaceId, workspaceId)))
     .then((rows) => rows[0] ?? null);
   if (!issue) {
     throw notFound("Workspace inheritance issue not found");
@@ -172,7 +172,7 @@ async function getWorkspaceInheritanceIssue(
   return issue;
 }
 
-function touchedByUserCondition(companyId: string, userId: string) {
+function touchedByUserCondition(workspaceId: string, userId: string) {
   return sql<boolean>`
     (
       ${issues.createdByUserId} = ${userId}
@@ -181,21 +181,21 @@ function touchedByUserCondition(companyId: string, userId: string) {
         SELECT 1
         FROM ${issueReadStates}
         WHERE ${issueReadStates.issueId} = ${issues.id}
-          AND ${issueReadStates.companyId} = ${companyId}
+          AND ${issueReadStates.workspaceId} = ${workspaceId}
           AND ${issueReadStates.userId} = ${userId}
       )
       OR EXISTS (
         SELECT 1
         FROM ${issueComments}
         WHERE ${issueComments.issueId} = ${issues.id}
-          AND ${issueComments.companyId} = ${companyId}
+          AND ${issueComments.workspaceId} = ${workspaceId}
           AND ${issueComments.authorUserId} = ${userId}
       )
     )
   `;
 }
 
-function participatedByAgentCondition(companyId: string, agentId: string) {
+function participatedByAgentCondition(workspaceId: string, agentId: string) {
   return sql<boolean>`
     (
       ${issues.createdByAgentId} = ${agentId}
@@ -204,13 +204,13 @@ function participatedByAgentCondition(companyId: string, agentId: string) {
         SELECT 1
         FROM ${issueComments}
         WHERE ${issueComments.issueId} = ${issues.id}
-          AND ${issueComments.companyId} = ${companyId}
+          AND ${issueComments.workspaceId} = ${workspaceId}
           AND ${issueComments.authorAgentId} = ${agentId}
       )
       OR EXISTS (
         SELECT 1
         FROM ${activityLog}
-        WHERE ${activityLog.companyId} = ${companyId}
+        WHERE ${activityLog.workspaceId} = ${workspaceId}
           AND ${activityLog.entityType} = 'issue'
           AND ${activityLog.entityId} = ${issues.id}::text
           AND ${activityLog.agentId} = ${agentId}
@@ -219,33 +219,33 @@ function participatedByAgentCondition(companyId: string, agentId: string) {
   `;
 }
 
-function myLastCommentAtExpr(companyId: string, userId: string) {
+function myLastCommentAtExpr(workspaceId: string, userId: string) {
   return sql<Date | null>`
     (
       SELECT MAX(${issueComments.createdAt})
       FROM ${issueComments}
       WHERE ${issueComments.issueId} = ${issues.id}
-        AND ${issueComments.companyId} = ${companyId}
+        AND ${issueComments.workspaceId} = ${workspaceId}
         AND ${issueComments.authorUserId} = ${userId}
     )
   `;
 }
 
-function myLastReadAtExpr(companyId: string, userId: string) {
+function myLastReadAtExpr(workspaceId: string, userId: string) {
   return sql<Date | null>`
     (
       SELECT MAX(${issueReadStates.lastReadAt})
       FROM ${issueReadStates}
       WHERE ${issueReadStates.issueId} = ${issues.id}
-        AND ${issueReadStates.companyId} = ${companyId}
+        AND ${issueReadStates.workspaceId} = ${workspaceId}
         AND ${issueReadStates.userId} = ${userId}
     )
   `;
 }
 
-function myLastTouchAtExpr(companyId: string, userId: string) {
-  const myLastCommentAt = myLastCommentAtExpr(companyId, userId);
-  const myLastReadAt = myLastReadAtExpr(companyId, userId);
+function myLastTouchAtExpr(workspaceId: string, userId: string) {
+  const myLastCommentAt = myLastCommentAtExpr(workspaceId, userId);
+  const myLastReadAt = myLastReadAtExpr(workspaceId, userId);
   return sql<Date | null>`
     GREATEST(
       COALESCE(${myLastCommentAt}, to_timestamp(0)),
@@ -256,13 +256,13 @@ function myLastTouchAtExpr(companyId: string, userId: string) {
   `;
 }
 
-function lastExternalCommentAtExpr(companyId: string, userId: string) {
+function lastExternalCommentAtExpr(workspaceId: string, userId: string) {
   return sql<Date | null>`
     (
       SELECT MAX(${issueComments.createdAt})
       FROM ${issueComments}
       WHERE ${issueComments.issueId} = ${issues.id}
-        AND ${issueComments.companyId} = ${companyId}
+        AND ${issueComments.workspaceId} = ${workspaceId}
         AND (
           ${issueComments.authorUserId} IS NULL
           OR ${issueComments.authorUserId} <> ${userId}
@@ -271,9 +271,9 @@ function lastExternalCommentAtExpr(companyId: string, userId: string) {
   `;
 }
 
-function issueLastActivityAtExpr(companyId: string, userId: string) {
-  const lastExternalCommentAt = lastExternalCommentAtExpr(companyId, userId);
-  const myLastTouchAt = myLastTouchAtExpr(companyId, userId);
+function issueLastActivityAtExpr(workspaceId: string, userId: string) {
+  const lastExternalCommentAt = lastExternalCommentAtExpr(workspaceId, userId);
+  const myLastTouchAt = myLastTouchAtExpr(workspaceId, userId);
   return sql<Date>`
     GREATEST(
       COALESCE(${lastExternalCommentAt}, to_timestamp(0)),
@@ -293,23 +293,23 @@ const ISSUE_LOCAL_INBOX_ACTIVITY_ACTIONS = [
   "issue.inbox_unarchived",
 ] as const;
 
-function issueLatestCommentAtExpr(companyId: string) {
+function issueLatestCommentAtExpr(workspaceId: string) {
   return sql<Date | null>`
     (
       SELECT MAX(${issueComments.createdAt})
       FROM ${issueComments}
       WHERE ${issueComments.issueId} = ${issues.id}
-        AND ${issueComments.companyId} = ${companyId}
+        AND ${issueComments.workspaceId} = ${workspaceId}
     )
   `;
 }
 
-function issueLatestLogAtExpr(companyId: string) {
+function issueLatestLogAtExpr(workspaceId: string) {
   return sql<Date | null>`
     (
       SELECT MAX(${activityLog.createdAt})
       FROM ${activityLog}
-      WHERE ${activityLog.companyId} = ${companyId}
+      WHERE ${activityLog.workspaceId} = ${workspaceId}
         AND ${activityLog.entityType} = 'issue'
         AND ${activityLog.entityId} = ${issues.id}::text
         AND ${activityLog.action} NOT IN (${sql.join(
@@ -320,9 +320,9 @@ function issueLatestLogAtExpr(companyId: string) {
   `;
 }
 
-function issueCanonicalLastActivityAtExpr(companyId: string) {
-  const latestCommentAt = issueLatestCommentAtExpr(companyId);
-  const latestLogAt = issueLatestLogAtExpr(companyId);
+function issueCanonicalLastActivityAtExpr(workspaceId: string) {
+  const latestCommentAt = issueLatestCommentAtExpr(workspaceId);
+  const latestLogAt = issueLatestLogAtExpr(workspaceId);
   return sql<Date>`
     GREATEST(
       ${issues.updatedAt},
@@ -332,9 +332,9 @@ function issueCanonicalLastActivityAtExpr(companyId: string) {
   `;
 }
 
-function unreadForUserCondition(companyId: string, userId: string) {
-  const touchedCondition = touchedByUserCondition(companyId, userId);
-  const myLastTouchAt = myLastTouchAtExpr(companyId, userId);
+function unreadForUserCondition(workspaceId: string, userId: string) {
+  const touchedCondition = touchedByUserCondition(workspaceId, userId);
+  const myLastTouchAt = myLastTouchAtExpr(workspaceId, userId);
   return sql<boolean>`
     (
       ${touchedCondition}
@@ -342,7 +342,7 @@ function unreadForUserCondition(companyId: string, userId: string) {
         SELECT 1
         FROM ${issueComments}
         WHERE ${issueComments.issueId} = ${issues.id}
-          AND ${issueComments.companyId} = ${companyId}
+          AND ${issueComments.workspaceId} = ${workspaceId}
           AND (
             ${issueComments.authorUserId} IS NULL
             OR ${issueComments.authorUserId} <> ${userId}
@@ -353,14 +353,14 @@ function unreadForUserCondition(companyId: string, userId: string) {
   `;
 }
 
-function inboxVisibleForUserCondition(companyId: string, userId: string) {
-  const issueLastActivityAt = issueLastActivityAtExpr(companyId, userId);
+function inboxVisibleForUserCondition(workspaceId: string, userId: string) {
+  const issueLastActivityAt = issueLastActivityAtExpr(workspaceId, userId);
   return sql<boolean>`
     NOT EXISTS (
       SELECT 1
       FROM ${issueInboxArchives}
       WHERE ${issueInboxArchives.issueId} = ${issues.id}
-        AND ${issueInboxArchives.companyId} = ${companyId}
+        AND ${issueInboxArchives.workspaceId} = ${workspaceId}
         AND ${issueInboxArchives.userId} = ${userId}
         AND ${issueInboxArchives.archivedAt} >= ${issueLastActivityAt}
     )
@@ -568,11 +568,11 @@ export function issueService(db: Db) {
     };
   }
 
-  async function assertAssignableAgent(companyId: string, agentId: string) {
+  async function assertAssignableAgent(workspaceId: string, agentId: string) {
     const assignee = await db
       .select({
         id: agents.id,
-        companyId: agents.companyId,
+        workspaceId: agents.workspaceId,
         status: agents.status,
       })
       .from(agents)
@@ -580,7 +580,7 @@ export function issueService(db: Db) {
       .then((rows) => rows[0] ?? null);
 
     if (!assignee) throw notFound("Assignee agent not found");
-    if (assignee.companyId !== companyId) {
+    if (assignee.workspaceId !== workspaceId) {
       throw unprocessable("Assignee must belong to same company");
     }
     if (assignee.status === "pending_approval") {
@@ -591,13 +591,13 @@ export function issueService(db: Db) {
     }
   }
 
-  async function assertAssignableUser(companyId: string, userId: string) {
+  async function assertAssignableUser(workspaceId: string, userId: string) {
     const membership = await db
       .select({ id: companyMemberships.id })
       .from(companyMemberships)
       .where(
         and(
-          eq(companyMemberships.companyId, companyId),
+          eq(companyMemberships.workspaceId, workspaceId),
           eq(companyMemberships.principalType, "user"),
           eq(companyMemberships.principalId, userId),
           eq(companyMemberships.status, "active"),
@@ -610,7 +610,7 @@ export function issueService(db: Db) {
   }
 
   async function assertValidProjectWorkspace(
-    companyId: string,
+    workspaceId: string,
     projectId: string | null | undefined,
     projectWorkspaceId: string,
     dbOrTx: DbReader = db,
@@ -618,21 +618,21 @@ export function issueService(db: Db) {
     const workspace = await dbOrTx
       .select({
         id: projectWorkspaces.id,
-        companyId: projectWorkspaces.companyId,
+        workspaceId: projectWorkspaces.workspaceId,
         projectId: projectWorkspaces.projectId,
       })
       .from(projectWorkspaces)
       .where(eq(projectWorkspaces.id, projectWorkspaceId))
       .then((rows) => rows[0] ?? null);
     if (!workspace) throw notFound("Project workspace not found");
-    if (workspace.companyId !== companyId) throw unprocessable("Project workspace must belong to same company");
+    if (workspace.workspaceId !== workspaceId) throw unprocessable("Project workspace must belong to same company");
     if (projectId && workspace.projectId !== projectId) {
       throw unprocessable("Project workspace must belong to the selected project");
     }
   }
 
   async function assertValidExecutionWorkspace(
-    companyId: string,
+    workspaceId: string,
     projectId: string | null | undefined,
     executionWorkspaceId: string,
     dbOrTx: DbReader = db,
@@ -640,25 +640,25 @@ export function issueService(db: Db) {
     const workspace = await dbOrTx
       .select({
         id: executionWorkspaces.id,
-        companyId: executionWorkspaces.companyId,
+        workspaceId: executionWorkspaces.workspaceId,
         projectId: executionWorkspaces.projectId,
       })
       .from(executionWorkspaces)
       .where(eq(executionWorkspaces.id, executionWorkspaceId))
       .then((rows) => rows[0] ?? null);
     if (!workspace) throw notFound("Execution workspace not found");
-    if (workspace.companyId !== companyId) throw unprocessable("Execution workspace must belong to same company");
+    if (workspace.workspaceId !== workspaceId) throw unprocessable("Execution workspace must belong to same company");
     if (projectId && workspace.projectId !== projectId) {
       throw unprocessable("Execution workspace must belong to the selected project");
     }
   }
 
-  async function assertValidLabelIds(companyId: string, labelIds: string[], dbOrTx: any = db) {
+  async function assertValidLabelIds(workspaceId: string, labelIds: string[], dbOrTx: any = db) {
     if (labelIds.length === 0) return;
     const existing = await dbOrTx
       .select({ id: labels.id })
       .from(labels)
-      .where(and(eq(labels.companyId, companyId), inArray(labels.id, labelIds)));
+      .where(and(eq(labels.workspaceId, workspaceId), inArray(labels.id, labelIds)));
     if (existing.length !== new Set(labelIds).size) {
       throw unprocessable("One or more labels are invalid for this company");
     }
@@ -666,25 +666,25 @@ export function issueService(db: Db) {
 
   async function syncIssueLabels(
     issueId: string,
-    companyId: string,
+    workspaceId: string,
     labelIds: string[],
     dbOrTx: any = db,
   ) {
     const deduped = [...new Set(labelIds)];
-    await assertValidLabelIds(companyId, deduped, dbOrTx);
+    await assertValidLabelIds(workspaceId, deduped, dbOrTx);
     await dbOrTx.delete(issueLabels).where(eq(issueLabels.issueId, issueId));
     if (deduped.length === 0) return;
     await dbOrTx.insert(issueLabels).values(
       deduped.map((labelId) => ({
         issueId,
         labelId,
-        companyId,
+        workspaceId,
       })),
     );
   }
 
   async function getIssueRelationSummaryMap(
-    companyId: string,
+    workspaceId: string,
     issueIds: string[],
     dbOrTx: DbReader = db,
   ): Promise<Map<string, IssueRelationSummaryMap>> {
@@ -711,7 +711,7 @@ export function issueService(db: Db) {
         .innerJoin(issues, eq(issueRelations.issueId, issues.id))
         .where(
           and(
-            eq(issueRelations.companyId, companyId),
+            eq(issueRelations.workspaceId, workspaceId),
             eq(issueRelations.type, "blocks"),
             inArray(issueRelations.relatedIssueId, uniqueIssueIds),
           ),
@@ -731,7 +731,7 @@ export function issueService(db: Db) {
         .innerJoin(issues, eq(issueRelations.relatedIssueId, issues.id))
         .where(
           and(
-            eq(issueRelations.companyId, companyId),
+            eq(issueRelations.workspaceId, workspaceId),
             eq(issueRelations.type, "blocks"),
             inArray(issueRelations.issueId, uniqueIssueIds),
           ),
@@ -770,7 +770,7 @@ export function issueService(db: Db) {
   }
 
   async function assertNoBlockingCycles(
-    companyId: string,
+    workspaceId: string,
     issueId: string,
     blockerIssueIds: string[],
     dbOrTx: DbReader = db,
@@ -783,7 +783,7 @@ export function issueService(db: Db) {
         blockedIssueId: issueRelations.relatedIssueId,
       })
       .from(issueRelations)
-      .where(and(eq(issueRelations.companyId, companyId), eq(issueRelations.type, "blocks")));
+      .where(and(eq(issueRelations.workspaceId, workspaceId), eq(issueRelations.type, "blocks")));
 
     const adjacency = new Map<string, string[]>();
     for (const row of rows) {
@@ -809,7 +809,7 @@ export function issueService(db: Db) {
 
   async function syncBlockedByIssueIds(
     issueId: string,
-    companyId: string,
+    workspaceId: string,
     blockedByIssueIds: string[],
     actor: { agentId?: string | null; userId?: string | null } = {},
     dbOrTx: any = db,
@@ -823,25 +823,25 @@ export function issueService(db: Db) {
       const lockedIssueIds = [issueId, ...deduped].sort();
       await dbOrTx.execute(
         sql`SELECT ${issues.id} FROM ${issues}
-            WHERE ${and(eq(issues.companyId, companyId), inArray(issues.id, lockedIssueIds))}
+            WHERE ${and(eq(issues.workspaceId, workspaceId), inArray(issues.id, lockedIssueIds))}
             ORDER BY ${issues.id}
             FOR UPDATE`,
       );
       const relatedIssues = await dbOrTx
         .select({ id: issues.id })
         .from(issues)
-        .where(and(eq(issues.companyId, companyId), inArray(issues.id, deduped)));
+        .where(and(eq(issues.workspaceId, workspaceId), inArray(issues.id, deduped)));
       if (relatedIssues.length !== deduped.length) {
         throw unprocessable("Blocked-by issues must belong to the same company");
       }
-      await assertNoBlockingCycles(companyId, issueId, deduped, dbOrTx);
+      await assertNoBlockingCycles(workspaceId, issueId, deduped, dbOrTx);
     }
 
     await dbOrTx
       .delete(issueRelations)
       .where(
         and(
-          eq(issueRelations.companyId, companyId),
+          eq(issueRelations.workspaceId, workspaceId),
           eq(issueRelations.relatedIssueId, issueId),
           eq(issueRelations.type, "blocks"),
         ),
@@ -851,7 +851,7 @@ export function issueService(db: Db) {
 
     await dbOrTx.insert(issueRelations).values(
       deduped.map((blockerIssueId) => ({
-        companyId,
+        workspaceId,
         issueId: blockerIssueId,
         relatedIssueId: issueId,
         type: "blocks",
@@ -910,8 +910,8 @@ export function issueService(db: Db) {
   }
 
   return {
-    list: async (companyId: string, filters?: IssueFilters) => {
-      const conditions = [eq(issues.companyId, companyId)];
+    list: async (workspaceId: string, filters?: IssueFilters) => {
+      const conditions = [eq(issues.workspaceId, workspaceId)];
       const limit = typeof filters?.limit === "number" && Number.isFinite(filters.limit)
         ? Math.max(1, Math.floor(filters.limit))
         : undefined;
@@ -934,7 +934,7 @@ export function issueService(db: Db) {
           SELECT 1
           FROM ${issueComments}
           WHERE ${issueComments.issueId} = ${issues.id}
-            AND ${issueComments.companyId} = ${companyId}
+            AND ${issueComments.workspaceId} = ${workspaceId}
             AND ${issueComments.body} ILIKE ${containsPattern} ESCAPE '\\'
         )
       `;
@@ -946,19 +946,19 @@ export function issueService(db: Db) {
         conditions.push(eq(issues.assigneeAgentId, filters.assigneeAgentId));
       }
       if (filters?.participantAgentId) {
-        conditions.push(participatedByAgentCondition(companyId, filters.participantAgentId));
+        conditions.push(participatedByAgentCondition(workspaceId, filters.participantAgentId));
       }
       if (filters?.assigneeUserId) {
         conditions.push(eq(issues.assigneeUserId, filters.assigneeUserId));
       }
       if (touchedByUserId) {
-        conditions.push(touchedByUserCondition(companyId, touchedByUserId));
+        conditions.push(touchedByUserCondition(workspaceId, touchedByUserId));
       }
       if (inboxArchivedByUserId) {
-        conditions.push(inboxVisibleForUserCondition(companyId, inboxArchivedByUserId));
+        conditions.push(inboxVisibleForUserCondition(workspaceId, inboxArchivedByUserId));
       }
       if (unreadForUserId) {
-        conditions.push(unreadForUserCondition(companyId, unreadForUserId));
+        conditions.push(unreadForUserCondition(workspaceId, unreadForUserId));
       }
       if (filters?.projectId) conditions.push(eq(issues.projectId, filters.projectId));
       if (filters?.executionWorkspaceId) {
@@ -971,7 +971,7 @@ export function issueService(db: Db) {
         const labeledIssueIds = await db
           .select({ issueId: issueLabels.issueId })
           .from(issueLabels)
-          .where(and(eq(issueLabels.companyId, companyId), eq(issueLabels.labelId, filters.labelId)));
+          .where(and(eq(issueLabels.workspaceId, workspaceId), eq(issueLabels.labelId, filters.labelId)));
         if (labeledIssueIds.length === 0) return [];
         conditions.push(inArray(issues.id, labeledIssueIds.map((row) => row.issueId)));
       }
@@ -1002,7 +1002,7 @@ export function issueService(db: Db) {
           ELSE 6
         END
       `;
-      const canonicalLastActivityAt = issueCanonicalLastActivityAtExpr(companyId);
+      const canonicalLastActivityAt = issueCanonicalLastActivityAtExpr(workspaceId);
       const baseQuery = db
         .select()
         .from(issues)
@@ -1042,7 +1042,7 @@ export function issueService(db: Db) {
             .from(issueComments)
             .where(
               and(
-                eq(issueComments.companyId, companyId),
+                eq(issueComments.workspaceId, workspaceId),
                 inArray(issueComments.issueId, issueIds),
               ),
             )
@@ -1057,7 +1057,7 @@ export function issueService(db: Db) {
             .from(issueReadStates)
             .where(
               and(
-                eq(issueReadStates.companyId, companyId),
+                eq(issueReadStates.workspaceId, workspaceId),
                 eq(issueReadStates.userId, contextUserId),
                 inArray(issueReadStates.issueId, issueIds),
               ),
@@ -1072,7 +1072,7 @@ export function issueService(db: Db) {
             .from(issueComments)
             .where(
               and(
-                eq(issueComments.companyId, companyId),
+                eq(issueComments.workspaceId, workspaceId),
                 inArray(issueComments.issueId, issueIds),
               ),
             )
@@ -1085,7 +1085,7 @@ export function issueService(db: Db) {
             .from(activityLog)
             .where(
               and(
-                eq(activityLog.companyId, companyId),
+                eq(activityLog.workspaceId, workspaceId),
                 eq(activityLog.entityType, "issue"),
                 inArray(activityLog.entityId, issueIds),
                 sql`${activityLog.action} NOT IN (${sql.join(
@@ -1157,11 +1157,11 @@ export function issueService(db: Db) {
       });
     },
 
-    countUnreadTouchedByUser: async (companyId: string, userId: string, status?: string) => {
+    countUnreadTouchedByUser: async (workspaceId: string, userId: string, status?: string) => {
       const conditions = [
-        eq(issues.companyId, companyId),
+        eq(issues.workspaceId, workspaceId),
         isNull(issues.hiddenAt),
-        unreadForUserCondition(companyId, userId),
+        unreadForUserCondition(workspaceId, userId),
         ne(issues.originKind, "routine_execution"),
       ];
       if (status) {
@@ -1179,19 +1179,19 @@ export function issueService(db: Db) {
       return Number(row?.count ?? 0);
     },
 
-    markRead: async (companyId: string, issueId: string, userId: string, readAt: Date = new Date()) => {
+    markRead: async (workspaceId: string, issueId: string, userId: string, readAt: Date = new Date()) => {
       const now = new Date();
       const [row] = await db
         .insert(issueReadStates)
         .values({
-          companyId,
+          workspaceId,
           issueId,
           userId,
           lastReadAt: readAt,
           updatedAt: now,
         })
         .onConflictDoUpdate({
-          target: [issueReadStates.companyId, issueReadStates.issueId, issueReadStates.userId],
+          target: [issueReadStates.workspaceId, issueReadStates.issueId, issueReadStates.userId],
           set: {
             lastReadAt: readAt,
             updatedAt: now,
@@ -1201,12 +1201,12 @@ export function issueService(db: Db) {
       return row;
     },
 
-    markUnread: async (companyId: string, issueId: string, userId: string) => {
+    markUnread: async (workspaceId: string, issueId: string, userId: string) => {
       const deleted = await db
         .delete(issueReadStates)
         .where(
           and(
-            eq(issueReadStates.companyId, companyId),
+            eq(issueReadStates.workspaceId, workspaceId),
             eq(issueReadStates.issueId, issueId),
             eq(issueReadStates.userId, userId),
           ),
@@ -1215,19 +1215,19 @@ export function issueService(db: Db) {
       return deleted.length > 0;
     },
 
-    archiveInbox: async (companyId: string, issueId: string, userId: string, archivedAt: Date = new Date()) => {
+    archiveInbox: async (workspaceId: string, issueId: string, userId: string, archivedAt: Date = new Date()) => {
       const now = new Date();
       const [row] = await db
         .insert(issueInboxArchives)
         .values({
-          companyId,
+          workspaceId,
           issueId,
           userId,
           archivedAt,
           updatedAt: now,
         })
         .onConflictDoUpdate({
-          target: [issueInboxArchives.companyId, issueInboxArchives.issueId, issueInboxArchives.userId],
+          target: [issueInboxArchives.workspaceId, issueInboxArchives.issueId, issueInboxArchives.userId],
           set: {
             archivedAt,
             updatedAt: now,
@@ -1237,12 +1237,12 @@ export function issueService(db: Db) {
       return row;
     },
 
-    unarchiveInbox: async (companyId: string, issueId: string, userId: string) => {
+    unarchiveInbox: async (workspaceId: string, issueId: string, userId: string) => {
       const [row] = await db
         .delete(issueInboxArchives)
         .where(
           and(
-            eq(issueInboxArchives.companyId, companyId),
+            eq(issueInboxArchives.workspaceId, workspaceId),
             eq(issueInboxArchives.issueId, issueId),
             eq(issueInboxArchives.userId, userId),
           ),
@@ -1268,18 +1268,18 @@ export function issueService(db: Db) {
 
     getRelationSummaries: async (issueId: string) => {
       const issue = await db
-        .select({ id: issues.id, companyId: issues.companyId })
+        .select({ id: issues.id, workspaceId: issues.workspaceId })
         .from(issues)
         .where(eq(issues.id, issueId))
         .then((rows) => rows[0] ?? null);
       if (!issue) throw notFound("Issue not found");
-      const relations = await getIssueRelationSummaryMap(issue.companyId, [issueId], db);
+      const relations = await getIssueRelationSummaryMap(issue.workspaceId, [issueId], db);
       return relations.get(issueId) ?? { blockedBy: [], blocks: [] };
     },
 
     listWakeableBlockedDependents: async (blockerIssueId: string) => {
       const blockerIssue = await db
-        .select({ id: issues.id, companyId: issues.companyId })
+        .select({ id: issues.id, workspaceId: issues.workspaceId })
         .from(issues)
         .where(eq(issues.id, blockerIssueId))
         .then((rows) => rows[0] ?? null);
@@ -1295,7 +1295,7 @@ export function issueService(db: Db) {
         .innerJoin(issues, eq(issueRelations.relatedIssueId, issues.id))
         .where(
           and(
-            eq(issueRelations.companyId, blockerIssue.companyId),
+            eq(issueRelations.workspaceId, blockerIssue.workspaceId),
             eq(issueRelations.type, "blocks"),
             eq(issueRelations.issueId, blockerIssueId),
           ),
@@ -1313,7 +1313,7 @@ export function issueService(db: Db) {
         .innerJoin(issues, eq(issueRelations.issueId, issues.id))
         .where(
           and(
-            eq(issueRelations.companyId, blockerIssue.companyId),
+            eq(issueRelations.workspaceId, blockerIssue.workspaceId),
             eq(issueRelations.type, "blocks"),
             inArray(issueRelations.relatedIssueId, candidateIds),
           ),
@@ -1350,7 +1350,7 @@ export function issueService(db: Db) {
           id: issues.id,
           assigneeAgentId: issues.assigneeAgentId,
           status: issues.status,
-          companyId: issues.companyId,
+          workspaceId: issues.workspaceId,
         })
         .from(issues)
         .where(eq(issues.id, parentIssueId))
@@ -1362,7 +1362,7 @@ export function issueService(db: Db) {
       const children = await db
         .select({ id: issues.id, status: issues.status })
         .from(issues)
-        .where(and(eq(issues.companyId, parent.companyId), eq(issues.parentId, parentIssueId)));
+        .where(and(eq(issues.workspaceId, parent.workspaceId), eq(issues.parentId, parentIssueId)));
       if (children.length === 0) return null;
       if (!children.every((child) => child.status === "done" || child.status === "cancelled")) {
         return null;
@@ -1376,7 +1376,7 @@ export function issueService(db: Db) {
     },
 
     create: async (
-      companyId: string,
+      workspaceId: string,
       data: IssueCreateInput,
     ) => {
       const {
@@ -1395,17 +1395,17 @@ export function issueService(db: Db) {
         throw unprocessable("Issue can only have one assignee");
       }
       if (data.assigneeAgentId) {
-        await assertAssignableAgent(companyId, data.assigneeAgentId);
+        await assertAssignableAgent(workspaceId, data.assigneeAgentId);
       }
       if (data.assigneeUserId) {
-        await assertAssignableUser(companyId, data.assigneeUserId);
+        await assertAssignableUser(workspaceId, data.assigneeUserId);
       }
       if (data.status === "in_progress" && !data.assigneeAgentId && !data.assigneeUserId) {
         throw unprocessable("in_progress issues require an assignee");
       }
       return db.transaction(async (tx) => {
-        const defaultCompanyGoal = await getDefaultCompanyGoal(tx, companyId);
-        const projectGoalId = await getProjectDefaultGoalId(tx, companyId, issueData.projectId);
+        const defaultCompanyGoal = await getDefaultCompanyGoal(tx, workspaceId);
+        const projectGoalId = await getProjectDefaultGoalId(tx, workspaceId, issueData.projectId);
         let projectWorkspaceId = issueData.projectWorkspaceId ?? null;
         let executionWorkspaceId = issueData.executionWorkspaceId ?? null;
         let executionWorkspacePreference = issueData.executionWorkspacePreference ?? null;
@@ -1417,7 +1417,7 @@ export function issueService(db: Db) {
           issueData.executionWorkspacePreference !== undefined ||
           issueData.executionWorkspaceSettings !== undefined;
         if (workspaceInheritanceIssueId) {
-          const workspaceSource = await getWorkspaceInheritanceIssue(tx, companyId, workspaceInheritanceIssueId);
+          const workspaceSource = await getWorkspaceInheritanceIssue(tx, workspaceId, workspaceInheritanceIssueId);
           if (projectWorkspaceId == null && workspaceSource.projectWorkspaceId) {
             projectWorkspaceId = workspaceSource.projectWorkspaceId;
           }
@@ -1452,7 +1452,7 @@ export function issueService(db: Db) {
           const project = await tx
             .select({ executionWorkspacePolicy: projects.executionWorkspacePolicy })
             .from(projects)
-            .where(and(eq(projects.id, issueData.projectId), eq(projects.companyId, companyId)))
+            .where(and(eq(projects.id, issueData.projectId), eq(projects.workspaceId, workspaceId)))
             .then((rows) => rows[0] ?? null);
           executionWorkspaceSettings =
             defaultIssueExecutionWorkspaceSettingsForProject(
@@ -1468,7 +1468,7 @@ export function issueService(db: Db) {
               executionWorkspacePolicy: projects.executionWorkspacePolicy,
             })
             .from(projects)
-            .where(and(eq(projects.id, issueData.projectId), eq(projects.companyId, companyId)))
+            .where(and(eq(projects.id, issueData.projectId), eq(projects.workspaceId, workspaceId)))
             .then((rows) => rows[0] ?? null);
           const projectPolicy = parseProjectExecutionWorkspacePolicy(project?.executionWorkspacePolicy);
           projectWorkspaceId = projectPolicy?.defaultProjectWorkspaceId ?? null;
@@ -1476,23 +1476,23 @@ export function issueService(db: Db) {
             projectWorkspaceId = await tx
               .select({ id: projectWorkspaces.id })
               .from(projectWorkspaces)
-              .where(and(eq(projectWorkspaces.projectId, issueData.projectId), eq(projectWorkspaces.companyId, companyId)))
+              .where(and(eq(projectWorkspaces.projectId, issueData.projectId), eq(projectWorkspaces.workspaceId, workspaceId)))
               .orderBy(desc(projectWorkspaces.isPrimary), asc(projectWorkspaces.createdAt), asc(projectWorkspaces.id))
               .then((rows) => rows[0]?.id ?? null);
           }
         }
         if (projectWorkspaceId) {
-          await assertValidProjectWorkspace(companyId, issueData.projectId, projectWorkspaceId, tx);
+          await assertValidProjectWorkspace(workspaceId, issueData.projectId, projectWorkspaceId, tx);
         }
         if (executionWorkspaceId) {
-          await assertValidExecutionWorkspace(companyId, issueData.projectId, executionWorkspaceId, tx);
+          await assertValidExecutionWorkspace(workspaceId, issueData.projectId, executionWorkspaceId, tx);
         }
         // Self-correcting counter: use MAX(issue_number) + 1 if the counter
         // has drifted below the actual max, preventing identifier collisions.
         const [maxRow] = await tx
           .select({ maxNum: sql<number>`coalesce(max(${issues.issueNumber}), 0)` })
           .from(issues)
-          .where(eq(issues.companyId, companyId));
+          .where(eq(issues.workspaceId, workspaceId));
         const currentMax = maxRow?.maxNum ?? 0;
 
         const [company] = await tx
@@ -1500,7 +1500,7 @@ export function issueService(db: Db) {
           .set({
             issueCounter: sql`greatest(${companies.issueCounter}, ${currentMax}) + 1`,
           })
-          .where(eq(companies.id, companyId))
+          .where(eq(companies.id, workspaceId))
           .returning({ issueCounter: companies.issueCounter, issuePrefix: companies.issuePrefix });
 
         const issueNumber = company.issueCounter;
@@ -1519,7 +1519,7 @@ export function issueService(db: Db) {
           ...(executionWorkspaceId ? { executionWorkspaceId } : {}),
           ...(executionWorkspacePreference ? { executionWorkspacePreference } : {}),
           ...(executionWorkspaceSettings ? { executionWorkspaceSettings } : {}),
-          companyId,
+          workspaceId,
           issueNumber,
           identifier,
         } as typeof issues.$inferInsert;
@@ -1535,12 +1535,12 @@ export function issueService(db: Db) {
 
         const [issue] = await tx.insert(issues).values(values).returning();
         if (inputLabelIds) {
-          await syncIssueLabels(issue.id, companyId, inputLabelIds, tx);
+          await syncIssueLabels(issue.id, workspaceId, inputLabelIds, tx);
         }
         if (blockedByIssueIds !== undefined) {
           await syncBlockedByIssueIds(
             issue.id,
-            companyId,
+            workspaceId,
             blockedByIssueIds,
             {
               agentId: issueData.createdByAgentId ?? null,
@@ -1606,10 +1606,10 @@ export function issueService(db: Db) {
         throw unprocessable("in_progress issues require an assignee");
       }
       if (issueData.assigneeAgentId) {
-        await assertAssignableAgent(existing.companyId, issueData.assigneeAgentId);
+        await assertAssignableAgent(existing.workspaceId, issueData.assigneeAgentId);
       }
       if (issueData.assigneeUserId) {
-        await assertAssignableUser(existing.companyId, issueData.assigneeUserId);
+        await assertAssignableUser(existing.workspaceId, issueData.assigneeUserId);
       }
       const nextProjectId = issueData.projectId !== undefined ? issueData.projectId : existing.projectId;
       const nextProjectWorkspaceId =
@@ -1617,10 +1617,10 @@ export function issueService(db: Db) {
       const nextExecutionWorkspaceId =
         issueData.executionWorkspaceId !== undefined ? issueData.executionWorkspaceId : existing.executionWorkspaceId;
       if (nextProjectWorkspaceId) {
-        await assertValidProjectWorkspace(existing.companyId, nextProjectId, nextProjectWorkspaceId);
+        await assertValidProjectWorkspace(existing.workspaceId, nextProjectId, nextProjectWorkspaceId);
       }
       if (nextExecutionWorkspaceId) {
-        await assertValidExecutionWorkspace(existing.companyId, nextProjectId, nextExecutionWorkspaceId);
+        await assertValidExecutionWorkspace(existing.workspaceId, nextProjectId, nextExecutionWorkspaceId);
       }
 
       applyStatusSideEffects(issueData.status, patch);
@@ -1649,12 +1649,12 @@ export function issueService(db: Db) {
       }
 
       const runUpdate = async (tx: any) => {
-        const defaultCompanyGoal = await getDefaultCompanyGoal(tx, existing.companyId);
+        const defaultCompanyGoal = await getDefaultCompanyGoal(tx, existing.workspaceId);
         const [currentProjectGoalId, nextProjectGoalId] = await Promise.all([
-          getProjectDefaultGoalId(tx, existing.companyId, existing.projectId),
+          getProjectDefaultGoalId(tx, existing.workspaceId, existing.projectId),
           getProjectDefaultGoalId(
             tx,
-            existing.companyId,
+            existing.workspaceId,
             issueData.projectId !== undefined ? issueData.projectId : existing.projectId,
           ),
         ]);
@@ -1675,12 +1675,12 @@ export function issueService(db: Db) {
           .then((rows: Array<typeof issues.$inferSelect>) => rows[0] ?? null);
         if (!updated) return null;
         if (nextLabelIds !== undefined) {
-          await syncIssueLabels(updated.id, existing.companyId, nextLabelIds, tx);
+          await syncIssueLabels(updated.id, existing.workspaceId, nextLabelIds, tx);
         }
         if (blockedByIssueIds !== undefined) {
           await syncBlockedByIssueIds(
             updated.id,
-            existing.companyId,
+            existing.workspaceId,
             blockedByIssueIds,
             {
               agentId: actorAgentId ?? null,
@@ -1732,12 +1732,12 @@ export function issueService(db: Db) {
 
     checkout: async (id: string, agentId: string, expectedStatuses: string[], checkoutRunId: string | null) => {
       const issueCompany = await db
-        .select({ companyId: issues.companyId })
+        .select({ workspaceId: issues.workspaceId })
         .from(issues)
         .where(eq(issues.id, id))
         .then((rows) => rows[0] ?? null);
       if (!issueCompany) throw notFound("Issue not found");
-      await assertAssignableAgent(issueCompany.companyId, agentId);
+      await assertAssignableAgent(issueCompany.workspaceId, agentId);
 
       const now = new Date();
 
@@ -1990,8 +1990,8 @@ export function issueService(db: Db) {
       return enriched;
     },
 
-    listLabels: (companyId: string) =>
-      db.select().from(labels).where(eq(labels.companyId, companyId)).orderBy(asc(labels.name), asc(labels.id)),
+    listLabels: (workspaceId: string) =>
+      db.select().from(labels).where(eq(labels.workspaceId, workspaceId)).orderBy(asc(labels.name), asc(labels.id)),
 
     getLabelById: (id: string) =>
       db
@@ -2000,11 +2000,11 @@ export function issueService(db: Db) {
         .where(eq(labels.id, id))
         .then((rows) => rows[0] ?? null),
 
-    createLabel: async (companyId: string, data: Pick<typeof labels.$inferInsert, "name" | "color">) => {
+    createLabel: async (workspaceId: string, data: Pick<typeof labels.$inferInsert, "name" | "color">) => {
       const [created] = await db
         .insert(labels)
         .values({
-          companyId,
+          workspaceId,
           name: data.name.trim(),
           color: data.color,
         })
@@ -2118,7 +2118,7 @@ export function issueService(db: Db) {
       actor: { agentId?: string; userId?: string; runId?: string | null },
     ) => {
       const issue = await db
-        .select({ companyId: issues.companyId })
+        .select({ workspaceId: issues.workspaceId })
         .from(issues)
         .where(eq(issues.id, issueId))
         .then((rows) => rows[0] ?? null);
@@ -2132,7 +2132,7 @@ export function issueService(db: Db) {
       const [comment] = await db
         .insert(issueComments)
         .values({
-          companyId: issue.companyId,
+          workspaceId: issue.workspaceId,
           issueId,
           authorAgentId: actor.agentId ?? null,
           authorUserId: actor.userId ?? null,
@@ -2163,7 +2163,7 @@ export function issueService(db: Db) {
       createdByUserId?: string | null;
     }) => {
       const issue = await db
-        .select({ id: issues.id, companyId: issues.companyId })
+        .select({ id: issues.id, workspaceId: issues.workspaceId })
         .from(issues)
         .where(eq(issues.id, input.issueId))
         .then((rows) => rows[0] ?? null);
@@ -2171,12 +2171,12 @@ export function issueService(db: Db) {
 
       if (input.issueCommentId) {
         const comment = await db
-          .select({ id: issueComments.id, companyId: issueComments.companyId, issueId: issueComments.issueId })
+          .select({ id: issueComments.id, workspaceId: issueComments.workspaceId, issueId: issueComments.issueId })
           .from(issueComments)
           .where(eq(issueComments.id, input.issueCommentId))
           .then((rows) => rows[0] ?? null);
         if (!comment) throw notFound("Issue comment not found");
-        if (comment.companyId !== issue.companyId || comment.issueId !== issue.id) {
+        if (comment.workspaceId !== issue.workspaceId || comment.issueId !== issue.id) {
           throw unprocessable("Attachment comment must belong to same issue and company");
         }
       }
@@ -2185,7 +2185,7 @@ export function issueService(db: Db) {
         const [asset] = await tx
           .insert(assets)
           .values({
-            companyId: issue.companyId,
+            workspaceId: issue.workspaceId,
             provider: input.provider,
             objectKey: input.objectKey,
             contentType: input.contentType,
@@ -2200,7 +2200,7 @@ export function issueService(db: Db) {
         const [attachment] = await tx
           .insert(issueAttachments)
           .values({
-            companyId: issue.companyId,
+            workspaceId: issue.workspaceId,
             issueId: issue.id,
             assetId: asset.id,
             issueCommentId: input.issueCommentId ?? null,
@@ -2209,7 +2209,7 @@ export function issueService(db: Db) {
 
         return {
           id: attachment.id,
-          companyId: attachment.companyId,
+          workspaceId: attachment.workspaceId,
           issueId: attachment.issueId,
           issueCommentId: attachment.issueCommentId,
           assetId: attachment.assetId,
@@ -2231,7 +2231,7 @@ export function issueService(db: Db) {
       db
         .select({
           id: issueAttachments.id,
-          companyId: issueAttachments.companyId,
+          workspaceId: issueAttachments.workspaceId,
           issueId: issueAttachments.issueId,
           issueCommentId: issueAttachments.issueCommentId,
           assetId: issueAttachments.assetId,
@@ -2255,7 +2255,7 @@ export function issueService(db: Db) {
       db
         .select({
           id: issueAttachments.id,
-          companyId: issueAttachments.companyId,
+          workspaceId: issueAttachments.workspaceId,
           issueId: issueAttachments.issueId,
           issueCommentId: issueAttachments.issueCommentId,
           assetId: issueAttachments.assetId,
@@ -2280,7 +2280,7 @@ export function issueService(db: Db) {
         const existing = await tx
           .select({
             id: issueAttachments.id,
-            companyId: issueAttachments.companyId,
+            workspaceId: issueAttachments.workspaceId,
             issueId: issueAttachments.issueId,
             issueCommentId: issueAttachments.issueCommentId,
             assetId: issueAttachments.assetId,
@@ -2306,7 +2306,7 @@ export function issueService(db: Db) {
         return existing;
       }),
 
-    findMentionedAgents: async (companyId: string, body: string) => {
+    findMentionedAgents: async (workspaceId: string, body: string) => {
       const re = /\B@([^\s@,!?.]+)/g;
       const tokens = new Set<string>();
       let m: RegExpExecArray | null;
@@ -2318,7 +2318,7 @@ export function issueService(db: Db) {
       const explicitAgentMentionIds = extractAgentMentionIds(body);
       if (tokens.size === 0 && explicitAgentMentionIds.length === 0) return [];
       const rows = await db.select({ id: agents.id, name: agents.name })
-        .from(agents).where(eq(agents.companyId, companyId));
+        .from(agents).where(eq(agents.workspaceId, workspaceId));
       const resolved = new Set<string>(explicitAgentMentionIds);
       for (const agent of rows) {
         if (tokens.has(agent.name.toLowerCase())) {
@@ -2331,7 +2331,7 @@ export function issueService(db: Db) {
     findMentionedProjectIds: async (issueId: string) => {
       const issue = await db
         .select({
-          companyId: issues.companyId,
+          workspaceId: issues.workspaceId,
           title: issues.title,
           description: issues.description,
         })
@@ -2362,7 +2362,7 @@ export function issueService(db: Db) {
         .from(projects)
         .where(
           and(
-            eq(projects.companyId, issue.companyId),
+            eq(projects.workspaceId, issue.workspaceId),
             inArray(projects.id, [...mentionedIds]),
           ),
         );
@@ -2409,7 +2409,7 @@ export function issueService(db: Db) {
         goalId: string | null;
         workspaces: Array<{
           id: string;
-          companyId: string;
+          workspaceId: string;
           projectId: string;
           name: string;
           cwd: string | null;
@@ -2422,7 +2422,7 @@ export function issueService(db: Db) {
         }>;
         primaryWorkspace: {
           id: string;
-          companyId: string;
+          workspaceId: string;
           projectId: string;
           name: string;
           cwd: string | null;
@@ -2457,7 +2457,7 @@ export function issueService(db: Db) {
           const projectWorkspaceRows = workspaceMap.get(r.id) ?? [];
           const workspaces = projectWorkspaceRows.map((workspace) => ({
             id: workspace.id,
-            companyId: workspace.companyId,
+            workspaceId: workspace.workspaceId,
             projectId: workspace.projectId,
             name: workspace.name,
             cwd: workspace.cwd,

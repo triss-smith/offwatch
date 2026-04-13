@@ -57,7 +57,7 @@ import { assetService } from "./assets.js";
 import { generateReadme } from "./company-export-readme.js";
 import { renderOrgChartPng, type OrgNode } from "../routes/org-chart-svg.js";
 import { companySkillService } from "./company-skills.js";
-import { companyService } from "./companies.js";
+import { workspaceService } from "./workspaces.js";
 import { validateCron } from "./cron.js";
 import { issueService } from "./issues.js";
 import { projectService } from "./projects.js";
@@ -2328,7 +2328,7 @@ function readAgentSkillRefs(frontmatter: Record<string, unknown>) {
 
 function buildManifestFromPackageFiles(
   files: Record<string, CompanyPortabilityFileEntry>,
-  opts?: { sourceLabel?: { companyId: string; companyName: string } | null },
+  opts?: { sourceLabel?: { workspaceId: string; companyName: string } | null },
 ): ResolvedSource {
   const normalizedFiles = normalizeFileMap(files);
   const companyPath = typeof normalizedFiles["COMPANY.md"] === "string"
@@ -2739,7 +2739,7 @@ export function parseGitHubSourceUrl(rawUrl: string) {
 
 
 export function companyPortabilityService(db: Db, storage?: StorageService) {
-  const companies = companyService(db);
+  const companies = workspaceService(db);
   const agents = agentService(db);
   const assetRecords = assetService(db);
   const instructions = agentInstructionsService();
@@ -2843,7 +2843,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
   }
 
   async function exportBundle(
-    companyId: string,
+    workspaceId: string,
     input: CompanyPortabilityExport,
   ): Promise<CompanyPortabilityExportResult> {
     const include = normalizeInclude({
@@ -2856,7 +2856,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
           : input.include?.issues,
       skills: input.skills && input.skills.length > 0 ? true : input.include?.skills,
     });
-    const company = await companies.getById(companyId);
+    const company = await companies.getById(workspaceId);
     if (!company) throw notFound("Company not found");
 
     const files: Record<string, CompanyPortabilityFileEntry> = {};
@@ -2866,9 +2866,9 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     const rootPath = normalizeAgentUrlKey(company.name) ?? "company-package";
     let companyLogoPath: string | null = null;
 
-    const allAgentRows = include.agents ? await agents.list(companyId, { includeTerminated: true }) : [];
+    const allAgentRows = include.agents ? await agents.list(workspaceId, { includeTerminated: true }) : [];
     const liveAgentRows = allAgentRows.filter((agent) => agent.status !== "terminated");
-    const companySkillRows = include.skills || include.agents ? await companySkills.listFull(companyId) : [];
+    const companySkillRows = include.skills || include.agents ? await companySkills.listFull(workspaceId) : [];
     if (include.agents) {
       const skipped = allAgentRows.length - liveAgentRows.length;
       if (skipped > 0) {
@@ -2919,9 +2919,9 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     const projectsSvc = projectService(db);
     const issuesSvc = issueService(db);
     const routinesSvc = routineService(db);
-    const allProjectsRaw = include.projects || include.issues ? await projectsSvc.list(companyId) : [];
+    const allProjectsRaw = include.projects || include.issues ? await projectsSvc.list(workspaceId) : [];
     const allProjects = allProjectsRaw.filter((project) => !project.archivedAt);
-    const allRoutines = include.issues ? await routinesSvc.list(companyId) : [];
+    const allRoutines = include.issues ? await routinesSvc.list(workspaceId) : [];
     const projectById = new Map(allProjects.map((project) => [project.id, project]));
     const projectByReference = new Map<string, typeof allProjects[number]>();
     for (const project of allProjects) {
@@ -2952,7 +2952,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     };
     for (const selector of input.issues ?? []) {
       const issue = await resolveIssueBySelector(selector);
-      if (!issue || issue.companyId !== companyId) {
+      if (!issue || issue.workspaceId !== workspaceId) {
         const routine = routineById.get(selector.trim());
         if (routine) {
           selectedRoutines.set(routine.id, routine);
@@ -2979,7 +2979,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
         continue;
       }
       selectedProjects.set(match.id, match);
-      const projectIssues = await issuesSvc.list(companyId, { projectId: match.id });
+      const projectIssues = await issuesSvc.list(workspaceId, { projectId: match.id });
       for (const issue of projectIssues) {
         selectedIssues.set(issue.id, issue);
       }
@@ -2995,7 +2995,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     }
 
     if (include.issues && selectedIssues.size === 0) {
-      const allIssues = await issuesSvc.list(companyId);
+      const allIssues = await issuesSvc.list(workspaceId);
       for (const issue of allIssues) {
         selectedIssues.set(issue.id, issue);
         if (issue.projectId) {
@@ -3126,7 +3126,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
       }
 
       for (const inventoryEntry of skill.fileInventory) {
-        const fileDetail = await companySkills.readFile(companyId, skill.id, inventoryEntry.path).catch(() => null);
+        const fileDetail = await companySkills.readFile(workspaceId, skill.id, inventoryEntry.path).catch(() => null);
         if (!fileDetail) continue;
         const filePath = `${packageDir}/${inventoryEntry.path}`;
         files[filePath] = inventoryEntry.path === "SKILL.md"
@@ -3380,7 +3380,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     let finalFiles = filterExportFiles(files, input.selectedFiles, paperclipExtensionPath);
     let resolved = buildManifestFromPackageFiles(finalFiles, {
       sourceLabel: {
-        companyId: company.id,
+        workspaceId: company.id,
         companyName: company.name,
       },
     });
@@ -3414,7 +3414,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
 
     resolved = buildManifestFromPackageFiles(finalFiles, {
       sourceLabel: {
-        companyId: company.id,
+        workspaceId: company.id,
         companyName: company.name,
       },
     });
@@ -3438,7 +3438,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
   }
 
   async function previewExport(
-    companyId: string,
+    workspaceId: string,
     input: CompanyPortabilityExport,
   ): Promise<CompanyPortabilityExportPreviewResult> {
     const previewInput: CompanyPortabilityExport = {
@@ -3454,7 +3454,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     if (previewInput.include && previewInput.include.issues === undefined) {
       previewInput.include.issues = false;
     }
-    const exported = await exportBundle(companyId, previewInput);
+    const exported = await exportBundle(workspaceId, previewInput);
     return {
       ...exported,
       fileInventory: Object.keys(exported.files)
@@ -3609,7 +3609,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     let targetCompanyName: string | null = null;
 
     if (input.target.mode === "existing_company") {
-      const targetCompany = await companies.getById(input.target.companyId);
+      const targetCompany = await companies.getById(input.target.workspaceId);
       if (!targetCompany) throw notFound("Target company not found");
       targetCompanyId = targetCompany.id;
       targetCompanyName = targetCompany.name;
@@ -3624,13 +3624,13 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     const existingProjectSlugs = new Set<string>();
 
     if (input.target.mode === "existing_company") {
-      const existingAgents = await agents.list(input.target.companyId);
+      const existingAgents = await agents.list(input.target.workspaceId);
       for (const existing of existingAgents) {
         const slug = normalizeAgentUrlKey(existing.name) ?? existing.id;
         if (!existingSlugToAgent.has(slug)) existingSlugToAgent.set(slug, existing);
         existingSlugs.add(slug);
       }
-      const existingProjects = await projects.list(input.target.companyId);
+      const existingProjects = await projects.list(input.target.workspaceId);
       for (const existing of existingProjects) {
         if (!existingProjectSlugToProject.has(existing.urlKey)) {
           existingProjectSlugToProject.set(existing.urlKey, { id: existing.id, name: existing.name });
@@ -3638,7 +3638,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
         existingProjectSlugs.add(existing.urlKey);
       }
 
-      const existingSkills = await companySkills.listFull(input.target.companyId);
+      const existingSkills = await companySkills.listFull(input.target.workspaceId);
       const existingSkillKeys = new Set(existingSkills.map((skill) => skill.key));
       const existingSkillSlugs = new Set(existingSkills.map((skill) => normalizeSkillSlug(skill.slug) ?? skill.slug));
       for (const skill of manifest.skills) {
@@ -3902,7 +3902,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
       targetCompany = created;
       companyAction = "created";
     } else {
-      targetCompany = await companies.getById(input.target.companyId);
+      targetCompany = await companies.getById(input.target.workspaceId);
       if (!targetCompany) throw notFound("Target company not found");
       if (include.company && sourceManifest.company && mode === "board_full") {
         const updated = await companies.update(targetCompany.id, {
@@ -3945,7 +3945,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
             try {
               const body = portableFileToBuffer(logoFile, logoPath);
               const stored = await storage.putFile({
-                companyId: targetCompany.id,
+                workspaceId: targetCompany.id,
                 namespace: "assets/companies",
                 originalFilename: path.posix.basename(logoPath),
                 contentType,

@@ -3,7 +3,7 @@ import type { Db } from "@paperclipai/db";
 import { activityLog, agents, heartbeatRuns, issues } from "@paperclipai/db";
 
 export interface ActivityFilters {
-  companyId: string;
+  workspaceId: string;
   agentId?: string;
   entityType?: string;
   entityId?: string;
@@ -13,7 +13,7 @@ export function activityService(db: Db) {
   const issueIdAsText = sql<string>`${issues.id}::text`;
   return {
     list: (filters: ActivityFilters) => {
-      const conditions = [eq(activityLog.companyId, filters.companyId)];
+      const conditions = [eq(activityLog.workspaceId, filters.workspaceId)];
 
       if (filters.agentId) {
         conditions.push(eq(activityLog.agentId, filters.agentId));
@@ -60,7 +60,7 @@ export function activityService(db: Db) {
         )
         .orderBy(desc(activityLog.createdAt)),
 
-    runsForIssue: (companyId: string, issueId: string) =>
+    runsForIssue: (workspaceId: string, issueId: string) =>
       db
         .select({
           runId: heartbeatRuns.id,
@@ -80,18 +80,18 @@ export function activityService(db: Db) {
           agents,
           and(
             eq(agents.id, heartbeatRuns.agentId),
-            eq(agents.companyId, heartbeatRuns.companyId),
+            eq(agents.workspaceId, heartbeatRuns.workspaceId),
           ),
         )
         .where(
           and(
-            eq(heartbeatRuns.companyId, companyId),
+            eq(heartbeatRuns.workspaceId, workspaceId),
             or(
               sql`${heartbeatRuns.contextSnapshot} ->> 'issueId' = ${issueId}`,
               sql`exists (
                 select 1
                 from ${activityLog}
-                where ${activityLog.companyId} = ${companyId}
+                where ${activityLog.workspaceId} = ${workspaceId}
                   and ${activityLog.entityType} = 'issue'
                   and ${activityLog.entityId} = ${issueId}
                   and ${activityLog.runId} = ${heartbeatRuns.id}
@@ -104,7 +104,7 @@ export function activityService(db: Db) {
     issuesForRun: async (runId: string) => {
       const run = await db
         .select({
-          companyId: heartbeatRuns.companyId,
+          workspaceId: heartbeatRuns.workspaceId,
           contextSnapshot: heartbeatRuns.contextSnapshot,
         })
         .from(heartbeatRuns)
@@ -124,7 +124,7 @@ export function activityService(db: Db) {
         .innerJoin(issues, eq(activityLog.entityId, issueIdAsText))
         .where(
           and(
-            eq(activityLog.companyId, run.companyId),
+            eq(activityLog.workspaceId, run.workspaceId),
             eq(activityLog.runId, runId),
             eq(activityLog.entityType, "issue"),
             isNull(issues.hiddenAt),
@@ -151,7 +151,7 @@ export function activityService(db: Db) {
         .from(issues)
         .where(
           and(
-            eq(issues.companyId, run.companyId),
+            eq(issues.workspaceId, run.workspaceId),
             eq(issues.id, contextIssueId),
             isNull(issues.hiddenAt),
           ),

@@ -210,7 +210,7 @@ export function agentService(db: Db) {
     });
   }
 
-  async function getMonthlySpendByAgentIds(companyId: string, agentIds: string[]) {
+  async function getMonthlySpendByAgentIds(workspaceId: string, agentIds: string[]) {
     if (agentIds.length === 0) return new Map<string, number>();
     const { start, end } = currentUtcMonthWindow();
     const rows = await db
@@ -221,7 +221,7 @@ export function agentService(db: Db) {
       .from(costEvents)
       .where(
         and(
-          eq(costEvents.companyId, companyId),
+          eq(costEvents.workspaceId, workspaceId),
           inArray(costEvents.agentId, agentIds),
           gte(costEvents.occurredAt, start),
           lt(costEvents.occurredAt, end),
@@ -231,11 +231,11 @@ export function agentService(db: Db) {
     return new Map(rows.map((row) => [row.agentId, Number(row.spentMonthlyCents ?? 0)]));
   }
 
-  async function hydrateAgentSpend<T extends { id: string; companyId: string; spentMonthlyCents: number }>(rows: T[]) {
+  async function hydrateAgentSpend<T extends { id: string; workspaceId: string; spentMonthlyCents: number }>(rows: T[]) {
     const agentIds = rows.map((row) => row.id);
-    const companyId = rows[0]?.companyId;
-    if (!companyId || agentIds.length === 0) return rows;
-    const spendByAgentId = await getMonthlySpendByAgentIds(companyId, agentIds);
+    const workspaceId = rows[0]?.workspaceId;
+    if (!workspaceId || agentIds.length === 0) return rows;
+    const spendByAgentId = await getMonthlySpendByAgentIds(workspaceId, agentIds);
     return rows.map((row) => ({
       ...row,
       spentMonthlyCents: spendByAgentId.get(row.id) ?? 0,
@@ -253,10 +253,10 @@ export function agentService(db: Db) {
     return normalizeAgentRow(hydrated);
   }
 
-  async function ensureManager(companyId: string, managerId: string) {
+  async function ensureManager(workspaceId: string, managerId: string) {
     const manager = await getById(managerId);
     if (!manager) throw notFound("Manager not found");
-    if (manager.companyId !== companyId) {
+    if (manager.workspaceId !== workspaceId) {
       throw unprocessable("Manager must belong to same company");
     }
     return manager;
@@ -275,7 +275,7 @@ export function agentService(db: Db) {
   }
 
   async function assertCompanyShortnameAvailable(
-    companyId: string,
+    workspaceId: string,
     candidateName: string,
     options?: AgentShortnameCollisionOptions,
   ) {
@@ -289,7 +289,7 @@ export function agentService(db: Db) {
         status: agents.status,
       })
       .from(agents)
-      .where(eq(agents.companyId, companyId));
+      .where(eq(agents.workspaceId, workspaceId));
 
     const hasCollision = hasAgentShortnameCollision(candidateName, existingAgents, options);
     if (hasCollision) {
@@ -321,7 +321,7 @@ export function agentService(db: Db) {
 
     if (data.reportsTo !== undefined) {
       if (data.reportsTo) {
-        await ensureManager(existing.companyId, data.reportsTo);
+        await ensureManager(existing.workspaceId, data.reportsTo);
       }
       await assertNoCycle(id, data.reportsTo);
     }
@@ -330,7 +330,7 @@ export function agentService(db: Db) {
       const previousShortname = normalizeAgentUrlKey(existing.name);
       const nextShortname = normalizeAgentUrlKey(data.name);
       if (previousShortname !== nextShortname) {
-        await assertCompanyShortnameAvailable(existing.companyId, data.name, { excludeAgentId: id });
+        await assertCompanyShortnameAvailable(existing.workspaceId, data.name, { excludeAgentId: id });
       }
     }
 
@@ -356,7 +356,7 @@ export function agentService(db: Db) {
       const changedKeys = diffConfigSnapshot(beforeConfig, afterConfig);
       if (changedKeys.length > 0) {
         await db.insert(agentConfigRevisions).values({
-          companyId: normalizedUpdated.companyId,
+          workspaceId: normalizedUpdated.workspaceId,
           agentId: normalizedUpdated.id,
           createdByAgentId: options?.recordRevision?.createdByAgentId ?? null,
           createdByUserId: options?.recordRevision?.createdByUserId ?? null,
@@ -373,8 +373,8 @@ export function agentService(db: Db) {
   }
 
   return {
-    list: async (companyId: string, options?: { includeTerminated?: boolean }) => {
-      const conditions = [eq(agents.companyId, companyId)];
+    list: async (workspaceId: string, options?: { includeTerminated?: boolean }) => {
+      const conditions = [eq(agents.workspaceId, workspaceId)];
       if (!options?.includeTerminated) {
         conditions.push(ne(agents.status, "terminated"));
       }
@@ -385,22 +385,22 @@ export function agentService(db: Db) {
 
     getById,
 
-    create: async (companyId: string, data: Omit<typeof agents.$inferInsert, "companyId">) => {
+    create: async (workspaceId: string, data: Omit<typeof agents.$inferInsert, "workspaceId">) => {
       if (data.reportsTo) {
-        await ensureManager(companyId, data.reportsTo);
+        await ensureManager(workspaceId, data.reportsTo);
       }
 
       const existingAgents = await db
         .select({ id: agents.id, name: agents.name, status: agents.status })
         .from(agents)
-        .where(eq(agents.companyId, companyId));
+        .where(eq(agents.workspaceId, workspaceId));
       const uniqueName = deduplicateAgentName(data.name, existingAgents);
 
       const role = data.role ?? "general";
       const normalizedPermissions = normalizeAgentPermissions(data.permissions, role);
       const created = await db
         .insert(agents)
-        .values({ ...data, name: uniqueName, companyId, role, permissions: normalizedPermissions })
+        .values({ ...data, name: uniqueName, workspaceId, role, permissions: normalizedPermissions })
         .returning()
         .then((rows) => rows[0]);
 
@@ -593,7 +593,7 @@ export function agentService(db: Db) {
         .insert(agentApiKeys)
         .values({
           agentId: id,
-          companyId: existing.companyId,
+          workspaceId: existing.workspaceId,
           name,
           keyHash,
         })
@@ -628,11 +628,11 @@ export function agentService(db: Db) {
       return rows[0] ?? null;
     },
 
-    orgForCompany: async (companyId: string) => {
+    orgForCompany: async (workspaceId: string) => {
       const rows = await db
         .select()
         .from(agents)
-        .where(and(eq(agents.companyId, companyId), ne(agents.status, "terminated")));
+        .where(and(eq(agents.workspaceId, workspaceId), ne(agents.status, "terminated")));
       const normalizedRows = rows.map(normalizeAgentRow);
       const byManager = new Map<string | null, typeof normalizedRows>();
       for (const row of normalizedRows) {
@@ -674,7 +674,7 @@ export function agentService(db: Db) {
         .from(heartbeatRuns)
         .where(and(eq(heartbeatRuns.agentId, agentId), inArray(heartbeatRuns.status, ["queued", "running"]))),
 
-    resolveByReference: async (companyId: string, reference: string) => {
+    resolveByReference: async (workspaceId: string, reference: string) => {
       const raw = reference.trim();
       if (raw.length === 0) {
         return { agent: null, ambiguous: false } as const;
@@ -682,7 +682,7 @@ export function agentService(db: Db) {
 
       if (isUuidLike(raw)) {
         const byId = await getById(raw);
-        if (!byId || byId.companyId !== companyId) {
+        if (!byId || byId.workspaceId !== workspaceId) {
           return { agent: null, ambiguous: false } as const;
         }
         return { agent: byId, ambiguous: false } as const;
@@ -693,7 +693,7 @@ export function agentService(db: Db) {
         return { agent: null, ambiguous: false } as const;
       }
 
-      const rows = await db.select().from(agents).where(eq(agents.companyId, companyId));
+      const rows = await db.select().from(agents).where(eq(agents.workspaceId, workspaceId));
       const matches = rows
         .map(normalizeAgentRow)
         .filter((agent) => agent.urlKey === urlKey && agent.status !== "terminated");

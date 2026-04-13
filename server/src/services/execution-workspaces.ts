@@ -258,7 +258,7 @@ export function mergeExecutionWorkspaceConfig(
 function toRuntimeService(row: WorkspaceRuntimeServiceRow): WorkspaceRuntimeService {
   return {
     id: row.id,
-    companyId: row.companyId,
+    workspaceId: row.workspaceId,
     projectId: row.projectId ?? null,
     projectWorkspaceId: row.projectWorkspaceId ?? null,
     executionWorkspaceId: row.executionWorkspaceId ?? null,
@@ -293,7 +293,7 @@ function toExecutionWorkspace(
 ): ExecutionWorkspace {
   return {
     id: row.id,
-    companyId: row.companyId,
+    workspaceId: row.workspaceId,
     projectId: row.projectId,
     projectWorkspaceId: row.projectWorkspaceId ?? null,
     sourceIssueId: row.sourceIssueId ?? null,
@@ -328,12 +328,12 @@ function usesInheritedProjectRuntimeServices(row: ExecutionWorkspaceRow) {
 
 async function loadEffectiveRuntimeServicesByExecutionWorkspace(
   db: Db,
-  companyId: string,
+  workspaceId: string,
   rows: ExecutionWorkspaceRow[],
 ) {
   const executionRuntimeServices = await listCurrentRuntimeServicesForExecutionWorkspaces(
     db,
-    companyId,
+    workspaceId,
     rows.map((row) => row.id),
   );
   const projectWorkspaceIds = rows
@@ -342,7 +342,7 @@ async function loadEffectiveRuntimeServicesByExecutionWorkspace(
     .filter((value): value is string => Boolean(value));
   const projectRuntimeServices = await listCurrentRuntimeServicesForProjectWorkspaces(
     db,
-    companyId,
+    workspaceId,
     [...new Set(projectWorkspaceIds)],
   );
 
@@ -358,14 +358,14 @@ async function loadEffectiveRuntimeServicesByExecutionWorkspace(
 
 export function executionWorkspaceService(db: Db) {
   return {
-    list: async (companyId: string, filters?: {
+    list: async (workspaceId: string, filters?: {
       projectId?: string;
       projectWorkspaceId?: string;
       issueId?: string;
       status?: string;
       reuseEligible?: boolean;
     }) => {
-      const conditions = [eq(executionWorkspaces.companyId, companyId)];
+      const conditions = [eq(executionWorkspaces.workspaceId, workspaceId)];
       if (filters?.projectId) conditions.push(eq(executionWorkspaces.projectId, filters.projectId));
       if (filters?.projectWorkspaceId) {
         conditions.push(eq(executionWorkspaces.projectWorkspaceId, filters.projectWorkspaceId));
@@ -385,7 +385,7 @@ export function executionWorkspaceService(db: Db) {
         .from(executionWorkspaces)
         .where(and(...conditions))
         .orderBy(desc(executionWorkspaces.lastUsedAt), desc(executionWorkspaces.createdAt));
-      const runtimeServicesByWorkspaceId = await loadEffectiveRuntimeServicesByExecutionWorkspace(db, companyId, rows);
+      const runtimeServicesByWorkspaceId = await loadEffectiveRuntimeServicesByExecutionWorkspace(db, workspaceId, rows);
       return rows.map((row) =>
         toExecutionWorkspace(
           row,
@@ -401,7 +401,7 @@ export function executionWorkspaceService(db: Db) {
         .where(eq(executionWorkspaces.id, id))
         .then((rows) => rows[0] ?? null);
       if (!row) return null;
-      const runtimeServicesByWorkspaceId = await loadEffectiveRuntimeServicesByExecutionWorkspace(db, row.companyId, [row]);
+      const runtimeServicesByWorkspaceId = await loadEffectiveRuntimeServicesByExecutionWorkspace(db, row.workspaceId, [row]);
       return toExecutionWorkspace(
         row,
         (runtimeServicesByWorkspaceId.get(row.id) ?? []).map(toRuntimeService),
@@ -416,7 +416,7 @@ export function executionWorkspaceService(db: Db) {
         .then((rows) => rows[0] ?? null);
       if (!workspace) return null;
 
-      const runtimeServicesByWorkspaceId = await loadEffectiveRuntimeServicesByExecutionWorkspace(db, workspace.companyId, [workspace]);
+      const runtimeServicesByWorkspaceId = await loadEffectiveRuntimeServicesByExecutionWorkspace(db, workspace.workspaceId, [workspace]);
       const runtimeServices = (runtimeServicesByWorkspaceId.get(workspace.id) ?? []).map(toRuntimeService);
 
       const linkedIssues = await db
@@ -427,7 +427,7 @@ export function executionWorkspaceService(db: Db) {
           status: issues.status,
         })
         .from(issues)
-        .where(and(eq(issues.companyId, workspace.companyId), eq(issues.executionWorkspaceId, workspace.id)));
+        .where(and(eq(issues.workspaceId, workspace.workspaceId), eq(issues.executionWorkspaceId, workspace.id)));
 
       const projectWorkspace = workspace.projectWorkspaceId
         ? await db
@@ -440,7 +440,7 @@ export function executionWorkspaceService(db: Db) {
             .from(projectWorkspaces)
             .where(
               and(
-                eq(projectWorkspaces.companyId, workspace.companyId),
+                eq(projectWorkspaces.workspaceId, workspace.workspaceId),
                 eq(projectWorkspaces.id, workspace.projectWorkspaceId),
               ),
             )
@@ -455,7 +455,7 @@ export function executionWorkspaceService(db: Db) {
             .from(projectWorkspaces)
             .where(
               and(
-                eq(projectWorkspaces.companyId, workspace.companyId),
+                eq(projectWorkspaces.workspaceId, workspace.workspaceId),
                 eq(projectWorkspaces.projectId, workspace.projectId),
                 eq(projectWorkspaces.isPrimary, true),
               ),
@@ -469,7 +469,7 @@ export function executionWorkspaceService(db: Db) {
               executionWorkspacePolicy: projects.executionWorkspacePolicy,
             })
             .from(projects)
-            .where(and(eq(projects.id, workspace.projectId), eq(projects.companyId, workspace.companyId)))
+            .where(and(eq(projects.id, workspace.projectId), eq(projects.workspaceId, workspace.workspaceId)))
             .then((rows) => parseProjectExecutionWorkspacePolicy(rows[0]?.executionWorkspacePolicy))
         : null;
 

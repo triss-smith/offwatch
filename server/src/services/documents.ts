@@ -28,7 +28,7 @@ export function extractLegacyPlanBody(description: string | null | undefined) {
 function mapIssueDocumentRow(
   row: {
     id: string;
-    companyId: string;
+    workspaceId: string;
     issueId: string;
     key: string;
     title: string | null;
@@ -47,7 +47,7 @@ function mapIssueDocumentRow(
 ) {
   return {
     id: row.id,
-    companyId: row.companyId,
+    workspaceId: row.workspaceId,
     issueId: row.issueId,
     key: row.key,
     title: row.title,
@@ -66,7 +66,7 @@ function mapIssueDocumentRow(
 
 const issueDocumentSelect = {
   id: documents.id,
-  companyId: documents.companyId,
+  workspaceId: documents.workspaceId,
   issueId: issueDocuments.issueId,
   key: issueDocuments.key,
   title: documents.title,
@@ -141,7 +141,7 @@ export function documentService(db: Db) {
       return db
         .select({
           id: documentRevisions.id,
-          companyId: documentRevisions.companyId,
+          workspaceId: documentRevisions.workspaceId,
           documentId: documentRevisions.documentId,
           issueId: issueDocuments.issueId,
           key: issueDocuments.key,
@@ -175,7 +175,7 @@ export function documentService(db: Db) {
     }) => {
       const key = normalizeDocumentKey(input.key);
       const issue = await db
-        .select({ id: issues.id, companyId: issues.companyId })
+        .select({ id: issues.id, workspaceId: issues.workspaceId })
         .from(issues)
         .where(eq(issues.id, input.issueId))
         .then((rows) => rows[0] ?? null);
@@ -187,7 +187,7 @@ export function documentService(db: Db) {
           const existing = await tx
             .select({
               id: documents.id,
-              companyId: documents.companyId,
+              workspaceId: documents.workspaceId,
               issueId: issueDocuments.issueId,
               key: issueDocuments.key,
               title: documents.title,
@@ -223,7 +223,7 @@ export function documentService(db: Db) {
             const [revision] = await tx
               .insert(documentRevisions)
               .values({
-                companyId: issue.companyId,
+                workspaceId: issue.workspaceId,
                 documentId: existing.id,
                 revisionNumber: nextRevisionNumber,
                 title: input.title ?? null,
@@ -279,7 +279,7 @@ export function documentService(db: Db) {
           const [document] = await tx
             .insert(documents)
             .values({
-              companyId: issue.companyId,
+              workspaceId: issue.workspaceId,
               title: input.title ?? null,
               format: input.format,
               latestBody: input.body,
@@ -297,7 +297,7 @@ export function documentService(db: Db) {
           const [revision] = await tx
             .insert(documentRevisions)
             .values({
-              companyId: issue.companyId,
+              workspaceId: issue.workspaceId,
               documentId: document.id,
               revisionNumber: 1,
               title: input.title ?? null,
@@ -317,7 +317,7 @@ export function documentService(db: Db) {
             .where(eq(documents.id, document.id));
 
           await tx.insert(issueDocuments).values({
-            companyId: issue.companyId,
+            workspaceId: issue.workspaceId,
             issueId: issue.id,
             documentId: document.id,
             key,
@@ -329,7 +329,7 @@ export function documentService(db: Db) {
             created: true as const,
             document: {
               id: document.id,
-              companyId: issue.companyId,
+              workspaceId: issue.workspaceId,
               issueId: issue.id,
               key,
               title: document.title,
@@ -375,7 +375,7 @@ export function documentService(db: Db) {
         const revision = await tx
           .select({
             id: documentRevisions.id,
-            companyId: documentRevisions.companyId,
+            workspaceId: documentRevisions.workspaceId,
             documentId: documentRevisions.documentId,
             revisionNumber: documentRevisions.revisionNumber,
             title: documentRevisions.title,
@@ -398,7 +398,7 @@ export function documentService(db: Db) {
         const [restoredRevision] = await tx
           .insert(documentRevisions)
           .values({
-            companyId: existing.companyId,
+            workspaceId: existing.workspaceId,
             documentId: existing.id,
             revisionNumber: nextRevisionNumber,
             title: revision.title ?? null,

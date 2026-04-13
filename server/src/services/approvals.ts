@@ -3,14 +3,9 @@ import type { Db } from "@paperclipai/db";
 import { approvalComments, approvals } from "@paperclipai/db";
 import { notFound, unprocessable } from "../errors.js";
 import { redactCurrentUserText } from "../log-redaction.js";
-import { agentService } from "./agents.js";
-import { budgetService } from "./budgets.js";
-import { notifyHireApproved } from "./hire-hook.js";
 import { instanceSettingsService } from "./instance-settings.js";
 
 export function approvalService(db: Db) {
-  const agentsSvc = agentService(db);
-  const budgets = budgetService(db);
   const instanceSettings = instanceSettingsService(db);
   const canResolveStatuses = new Set(["pending", "revision_requested"]);
   const resolvableStatuses = Array.from(canResolveStatuses);
@@ -79,8 +74,8 @@ export function approvalService(db: Db) {
   }
 
   return {
-    list: (companyId: string, status?: string) => {
-      const conditions = [eq(approvals.companyId, companyId)];
+    list: (workspaceId: string, status?: string) => {
+      const conditions = [eq(approvals.workspaceId, workspaceId)];
       if (status) conditions.push(eq(approvals.status, status));
       return db.select().from(approvals).where(and(...conditions));
     },
@@ -92,10 +87,10 @@ export function approvalService(db: Db) {
         .where(eq(approvals.id, id))
         .then((rows) => rows[0] ?? null),
 
-    create: (companyId: string, data: Omit<typeof approvals.$inferInsert, "companyId">) =>
+    create: (workspaceId: string, data: Omit<typeof approvals.$inferInsert, "workspaceId">) =>
       db
         .insert(approvals)
-        .values({ ...data, companyId })
+        .values({ ...data, workspaceId: workspaceId })
         .returning()
         .then((rows) => rows[0]),
 
@@ -107,64 +102,6 @@ export function approvalService(db: Db) {
         decisionNote,
       );
 
-      let hireApprovedAgentId: string | null = null;
-      const now = new Date();
-      if (applied && updated.type === "hire_agent") {
-        const payload = updated.payload as Record<string, unknown>;
-        const payloadAgentId = typeof payload.agentId === "string" ? payload.agentId : null;
-        if (payloadAgentId) {
-          await agentsSvc.activatePendingApproval(payloadAgentId);
-          hireApprovedAgentId = payloadAgentId;
-        } else {
-          const created = await agentsSvc.create(updated.companyId, {
-            name: String(payload.name ?? "New Agent"),
-            role: String(payload.role ?? "general"),
-            title: typeof payload.title === "string" ? payload.title : null,
-            reportsTo: typeof payload.reportsTo === "string" ? payload.reportsTo : null,
-            capabilities: typeof payload.capabilities === "string" ? payload.capabilities : null,
-            adapterType: String(payload.adapterType ?? "process"),
-            adapterConfig:
-              typeof payload.adapterConfig === "object" && payload.adapterConfig !== null
-                ? (payload.adapterConfig as Record<string, unknown>)
-                : {},
-            budgetMonthlyCents:
-              typeof payload.budgetMonthlyCents === "number" ? payload.budgetMonthlyCents : 0,
-            metadata:
-              typeof payload.metadata === "object" && payload.metadata !== null
-                ? (payload.metadata as Record<string, unknown>)
-                : null,
-            status: "idle",
-            spentMonthlyCents: 0,
-            permissions: undefined,
-            lastHeartbeatAt: null,
-          });
-          hireApprovedAgentId = created?.id ?? null;
-        }
-        if (hireApprovedAgentId) {
-          const budgetMonthlyCents =
-            typeof payload.budgetMonthlyCents === "number" ? payload.budgetMonthlyCents : 0;
-          if (budgetMonthlyCents > 0) {
-            await budgets.upsertPolicy(
-              updated.companyId,
-              {
-                scopeType: "agent",
-                scopeId: hireApprovedAgentId,
-                amount: budgetMonthlyCents,
-                windowKind: "calendar_month_utc",
-              },
-              decidedByUserId,
-            );
-          }
-          void notifyHireApproved(db, {
-            companyId: updated.companyId,
-            agentId: hireApprovedAgentId,
-            source: "approval",
-            sourceId: id,
-            approvedAt: now,
-          }).catch(() => {});
-        }
-      }
-
       return { approval: updated, applied };
     },
 
@@ -175,14 +112,6 @@ export function approvalService(db: Db) {
         decidedByUserId,
         decisionNote,
       );
-
-      if (applied && updated.type === "hire_agent") {
-        const payload = updated.payload as Record<string, unknown>;
-        const payloadAgentId = typeof payload.agentId === "string" ? payload.agentId : null;
-        if (payloadAgentId) {
-          await agentsSvc.terminate(payloadAgentId);
-        }
-      }
 
       return { approval: updated, applied };
     },
@@ -239,7 +168,7 @@ export function approvalService(db: Db) {
         .where(
           and(
             eq(approvalComments.approvalId, approvalId),
-            eq(approvalComments.companyId, existing.companyId),
+            eq(approvalComments.workspaceId, existing.workspaceId),
           ),
         )
         .orderBy(asc(approvalComments.createdAt))
@@ -259,7 +188,7 @@ export function approvalService(db: Db) {
       return db
         .insert(approvalComments)
         .values({
-          companyId: existing.companyId,
+          workspaceId: existing.workspaceId,
           approvalId,
           authorAgentId: actor.agentId ?? null,
           authorUserId: actor.userId ?? null,

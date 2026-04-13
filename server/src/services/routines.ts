@@ -330,63 +330,63 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
       .then((rows) => rows[0] ?? null);
   }
 
-  async function assertRoutineAccess(companyId: string, routineId: string) {
+  async function assertRoutineAccess(workspaceId: string, routineId: string) {
     const routine = await getRoutineById(routineId);
     if (!routine) throw notFound("Routine not found");
-    if (routine.companyId !== companyId) throw forbidden("Routine must belong to same company");
+    if (routine.workspaceId !== workspaceId) throw forbidden("Routine must belong to same company");
     return routine;
   }
 
-  async function assertAssignableAgent(companyId: string, agentId: string | null | undefined) {
+  async function assertAssignableAgent(workspaceId: string, agentId: string | null | undefined) {
     if (!agentId) return;
     const agent = await db
-      .select({ id: agents.id, companyId: agents.companyId, status: agents.status })
+      .select({ id: agents.id, workspaceId: agents.workspaceId, status: agents.status })
       .from(agents)
       .where(eq(agents.id, agentId))
       .then((rows) => rows[0] ?? null);
     if (!agent) throw notFound("Assignee agent not found");
-    if (agent.companyId !== companyId) throw unprocessable("Assignee must belong to same company");
+    if (agent.workspaceId !== workspaceId) throw unprocessable("Assignee must belong to same company");
     if (agent.status === "pending_approval") throw conflict("Cannot assign routines to pending approval agents");
     if (agent.status === "terminated") throw conflict("Cannot assign routines to terminated agents");
   }
 
-  async function assertProject(companyId: string, projectId: string | null | undefined) {
+  async function assertProject(workspaceId: string, projectId: string | null | undefined) {
     if (!projectId) return;
     const project = await db
-      .select({ id: projects.id, companyId: projects.companyId })
+      .select({ id: projects.id, workspaceId: projects.workspaceId })
       .from(projects)
       .where(eq(projects.id, projectId))
       .then((rows) => rows[0] ?? null);
     if (!project) throw notFound("Project not found");
-    if (project.companyId !== companyId) throw unprocessable("Project must belong to same company");
+    if (project.workspaceId !== workspaceId) throw unprocessable("Project must belong to same company");
   }
 
-  async function assertGoal(companyId: string, goalId: string) {
+  async function assertGoal(workspaceId: string, goalId: string) {
     const goal = await db
-      .select({ id: goals.id, companyId: goals.companyId })
+      .select({ id: goals.id, workspaceId: goals.workspaceId })
       .from(goals)
       .where(eq(goals.id, goalId))
       .then((rows) => rows[0] ?? null);
     if (!goal) throw notFound("Goal not found");
-    if (goal.companyId !== companyId) throw unprocessable("Goal must belong to same company");
+    if (goal.workspaceId !== workspaceId) throw unprocessable("Goal must belong to same company");
   }
 
-  async function assertParentIssue(companyId: string, issueId: string) {
+  async function assertParentIssue(workspaceId: string, issueId: string) {
     const parentIssue = await db
-      .select({ id: issues.id, companyId: issues.companyId })
+      .select({ id: issues.id, workspaceId: issues.workspaceId })
       .from(issues)
       .where(eq(issues.id, issueId))
       .then((rows) => rows[0] ?? null);
     if (!parentIssue) throw notFound("Parent issue not found");
-    if (parentIssue.companyId !== companyId) throw unprocessable("Parent issue must belong to same company");
+    if (parentIssue.workspaceId !== workspaceId) throw unprocessable("Parent issue must belong to same company");
   }
 
-  async function listTriggersForRoutineIds(companyId: string, routineIds: string[]) {
+  async function listTriggersForRoutineIds(workspaceId: string, routineIds: string[]) {
     if (routineIds.length === 0) return new Map<string, RoutineTrigger[]>();
     const rows = await db
       .select()
       .from(routineTriggers)
-      .where(and(eq(routineTriggers.companyId, companyId), inArray(routineTriggers.routineId, routineIds)))
+      .where(and(eq(routineTriggers.workspaceId, workspaceId), inArray(routineTriggers.routineId, routineIds)))
       .orderBy(asc(routineTriggers.createdAt), asc(routineTriggers.id));
     const map = new Map<string, RoutineTrigger[]>();
     for (const row of rows) {
@@ -397,12 +397,12 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
     return map;
   }
 
-  async function listLatestRunByRoutineIds(companyId: string, routineIds: string[]) {
+  async function listLatestRunByRoutineIds(workspaceId: string, routineIds: string[]) {
     if (routineIds.length === 0) return new Map<string, RoutineRunSummary>();
     const rows = await db
       .selectDistinctOn([routineRuns.routineId], {
         id: routineRuns.id,
-        companyId: routineRuns.companyId,
+        workspaceId: routineRuns.workspaceId,
         routineId: routineRuns.routineId,
         triggerId: routineRuns.triggerId,
         source: routineRuns.source,
@@ -427,14 +427,14 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
       .from(routineRuns)
       .leftJoin(routineTriggers, eq(routineRuns.triggerId, routineTriggers.id))
       .leftJoin(issues, eq(routineRuns.linkedIssueId, issues.id))
-      .where(and(eq(routineRuns.companyId, companyId), inArray(routineRuns.routineId, routineIds)))
+      .where(and(eq(routineRuns.workspaceId, workspaceId), inArray(routineRuns.routineId, routineIds)))
       .orderBy(routineRuns.routineId, desc(routineRuns.createdAt), desc(routineRuns.id));
 
     const map = new Map<string, RoutineRunSummary>();
     for (const row of rows) {
       map.set(row.routineId, {
         id: row.id,
-        companyId: row.companyId,
+        workspaceId: row.workspaceId,
         routineId: row.routineId,
         triggerId: row.triggerId,
         source: row.source as RoutineRunSummary["source"],
@@ -470,7 +470,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
     return map;
   }
 
-  async function listLiveIssueByRoutineIds(companyId: string, routineIds: string[]) {
+  async function listLiveIssueByRoutineIds(workspaceId: string, routineIds: string[]) {
     if (routineIds.length === 0) return new Map<string, RoutineListItem["activeIssue"]>();
     const executionBoundRows = await db
       .selectDistinctOn([issues.originId], {
@@ -492,7 +492,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
       )
       .where(
         and(
-          eq(issues.companyId, companyId),
+          eq(issues.workspaceId, workspaceId),
           eq(issues.originKind, "routine_execution"),
           inArray(issues.originId, routineIds),
           inArray(issues.status, OPEN_ISSUE_STATUSES),
@@ -523,14 +523,14 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
         .innerJoin(
           heartbeatRuns,
           and(
-            eq(heartbeatRuns.companyId, issues.companyId),
+            eq(heartbeatRuns.workspaceId, issues.workspaceId),
             inArray(heartbeatRuns.status, LIVE_HEARTBEAT_RUN_STATUSES),
             sql`${heartbeatRuns.contextSnapshot} ->> 'issueId' = cast(${issues.id} as text)`,
           ),
         )
         .where(
           and(
-            eq(issues.companyId, companyId),
+            eq(issues.workspaceId, workspaceId),
             eq(issues.originKind, "routine_execution"),
             inArray(issues.originId, missingRoutineIds),
             inArray(issues.status, OPEN_ISSUE_STATUSES),
@@ -603,7 +603,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
       )
       .where(
         and(
-          eq(issues.companyId, routine.companyId),
+          eq(issues.workspaceId, routine.workspaceId),
           eq(issues.originKind, "routine_execution"),
           eq(issues.originId, routine.id),
           inArray(issues.status, OPEN_ISSUE_STATUSES),
@@ -621,14 +621,14 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
       .innerJoin(
         heartbeatRuns,
         and(
-          eq(heartbeatRuns.companyId, issues.companyId),
+          eq(heartbeatRuns.workspaceId, issues.workspaceId),
           inArray(heartbeatRuns.status, LIVE_HEARTBEAT_RUN_STATUSES),
           sql`${heartbeatRuns.contextSnapshot} ->> 'issueId' = cast(${issues.id} as text)`,
         ),
       )
       .where(
         and(
-          eq(issues.companyId, routine.companyId),
+          eq(issues.workspaceId, routine.workspaceId),
           eq(issues.originKind, "routine_execution"),
           eq(issues.originId, routine.id),
           inArray(issues.status, OPEN_ISSUE_STATUSES),
@@ -653,13 +653,13 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
   }
 
   async function createWebhookSecret(
-    companyId: string,
+    workspaceId: string,
     routineId: string,
     actor: Actor,
   ) {
     const secretValue = crypto.randomBytes(24).toString("hex");
     const secret = await secretsSvc.create(
-      companyId,
+      workspaceId,
       {
         name: `routine-${routineId}-${crypto.randomBytes(6).toString("hex")}`,
         provider: "local_encrypted",
@@ -671,15 +671,15 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
     return { secret, secretValue };
   }
 
-  async function resolveTriggerSecret(trigger: typeof routineTriggers.$inferSelect, companyId: string) {
+  async function resolveTriggerSecret(trigger: typeof routineTriggers.$inferSelect, workspaceId: string) {
     if (!trigger.secretId) throw notFound("Routine trigger secret not found");
     const secret = await db
       .select()
       .from(companySecrets)
       .where(eq(companySecrets.id, trigger.secretId))
       .then((rows) => rows[0] ?? null);
-    if (!secret || secret.companyId !== companyId) throw notFound("Routine trigger secret not found");
-    const value = await secretsSvc.resolveSecretValue(companyId, trigger.secretId, "latest");
+    if (!secret || secret.workspaceId !== workspaceId) throw notFound("Routine trigger secret not found");
+    const value = await secretsSvc.resolveSecretValue(workspaceId, trigger.secretId, "latest");
     return value;
   }
 
@@ -709,7 +709,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
     const run = await db.transaction(async (tx) => {
       const txDb = tx as unknown as Db;
       await tx.execute(
-        sql`select id from ${routines} where ${routines.id} = ${input.routine.id} and ${routines.companyId} = ${input.routine.companyId} for update`,
+        sql`select id from ${routines} where ${routines.id} = ${input.routine.id} and ${routines.workspaceId} = ${input.routine.workspaceId} for update`,
       );
 
       if (input.idempotencyKey) {
@@ -718,7 +718,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
           .from(routineRuns)
           .where(
             and(
-              eq(routineRuns.companyId, input.routine.companyId),
+              eq(routineRuns.workspaceId, input.routine.workspaceId),
               eq(routineRuns.routineId, input.routine.id),
               eq(routineRuns.source, input.source),
               eq(routineRuns.idempotencyKey, input.idempotencyKey),
@@ -735,7 +735,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
       const [createdRun] = await txDb
         .insert(routineRuns)
         .values({
-          companyId: input.routine.companyId,
+          workspaceId: input.routine.workspaceId,
           routineId: input.routine.id,
           triggerId: input.trigger?.id ?? null,
           source: input.source,
@@ -773,7 +773,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
         }
 
         try {
-          createdIssue = await issueSvc.create(input.routine.companyId, {
+          createdIssue = await issueSvc.create(input.routine.workspaceId, {
             projectId,
             goalId: input.routine.goalId,
             parentId: input.routine.parentIssueId,
@@ -869,7 +869,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
       const actorId = input.source === "schedule" ? "routine-scheduler" : "routine-webhook";
       try {
         await logActivity(db, {
-          companyId: input.routine.companyId,
+          workspaceId: input.routine.workspaceId,
           actorType: "system",
           actorId,
           action: "routine.run_triggered",
@@ -902,17 +902,17 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
     get: getRoutineById,
     getTrigger: getTriggerById,
 
-    list: async (companyId: string): Promise<RoutineListItem[]> => {
+    list: async (workspaceId: string): Promise<RoutineListItem[]> => {
       const rows = await db
         .select()
         .from(routines)
-        .where(eq(routines.companyId, companyId))
+        .where(eq(routines.workspaceId, workspaceId))
         .orderBy(desc(routines.updatedAt), asc(routines.title));
       const routineIds = rows.map((row) => row.id);
       const [triggersByRoutine, latestRunByRoutine, activeIssueByRoutine] = await Promise.all([
-        listTriggersForRoutineIds(companyId, routineIds),
-        listLatestRunByRoutineIds(companyId, routineIds),
-        listLiveIssueByRoutineIds(companyId, routineIds),
+        listTriggersForRoutineIds(workspaceId, routineIds),
+        listLatestRunByRoutineIds(workspaceId, routineIds),
+        listLiveIssueByRoutineIds(workspaceId, routineIds),
       ]);
       return rows.map((row) => ({
         ...row,
@@ -945,7 +945,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
         db
           .select({
             id: routineRuns.id,
-            companyId: routineRuns.companyId,
+            workspaceId: routineRuns.workspaceId,
             routineId: routineRuns.routineId,
             triggerId: routineRuns.triggerId,
             source: routineRuns.source,
@@ -976,7 +976,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
           .then((runs) =>
             runs.map((run) => ({
               id: run.id,
-              companyId: run.companyId,
+              workspaceId: run.workspaceId,
               routineId: run.routineId,
               triggerId: run.triggerId,
               source: run.source as RoutineRunSummary["source"],
@@ -1023,11 +1023,11 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
       };
     },
 
-    create: async (companyId: string, input: CreateRoutine, actor: Actor): Promise<Routine> => {
-      await assertProject(companyId, input.projectId ?? null);
-      await assertAssignableAgent(companyId, input.assigneeAgentId ?? null);
-      if (input.goalId) await assertGoal(companyId, input.goalId);
-      if (input.parentIssueId) await assertParentIssue(companyId, input.parentIssueId);
+    create: async (workspaceId: string, input: CreateRoutine, actor: Actor): Promise<Routine> => {
+      await assertProject(workspaceId, input.projectId ?? null);
+      await assertAssignableAgent(workspaceId, input.assigneeAgentId ?? null);
+      if (input.goalId) await assertGoal(workspaceId, input.goalId);
+      if (input.parentIssueId) await assertParentIssue(workspaceId, input.parentIssueId);
       const variables = syncRoutineVariablesWithTemplate(
         [input.title, input.description],
         sanitizeRoutineVariableInputs(input.variables),
@@ -1037,7 +1037,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
       const [created] = await db
         .insert(routines)
         .values({
-          companyId,
+          workspaceId,
           projectId: input.projectId ?? null,
           goalId: input.goalId ?? null,
           parentIssueId: input.parentIssueId ?? null,
@@ -1076,10 +1076,10 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
         [nextTitle, nextDescription],
         patch.variables === undefined ? existing.variables : sanitizeRoutineVariableInputs(patch.variables),
       );
-      if (patch.projectId !== undefined) await assertProject(existing.companyId, nextProjectId);
-      if (patch.assigneeAgentId !== undefined) await assertAssignableAgent(existing.companyId, nextAssigneeAgentId);
-      if (patch.goalId) await assertGoal(existing.companyId, patch.goalId);
-      if (patch.parentIssueId) await assertParentIssue(existing.companyId, patch.parentIssueId);
+      if (patch.projectId !== undefined) await assertProject(existing.workspaceId, nextProjectId);
+      if (patch.assigneeAgentId !== undefined) await assertAssignableAgent(existing.workspaceId, nextAssigneeAgentId);
+      if (patch.goalId) await assertGoal(existing.workspaceId, patch.goalId);
+      if (patch.parentIssueId) await assertParentIssue(existing.workspaceId, patch.parentIssueId);
       assertRoutineVariableDefinitions(nextVariables);
       const enabledScheduleTriggers = await db
         .select({ id: routineTriggers.id })
@@ -1143,7 +1143,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
 
       if (input.kind === "webhook") {
         publicId = crypto.randomBytes(12).toString("hex");
-        const created = await createWebhookSecret(routine.companyId, routine.id, actor);
+        const created = await createWebhookSecret(routine.workspaceId, routine.id, actor);
         secretId = created.secret.id;
         secretMaterial = {
           webhookUrl: `${process.env.PAPERCLIP_API_URL}/api/routine-triggers/public/${publicId}/fire`,
@@ -1154,7 +1154,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
       const [trigger] = await db
         .insert(routineTriggers)
         .values({
-          companyId: routine.companyId,
+          workspaceId: routine.workspaceId,
           routineId: routine.id,
           kind: input.kind,
           label: input.label ?? null,
@@ -1273,8 +1273,8 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
       const routine = await getRoutineById(id);
       if (!routine) throw notFound("Routine not found");
       if (routine.status === "archived") throw conflict("Routine is archived");
-      await assertProject(routine.companyId, input.projectId ?? null);
-      await assertAssignableAgent(routine.companyId, input.assigneeAgentId ?? null);
+      await assertProject(routine.workspaceId, input.projectId ?? null);
+      await assertAssignableAgent(routine.workspaceId, input.assigneeAgentId ?? null);
       const trigger = input.triggerId ? await getTriggerById(input.triggerId) : null;
       if (trigger && trigger.routineId !== routine.id) throw forbidden("Trigger does not belong to routine");
       if (trigger && !trigger.enabled) throw conflict("Routine trigger is not active");
@@ -1316,7 +1316,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
       if (trigger.signingMode === "none") {
         // No authentication — the publicId in the URL acts as a shared secret.
       } else if (trigger.signingMode === "github_hmac") {
-        const secretValue = await resolveTriggerSecret(trigger, routine.companyId);
+        const secretValue = await resolveTriggerSecret(trigger, routine.workspaceId);
         const rawBody = input.rawBody ?? Buffer.from(JSON.stringify(input.payload ?? {}));
         // Accept X-Hub-Signature-256 (GitHub/Sentry) or fall back to the
         // generic X-Paperclip-Signature header so operators can use github_hmac
@@ -1335,7 +1335,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
           crypto.timingSafeEqual(normalizedBuf, expectedBuf);
         if (!valid) throw unauthorized();
       } else if (trigger.signingMode === "bearer") {
-        const secretValue = await resolveTriggerSecret(trigger, routine.companyId);
+        const secretValue = await resolveTriggerSecret(trigger, routine.workspaceId);
         const expected = `Bearer ${secretValue}`;
         const provided = input.authorizationHeader?.trim() ?? "";
         const expectedBuf = Buffer.from(expected);
@@ -1348,7 +1348,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
           throw unauthorized();
         }
       } else {
-        const secretValue = await resolveTriggerSecret(trigger, routine.companyId);
+        const secretValue = await resolveTriggerSecret(trigger, routine.workspaceId);
         const rawBody = input.rawBody ?? Buffer.from(JSON.stringify(input.payload ?? {}));
         const providedSignature = input.signatureHeader?.trim() ?? "";
         const providedTimestamp = input.timestampHeader?.trim() ?? "";
@@ -1388,7 +1388,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
       const rows = await db
         .select({
           id: routineRuns.id,
-          companyId: routineRuns.companyId,
+          workspaceId: routineRuns.workspaceId,
           routineId: routineRuns.routineId,
           triggerId: routineRuns.triggerId,
           source: routineRuns.source,
@@ -1419,7 +1419,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
 
       return rows.map((row) => ({
         id: row.id,
-        companyId: row.companyId,
+        workspaceId: row.workspaceId,
         routineId: row.routineId,
         triggerId: row.triggerId,
         source: row.source as RoutineRunSummary["source"],

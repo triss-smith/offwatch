@@ -23,7 +23,7 @@ export function setPluginEventBus(bus: PluginEventBus): void {
 }
 
 export interface LogActivityInput {
-  companyId: string;
+  workspaceId: string;
   actorType: "agent" | "user" | "system";
   actorId: string;
   action: string;
@@ -43,7 +43,7 @@ export async function logActivity(db: Db, input: LogActivityInput) {
     ? redactCurrentUserValue(sanitizedDetails, currentUserRedactionOptions)
     : null;
   await db.insert(activityLog).values({
-    companyId: input.companyId,
+    workspaceId: input.workspaceId,
     actorType: input.actorType,
     actorId: input.actorId,
     action: input.action,
@@ -55,7 +55,7 @@ export async function logActivity(db: Db, input: LogActivityInput) {
   });
 
   publishLiveEvent({
-    companyId: input.companyId,
+    workspaceId: input.workspaceId,
     type: "activity.logged",
     payload: {
       actorType: input.actorType,
@@ -78,7 +78,7 @@ export async function logActivity(db: Db, input: LogActivityInput) {
       actorType: input.actorType,
       entityId: input.entityId,
       entityType: input.entityType,
-      companyId: input.companyId,
+      workspaceId: input.workspaceId,
       payload: {
         ...redactedDetails,
         agentId: input.agentId ?? null,

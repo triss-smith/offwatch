@@ -389,7 +389,7 @@ export function createPluginWorkerHandle(
   let nextRestartAt: number | null = null;
 
   // Track open stream channels so we can emit synthetic close on crash.
-  // Maps channel → companyId.
+  // Maps channel → workspaceId.
   const openStreamChannels = new Map<string, string>();
 
   // Shutdown coordination
@@ -574,7 +574,7 @@ export function createPluginWorkerHandle(
       // Track open channels so we can emit synthetic close on crash
       if (notification.method === "streams.open") {
         const ch = String(params.channel ?? "");
-        const co = String(params.companyId ?? "");
+        const co = String(params.workspaceId ?? "");
         if (ch) openStreamChannels.set(ch, co);
       } else if (notification.method === "streams.close") {
         openStreamChannels.delete(String(params.channel ?? ""));
@@ -693,9 +693,9 @@ export function createPluginWorkerHandle(
     // Emit synthetic close for any orphaned stream channels so SSE clients
     // are notified instead of hanging indefinitely.
     if (openStreamChannels.size > 0 && options.onStreamNotification) {
-      for (const [channel, companyId] of openStreamChannels) {
+      for (const [channel, workspaceId] of openStreamChannels) {
         try {
-          options.onStreamNotification("streams.close", { channel, companyId });
+          options.onStreamNotification("streams.close", { channel, workspaceId });
         } catch {
           // Best-effort cleanup — don't let it interfere with exit handling
         }

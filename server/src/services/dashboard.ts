@@ -7,11 +7,11 @@ import { budgetService } from "./budgets.js";
 export function dashboardService(db: Db) {
   const budgets = budgetService(db);
   return {
-    summary: async (companyId: string) => {
+    summary: async (workspaceId: string) => {
       const company = await db
         .select()
         .from(companies)
-        .where(eq(companies.id, companyId))
+        .where(eq(companies.id, workspaceId))
         .then((rows) => rows[0] ?? null);
 
       if (!company) throw notFound("Company not found");
@@ -19,19 +19,19 @@ export function dashboardService(db: Db) {
       const agentRows = await db
         .select({ status: agents.status, count: sql<number>`count(*)` })
         .from(agents)
-        .where(eq(agents.companyId, companyId))
+        .where(eq(agents.workspaceId, workspaceId))
         .groupBy(agents.status);
 
       const taskRows = await db
         .select({ status: issues.status, count: sql<number>`count(*)` })
         .from(issues)
-        .where(eq(issues.companyId, companyId))
+        .where(eq(issues.workspaceId, workspaceId))
         .groupBy(issues.status);
 
       const pendingApprovals = await db
         .select({ count: sql<number>`count(*)` })
         .from(approvals)
-        .where(and(eq(approvals.companyId, companyId), eq(approvals.status, "pending")))
+        .where(and(eq(approvals.workspaceId, workspaceId), eq(approvals.status, "pending")))
         .then((rows) => Number(rows[0]?.count ?? 0));
 
       const agentCounts: Record<string, number> = {
@@ -70,7 +70,7 @@ export function dashboardService(db: Db) {
         .from(costEvents)
         .where(
           and(
-            eq(costEvents.companyId, companyId),
+            eq(costEvents.workspaceId, workspaceId),
             gte(costEvents.occurredAt, monthStart),
           ),
         );
@@ -80,10 +80,10 @@ export function dashboardService(db: Db) {
         company.budgetMonthlyCents > 0
           ? (monthSpendCents / company.budgetMonthlyCents) * 100
           : 0;
-      const budgetOverview = await budgets.overview(companyId);
+      const budgetOverview = await budgets.overview(workspaceId);
 
       return {
-        companyId,
+        workspaceId,
         agents: {
           active: agentCounts.active,
           running: agentCounts.running,

@@ -74,7 +74,7 @@ type PendingFeedbackExportRow = typeof feedbackExports.$inferSelect;
 
 type IssueFeedbackContext = {
   id: string;
-  companyId: string;
+  workspaceId: string;
   projectId: string | null;
   identifier: string | null;
   title: string;
@@ -376,7 +376,7 @@ function captureStatusFromFiles(files: FeedbackTraceBundleFile[]): FeedbackTrace
 }
 
 async function buildCodexTraceFiles(input: {
-  companyId: string;
+  workspaceId: string;
   sessionId: string | null;
   state: ReturnType<typeof createFeedbackRedactionState>;
   notes: string[];
@@ -390,7 +390,7 @@ async function buildCodexTraceFiles(input: {
   const managedRoot = path.join(
     resolvePaperclipInstanceRoot(),
     "companies",
-    input.companyId,
+    input.workspaceId,
     "codex-home",
     "sessions",
   );
@@ -745,7 +745,7 @@ function mapTraceRow(row: FeedbackTraceRow, includePayload: boolean): FeedbackTr
   const targetSummary = asRecord(row.targetSummary) as unknown as FeedbackTraceTargetSummary | null;
   return {
     id: row.id,
-    companyId: row.companyId,
+    workspaceId: row.workspaceId,
     feedbackVoteId: row.feedbackVoteId,
     issueId: row.issueId,
     projectId: row.projectId ?? null,
@@ -794,7 +794,7 @@ async function resolveFeedbackTarget(
       .select({
         id: issueComments.id,
         issueId: issueComments.issueId,
-        companyId: issueComments.companyId,
+        workspaceId: issueComments.workspaceId,
         authorAgentId: issueComments.authorAgentId,
         authorUserId: issueComments.authorUserId,
         createdByRunId: issueComments.createdByRunId,
@@ -805,7 +805,7 @@ async function resolveFeedbackTarget(
       .where(eq(issueComments.id, targetId))
       .then((rows) => rows[0] ?? null);
 
-    if (!targetComment || targetComment.issueId !== issue.id || targetComment.companyId !== issue.companyId) {
+    if (!targetComment || targetComment.issueId !== issue.id || targetComment.workspaceId !== issue.workspaceId) {
       throw notFound("Feedback target not found");
     }
     if (!targetComment.authorAgentId) {
@@ -845,7 +845,7 @@ async function resolveFeedbackTarget(
     const targetRevision = await db
       .select({
         id: documentRevisions.id,
-        companyId: documentRevisions.companyId,
+        workspaceId: documentRevisions.workspaceId,
         documentId: documentRevisions.documentId,
         revisionNumber: documentRevisions.revisionNumber,
         body: documentRevisions.body,
@@ -863,7 +863,7 @@ async function resolveFeedbackTarget(
       .where(eq(documentRevisions.id, targetId))
       .then((rows) => rows.find((row) => row.issueId === issue.id) ?? null);
 
-    if (!targetRevision || targetRevision.companyId !== issue.companyId) {
+    if (!targetRevision || targetRevision.workspaceId !== issue.workspaceId) {
       throw notFound("Feedback target not found");
     }
     if (!targetRevision.createdByAgentId) {
@@ -921,7 +921,7 @@ async function listIssueContextItems(
         createdByRunId: issueComments.createdByRunId,
       })
       .from(issueComments)
-      .where(and(eq(issueComments.companyId, issue.companyId), eq(issueComments.issueId, issue.id))),
+      .where(and(eq(issueComments.workspaceId, issue.workspaceId), eq(issueComments.issueId, issue.id))),
     db
       .select({
         targetId: documentRevisions.id,
@@ -938,7 +938,7 @@ async function listIssueContextItems(
       .from(documentRevisions)
       .innerJoin(documents, eq(documentRevisions.documentId, documents.id))
       .innerJoin(issueDocuments, eq(issueDocuments.documentId, documents.id))
-      .where(and(eq(documentRevisions.companyId, issue.companyId), eq(issueDocuments.issueId, issue.id))),
+      .where(and(eq(documentRevisions.workspaceId, issue.workspaceId), eq(issueDocuments.issueId, issue.id))),
   ]);
 
   const issuePath = buildIssuePath(issue.identifier);
@@ -1052,7 +1052,7 @@ async function buildIssueContext(
 
 async function buildAgentContext(
   db: Pick<Db, "select">,
-  companyId: string,
+  workspaceId: string,
   authorAgentId: string | null,
   createdByRunId: string | null,
   state: ReturnType<typeof createFeedbackRedactionState>,
@@ -1065,7 +1065,7 @@ async function buildAgentContext(
   const agent = await db
     .select({
       id: agents.id,
-      companyId: agents.companyId,
+      workspaceId: agents.workspaceId,
       name: agents.name,
       role: agents.role,
       title: agents.title,
@@ -1078,7 +1078,7 @@ async function buildAgentContext(
     .where(eq(agents.id, authorAgentId))
     .then((rows) => rows[0] ?? null);
 
-  if (!agent || agent.companyId !== companyId) {
+  if (!agent || agent.workspaceId !== workspaceId) {
     state.notes.add("author_agent_unavailable");
     return null;
   }
@@ -1091,7 +1091,7 @@ async function buildAgentContext(
     : await db
       .select()
       .from(companySkills)
-      .where(eq(companySkills.companyId, companyId));
+      .where(eq(companySkills.workspaceId, workspaceId));
   const matchedSkills = availableSkills
     .filter((skill) => desiredSkillRefs.some((reference) => matchesSkillReference(skill, reference)))
     .slice(0, MAX_SKILLS);
@@ -1107,7 +1107,7 @@ async function buildAgentContext(
     ? await db
       .select({
         id: heartbeatRuns.id,
-        companyId: heartbeatRuns.companyId,
+        workspaceId: heartbeatRuns.workspaceId,
         agentId: heartbeatRuns.agentId,
         invocationSource: heartbeatRuns.invocationSource,
         status: heartbeatRuns.status,
@@ -1135,7 +1135,7 @@ async function buildAgentContext(
         costCents: costEvents.costCents,
       })
       .from(costEvents)
-      .where(and(eq(costEvents.companyId, companyId), eq(costEvents.heartbeatRunId, run.id)))
+      .where(and(eq(costEvents.workspaceId, workspaceId), eq(costEvents.heartbeatRunId, run.id)))
     : [];
 
   const usage = asRecord(run?.usageJson) ?? {};
@@ -1191,7 +1191,7 @@ async function buildAgentContext(
 
   const instructionsBundle = await instructionsSvc.getBundle({
     id: agent.id,
-    companyId: agent.companyId,
+    workspaceId: agent.workspaceId,
     name: agent.name,
     adapterConfig: agent.adapterConfig,
   }).catch(() => null);
@@ -1206,7 +1206,7 @@ async function buildAgentContext(
     if (readableEntryPath) {
       const entryFile = await instructionsSvc.readFile({
         id: agent.id,
-        companyId: agent.companyId,
+        workspaceId: agent.workspaceId,
         name: agent.name,
         adapterConfig: agent.adapterConfig,
       }, readableEntryPath).catch(() => null);
@@ -1392,7 +1392,7 @@ async function buildPayloadArtifacts(
   const exportId = buildExportId(input.voteId, input.now);
   const [issueContext, agentContext] = await Promise.all([
     buildIssueContext(db, input.issue, input.target, state),
-    buildAgentContext(db, input.issue.companyId, input.target.authorAgentId, input.target.createdByRunId, state),
+    buildAgentContext(db, input.issue.workspaceId, input.target.authorAgentId, input.target.createdByRunId, state),
   ]);
 
   const payloadSnapshot = {
@@ -1441,7 +1441,7 @@ async function buildFeedbackTraceBundleFromRow(
     const run = await db
       .select({
         id: heartbeatRuns.id,
-        companyId: heartbeatRuns.companyId,
+        workspaceId: heartbeatRuns.workspaceId,
         agentId: heartbeatRuns.agentId,
         invocationSource: heartbeatRuns.invocationSource,
         status: heartbeatRuns.status,
@@ -1471,7 +1471,7 @@ async function buildFeedbackTraceBundleFromRow(
       .where(eq(heartbeatRuns.id, sourceRunId))
       .then((rows) => rows[0] ?? null);
 
-    if (!run || run.companyId !== row.companyId) {
+    if (!run || run.workspaceId !== row.workspaceId) {
       appendNote(notes, "source_run_unavailable");
     } else {
       adapterType = run.adapterType;
@@ -1490,7 +1490,7 @@ async function buildFeedbackTraceBundleFromRow(
       paperclipRun = sanitizeFeedbackValue(
         {
           id: run.id,
-          companyId: run.companyId,
+          workspaceId: run.workspaceId,
           agentId: run.agentId,
           agentName: run.agentName,
           agentRole: run.agentRole,
@@ -1554,7 +1554,7 @@ async function buildFeedbackTraceBundleFromRow(
 
       if (run.adapterType === "codex_local") {
         const adapter = await buildCodexTraceFiles({
-          companyId: row.companyId,
+          workspaceId: row.workspaceId,
           sessionId: run.sessionIdAfter ?? run.sessionIdBefore,
           state,
           notes,
@@ -1601,7 +1601,7 @@ async function buildFeedbackTraceBundleFromRow(
     {
       traceId: trace.id,
       exportId: trace.exportId,
-      companyId: trace.companyId,
+      workspaceId: trace.workspaceId,
       feedbackVoteId: trace.feedbackVoteId,
       issueId: trace.issueId,
       issueIdentifier: trace.issueIdentifier,
@@ -1639,7 +1639,7 @@ async function buildFeedbackTraceBundleFromRow(
   const bundle: FeedbackTraceBundle = {
     traceId: trace.id,
     exportId: trace.exportId,
-    companyId: trace.companyId,
+    workspaceId: trace.workspaceId,
     issueId: trace.issueId,
     issueIdentifier: trace.issueIdentifier,
     adapterType,
@@ -1678,7 +1678,7 @@ export function feedbackService(db: Db, options: FeedbackServiceOptions = {}) {
         .where(and(eq(feedbackVotes.issueId, issueId), eq(feedbackVotes.authorUserId, authorUserId))),
 
     listFeedbackTraces: async (input: {
-      companyId: string;
+      workspaceId: string;
       issueId?: string;
       projectId?: string;
       targetType?: FeedbackTargetType;
@@ -1689,7 +1689,7 @@ export function feedbackService(db: Db, options: FeedbackServiceOptions = {}) {
       sharedOnly?: boolean;
       includePayload?: boolean;
     }) => {
-      const filters = [eq(feedbackExports.companyId, input.companyId)];
+      const filters = [eq(feedbackExports.workspaceId, input.workspaceId)];
       if (input.issueId) filters.push(eq(feedbackExports.issueId, input.issueId));
       if (input.projectId) filters.push(eq(feedbackExports.projectId, input.projectId));
       if (input.targetType) filters.push(eq(feedbackExports.targetType, input.targetType));
@@ -1742,7 +1742,7 @@ export function feedbackService(db: Db, options: FeedbackServiceOptions = {}) {
     },
 
     flushPendingFeedbackTraces: async (input?: {
-      companyId?: string;
+      workspaceId?: string;
       traceId?: string;
       limit?: number;
       now?: Date;
@@ -1750,8 +1750,8 @@ export function feedbackService(db: Db, options: FeedbackServiceOptions = {}) {
       const shareClient = options.shareClient;
       if (!shareClient) {
         const filters = [eq(feedbackExports.status, "pending")];
-        if (input?.companyId) {
-          filters.push(eq(feedbackExports.companyId, input.companyId));
+        if (input?.workspaceId) {
+          filters.push(eq(feedbackExports.workspaceId, input.workspaceId));
         }
         if (input?.traceId) {
           filters.push(eq(feedbackExports.id, input.traceId));
@@ -1792,8 +1792,8 @@ export function feedbackService(db: Db, options: FeedbackServiceOptions = {}) {
       const filters = [
         or(eq(feedbackExports.status, "pending"), eq(feedbackExports.status, "failed")),
       ];
-      if (input?.companyId) {
-        filters.push(eq(feedbackExports.companyId, input.companyId));
+      if (input?.workspaceId) {
+        filters.push(eq(feedbackExports.workspaceId, input.workspaceId));
       }
       if (input?.traceId) {
         filters.push(eq(feedbackExports.id, input.traceId));
@@ -1870,7 +1870,7 @@ export function feedbackService(db: Db, options: FeedbackServiceOptions = {}) {
         const issue = await tx
           .select({
             id: issues.id,
-            companyId: issues.companyId,
+            workspaceId: issues.workspaceId,
             projectId: issues.projectId,
             identifier: issues.identifier,
             title: issues.title,
@@ -1889,7 +1889,7 @@ export function feedbackService(db: Db, options: FeedbackServiceOptions = {}) {
             feedbackDataSharingTermsVersion: companies.feedbackDataSharingTermsVersion,
           })
           .from(companies)
-          .where(eq(companies.id, issue.companyId))
+          .where(eq(companies.id, issue.workspaceId))
           .then((rows) => rows[0] ?? null);
         if (!existingCompany) throw notFound("Company not found");
 
@@ -1912,7 +1912,7 @@ export function feedbackService(db: Db, options: FeedbackServiceOptions = {}) {
               feedbackDataSharingTermsVersion: consentVersion,
               updatedAt: now,
             })
-            .where(eq(companies.id, issue.companyId));
+            .where(eq(companies.id, issue.workspaceId));
         }
 
         const existingInstanceSettings = await tx
@@ -1968,7 +1968,7 @@ export function feedbackService(db: Db, options: FeedbackServiceOptions = {}) {
         const [savedVote] = await tx
           .insert(feedbackVotes)
           .values({
-            companyId: issue.companyId,
+            workspaceId: issue.workspaceId,
             issueId: issue.id,
             targetType: input.targetType,
             targetId: input.targetId,
@@ -1983,7 +1983,7 @@ export function feedbackService(db: Db, options: FeedbackServiceOptions = {}) {
           })
           .onConflictDoUpdate({
             target: [
-              feedbackVotes.companyId,
+              feedbackVotes.workspaceId,
               feedbackVotes.targetType,
               feedbackVotes.targetId,
               feedbackVotes.authorUserId,
@@ -2023,7 +2023,7 @@ export function feedbackService(db: Db, options: FeedbackServiceOptions = {}) {
         const [savedTrace] = await tx
           .insert(feedbackExports)
           .values({
-            companyId: issue.companyId,
+            workspaceId: issue.workspaceId,
             feedbackVoteId: savedVote.id,
             issueId: issue.id,
             projectId: issue.projectId,
