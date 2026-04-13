@@ -132,6 +132,12 @@ async function buildClaudeRuntimeConfig(input: ClaudeExecutionInput): Promise<Cl
   const env: Record<string, string> = { ...buildPaperclipEnv(agent) };
   env.PAPERCLIP_RUN_ID = runId;
 
+  const configBaseUrl = asString(config.baseUrl, "");
+  if (configBaseUrl) env.ANTHROPIC_BASE_URL = configBaseUrl;
+
+  const configApiKey = asString(config.apiKey, "");
+  if (configApiKey) env.ANTHROPIC_API_KEY = configApiKey;
+
   const wakeTaskId =
     (typeof context.taskId === "string" && context.taskId.trim().length > 0 && context.taskId.trim()) ||
     (typeof context.issueId === "string" && context.issueId.trim().length > 0 && context.issueId.trim()) ||
