@@ -66,6 +66,7 @@ No structural hierarchy — agents are a flat list per workspace.
 Add:
 - `linkedExternalId` (`text`, nullable) — ID in the external tracker
 - `linkedExternalUrl` (`text`, nullable) — deep link to the external tracker issue
+- `linkedBranchName` (`text`, nullable) — exact branch name the tracker expects (e.g. `smith/LIN-123-fix-auth-middleware`); stored as a discrete field so it is always retrievable without parsing the plan document and can be surfaced in the Tracker UI tab and inbox notification
 
 ### New internal events (emitted by issues service, consumed by issue tracker adapter)
 - `issue.checkedout` — fired when an agent successfully checks out an issue
@@ -131,12 +132,19 @@ Config is stored encrypted in `workspaces.issueTrackerConfig`. API key / token v
 
 ### Branch naming
 Linear's convention: `{username}/{identifier}-{title-slug}`  
-Example: `smith/lin-123-fix-auth-middleware`  
-The branch name is pre-computed by the adapter and stored in the `plan` document at sync time so the agent has it without needing to call any tool.
+Example: `smith/LIN-123-fix-auth-middleware`  
+The identifier casing must match exactly what Linear expects (`LIN-123`, not `lin-123`) so that Linear's GitHub integration can automatically link the pushed branch to the issue.
+
+At sync time the adapter:
+1. Computes the branch name via `getBranchName()` using Linear's exact format
+2. Stores it in `issues.linkedBranchName` as a discrete field
+3. Also includes it in the `plan` document so the agent sees it inline with the issue description
+
+The agent creates the branch using the value from `linkedBranchName` — no derivation needed.
 
 ### Event hooks
 - `issue.checkedout` → adapter calls Linear API: transition issue to "In Progress" state
-- `issue.completed` → adapter creates an operator inbox notification: *"Branch `smith/lin-123-fix-auth-middleware` is ready — push to GitHub when ready"*
+- `issue.completed` → adapter reads `issues.linkedBranchName` and creates an operator inbox notification: *"Branch `smith/LIN-123-fix-auth-middleware` is ready — push to GitHub when ready"*
 
 ### Webhook endpoint
 `POST /api/workspaces/:workspaceId/tracker/webhook`  
