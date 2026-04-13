@@ -390,6 +390,10 @@ export interface CreateConfigValues {
   maxTurnsPerRun: number;
   heartbeatEnabled: boolean;
   intervalSec: number;
+  /** Override the Anthropic API base URL (e.g. for Ollama, LM Studio, Minimax). */
+  baseUrl?: string;
+  /** API key to inject as ANTHROPIC_API_KEY (for non-subscription providers). */
+  apiKey?: string;
   /** Arbitrary key-value pairs populated by schema-driven config fields. */
   adapterSchemaValues?: Record<string, unknown>;
 }

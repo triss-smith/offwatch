@@ -96,6 +96,8 @@ export function buildClaudeLocalConfig(v: CreateConfigValues): Record<string, un
     ac.workspaceRuntime = runtimeServices;
   }
   if (v.command) ac.command = v.command;
+  if (v.baseUrl) ac.baseUrl = v.baseUrl;
+  if (v.apiKey) ac.apiKey = v.apiKey;
   if (v.extraArgs) ac.extraArgs = parseCommaArgs(v.extraArgs);
   return ac;
 }
