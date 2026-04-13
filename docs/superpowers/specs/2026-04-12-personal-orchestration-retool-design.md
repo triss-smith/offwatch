@@ -172,11 +172,29 @@ The audit agent is a standard Paperclip agent with:
 When the audit agent runs, it:
 1. Inspects configured file paths for security vulnerabilities, code smells, or architectural drift
 2. For each significant finding, calls `tracker:propose-issue` with title, description, and severity
-3. Minor findings (style issues, non-critical warnings) are posted as comments on a dedicated per-workspace "Audit Log" Paperclip issue (created automatically on first audit run if it doesn't exist) rather than creating new proposals
+3. Minor findings (style issues, non-critical warnings) are recorded in the dedicated Audit Log (see below) rather than creating new proposals
 
 The operator reviews proposals in the approval queue. Approved proposals are pushed to the external tracker and the sync loop picks them up as new issues for other agents to work on.
 
 Audit file paths and schedule are configured per-agent in the agent's config (not in workspace settings), so multiple audit agents can cover different areas of the codebase with different schedules.
+
+---
+
+## Audit Log
+
+The Audit Log is a dedicated first-class UI surface, accessible as a sidebar menu item in the workspace navigation. It is not modelled as a Paperclip issue — it is its own view backed by audit run records.
+
+**What it shows:**
+- Chronological list of audit runs (agent, timestamp, files scanned, duration)
+- Per-run findings, grouped by severity: critical, warning, info
+- For each finding: the source file, the finding description, and its disposition (proposed to tracker / approved / rejected / dismissed as minor)
+- Links to any `tracker_issue_proposal` approvals that originated from that run
+
+**Data model:**
+Audit runs are stored in a new `audit_runs` table (workspace-scoped). Each run has many `audit_findings` rows. The audit agent writes findings via a new internal API endpoint rather than issue comments.
+
+**Why a dedicated surface:**
+Audit output is operational telemetry, not task work. Mixing it into the issues list or as comments on a synthetic issue would bury it. A dedicated menu item keeps the issues list clean and makes audit history easy to review at a glance.
 
 ---
 
@@ -232,8 +250,9 @@ Toggled in workspace settings under "Agent Permissions". When enabled, an agent 
 - Org chart page removed
 - Hiring/strategy approval types removed from the approvals UI
 - New workspace settings section: "Issue Tracker" — type selector + type-specific config fields (API key, user ID, team)
-- Agent creation form simplified: remove `reportsTo`, remove budget fields (or make optional)
+- Agent creation form simplified: remove `reportsTo`, remove budget fields
 - Issue detail: new "Tracker" tab showing linked external issue, status, and branch name
+- New sidebar menu item: "Audit Log" — dedicated view for audit run history and findings (see Audit Log section)
 
 ---
 
@@ -261,7 +280,9 @@ Toggled in workspace settings under "Agent Permissions". When enabled, an agent 
 - `tracker:propose-issue` tool + `linear_issue_proposal` approval type
 - `tracker:get-issue-context` tool
 
-**Phase 4 — Security audit agent support**
+**Phase 4 — Security audit agent support + Audit Log UI**
+- Add `audit_runs` and `audit_findings` tables and internal API endpoint for agents to write findings
+- Build Audit Log sidebar menu item and view (run history, per-run findings, disposition tracking)
 - Verify audit agent can run on a recurring heartbeat schedule
 - Verify `tracker:propose-issue` tool is available and approval flow works end-to-end
 - Document audit agent setup for the operator
