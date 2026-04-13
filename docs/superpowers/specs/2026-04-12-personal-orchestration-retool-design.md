@@ -188,6 +188,49 @@ Audit file paths and schedule are configured per-agent in the agent's config (no
 
 ---
 
+## Git Worktree Isolation
+
+Multiple agents working on the same repository simultaneously would conflict if they shared a working directory. Each agent gets its own **git worktree** — a separate checkout of the repo on its own branch — so agents can work in parallel without interfering.
+
+### Workspace repository config
+
+Each workspace gains two new settings (configured in workspace settings alongside the issue tracker config):
+
+- `repoPath` — absolute path to the main git repository clone on the host machine (e.g. `/home/smith/projects/myapp`)
+- `worktreesPath` — directory where per-issue worktrees are created (e.g. `/home/smith/projects/myapp-worktrees`); defaults to `{repoPath}-worktrees` if not set
+
+### Worktree lifecycle
+
+**On issue checkout (agent picks up an issue):**
+1. Paperclip creates the branch and worktree before invoking the agent:
+   ```
+   git -C {repoPath} worktree add {worktreesPath}/{linkedBranchName} -b {linkedBranchName}
+   ```
+2. The worktree path is stored on the issue as `worktreePath`
+3. The Claude Code adapter receives the worktree path as the working directory for this run — the agent works entirely within the worktree, never touching the main clone
+
+**On issue completion:**
+- The worktree remains on disk so the operator can inspect and push the branch
+- The inbox notification includes the worktree path alongside the branch name: *"Branch `smith/LIN-123-fix-auth-middleware` is ready at `/home/smith/projects/myapp-worktrees/smith/LIN-123-fix-auth-middleware` — push to GitHub when ready"*
+
+**Worktree cleanup:**
+- A "Remove worktree" action is available in the issue Tracker tab after the issue is done
+- Running it executes `git worktree remove {worktreePath}` and clears `worktreePath` on the issue
+- The operator can also clean up manually via standard git commands
+
+### `issues` table addition
+
+- `worktreePath` (`text`, nullable) — absolute path to the active git worktree for this issue; set on checkout, cleared on worktree removal
+
+### Concurrency guarantee
+
+Combined with Paperclip's existing atomic checkout (one agent per issue at a time), worktree isolation means:
+- No two agents share a working directory
+- No two agents are on the same branch simultaneously
+- The main repository clone is never modified by agents — it stays clean as the reference
+
+---
+
 ## Audit Log
 
 The Audit Log is a dedicated first-class UI surface, accessible as a sidebar menu item in the workspace navigation. It is not modelled as a Paperclip issue — it is its own view backed by audit run records.
@@ -269,7 +312,9 @@ Toggled in workspace settings under "Agent Permissions". When enabled, an agent 
 **Phase 1 — Retool core**
 - Rename company → workspace in schema, API routes, and UI
 - Remove org chart, hiring, CEO strategy from schema, services, routes, and UI
-- Add `linkedExternalId`, `linkedExternalUrl` to issues
+- Add `linkedExternalId`, `linkedExternalUrl`, `linkedBranchName`, `worktreePath` to issues
+- Add `repoPath` and `worktreesPath` to workspace settings (schema + UI)
+- Implement worktree creation on issue checkout and cleanup action in Tracker tab
 - Emit `issue.checkedout` and `issue.completed` events from issues service
 - Simplify approval types
 
