@@ -7,13 +7,13 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 import { agents } from "./agents.js";
-import { companies } from "./companies.js";
+import { workspaces } from "./workspaces.js";
 
 export const goals = pgTable(
   "goals",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    companyId: uuid("company_id").notNull().references(() => companies.id),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id),
     title: text("title").notNull(),
     description: text("description"),
     level: text("level").notNull().default("task"),
@@ -24,6 +24,6 @@ export const goals = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    companyIdx: index("goals_company_idx").on(table.companyId),
+    workspaceIdx: index("goals_workspace_idx").on(table.workspaceId),
   }),
 );

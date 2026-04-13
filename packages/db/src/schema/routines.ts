@@ -10,7 +10,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { agents } from "./agents.js";
-import { companies } from "./companies.js";
+import { workspaces } from "./workspaces.js";
 import { companySecrets } from "./company_secrets.js";
 import { issues } from "./issues.js";
 import { projects } from "./projects.js";
@@ -21,7 +21,7 @@ export const routines = pgTable(
   "routines",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
     projectId: uuid("project_id").references(() => projects.id, { onDelete: "cascade" }),
     goalId: uuid("goal_id").references(() => goals.id, { onDelete: "set null" }),
     parentIssueId: uuid("parent_issue_id").references(() => issues.id, { onDelete: "set null" }),
@@ -43,9 +43,9 @@ export const routines = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    companyStatusIdx: index("routines_company_status_idx").on(table.companyId, table.status),
-    companyAssigneeIdx: index("routines_company_assignee_idx").on(table.companyId, table.assigneeAgentId),
-    companyProjectIdx: index("routines_company_project_idx").on(table.companyId, table.projectId),
+    companyStatusIdx: index("routines_company_status_idx").on(table.workspaceId, table.status),
+    companyAssigneeIdx: index("routines_company_assignee_idx").on(table.workspaceId, table.assigneeAgentId),
+    companyProjectIdx: index("routines_company_project_idx").on(table.workspaceId, table.projectId),
   }),
 );
 
@@ -53,7 +53,7 @@ export const routineTriggers = pgTable(
   "routine_triggers",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
     routineId: uuid("routine_id").notNull().references(() => routines.id, { onDelete: "cascade" }),
     kind: text("kind").notNull(),
     label: text("label"),
@@ -76,8 +76,8 @@ export const routineTriggers = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    companyRoutineIdx: index("routine_triggers_company_routine_idx").on(table.companyId, table.routineId),
-    companyKindIdx: index("routine_triggers_company_kind_idx").on(table.companyId, table.kind),
+    companyRoutineIdx: index("routine_triggers_company_routine_idx").on(table.workspaceId, table.routineId),
+    companyKindIdx: index("routine_triggers_company_kind_idx").on(table.workspaceId, table.kind),
     nextRunIdx: index("routine_triggers_next_run_idx").on(table.nextRunAt),
     publicIdIdx: index("routine_triggers_public_id_idx").on(table.publicId),
     publicIdUq: uniqueIndex("routine_triggers_public_id_uq").on(table.publicId),
@@ -88,7 +88,7 @@ export const routineRuns = pgTable(
   "routine_runs",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    companyId: uuid("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
     routineId: uuid("routine_id").notNull().references(() => routines.id, { onDelete: "cascade" }),
     triggerId: uuid("trigger_id").references(() => routineTriggers.id, { onDelete: "set null" }),
     source: text("source").notNull(),
@@ -104,7 +104,7 @@ export const routineRuns = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    companyRoutineIdx: index("routine_runs_company_routine_idx").on(table.companyId, table.routineId, table.createdAt),
+    companyRoutineIdx: index("routine_runs_company_routine_idx").on(table.workspaceId, table.routineId, table.createdAt),
     triggerIdx: index("routine_runs_trigger_idx").on(table.triggerId, table.createdAt),
     linkedIssueIdx: index("routine_runs_linked_issue_idx").on(table.linkedIssueId),
     idempotencyIdx: index("routine_runs_trigger_idempotency_idx").on(table.triggerId, table.idempotencyKey),

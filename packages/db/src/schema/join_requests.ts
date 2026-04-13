@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, timestamp, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
-import { companies } from "./companies.js";
+import { workspaces } from "./workspaces.js";
 import { invites } from "./invites.js";
 import { agents } from "./agents.js";
 
@@ -8,7 +8,7 @@ export const joinRequests = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     inviteId: uuid("invite_id").notNull().references(() => invites.id),
-    companyId: uuid("company_id").notNull().references(() => companies.id),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id),
     requestType: text("request_type").notNull(),
     status: text("status").notNull().default("pending_approval"),
     requestIp: text("request_ip").notNull(),
@@ -32,7 +32,7 @@ export const joinRequests = pgTable(
   (table) => ({
     inviteUniqueIdx: uniqueIndex("join_requests_invite_unique_idx").on(table.inviteId),
     companyStatusTypeCreatedIdx: index("join_requests_company_status_type_created_idx").on(
-      table.companyId,
+      table.workspaceId,
       table.status,
       table.requestType,
       table.createdAt,

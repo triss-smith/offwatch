@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, timestamp, integer, index } from "drizzle-orm/pg-core";
-import { companies } from "./companies.js";
+import { workspaces } from "./workspaces.js";
 import { agents } from "./agents.js";
 import { issues } from "./issues.js";
 import { projects } from "./projects.js";
@@ -10,7 +10,7 @@ export const costEvents = pgTable(
   "cost_events",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    companyId: uuid("company_id").notNull().references(() => companies.id),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id),
     agentId: uuid("agent_id").notNull().references(() => agents.id),
     issueId: uuid("issue_id").references(() => issues.id),
     projectId: uuid("project_id").references(() => projects.id),
@@ -29,24 +29,24 @@ export const costEvents = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    companyOccurredIdx: index("cost_events_company_occurred_idx").on(table.companyId, table.occurredAt),
-    companyAgentOccurredIdx: index("cost_events_company_agent_occurred_idx").on(
-      table.companyId,
+    workspaceOccurredIdx: index("cost_events_workspace_occurred_idx").on(table.workspaceId, table.occurredAt),
+    workspaceAgentOccurredIdx: index("cost_events_workspace_agent_occurred_idx").on(
+      table.workspaceId,
       table.agentId,
       table.occurredAt,
     ),
-    companyProviderOccurredIdx: index("cost_events_company_provider_occurred_idx").on(
-      table.companyId,
+    workspaceProviderOccurredIdx: index("cost_events_workspace_provider_occurred_idx").on(
+      table.workspaceId,
       table.provider,
       table.occurredAt,
     ),
-    companyBillerOccurredIdx: index("cost_events_company_biller_occurred_idx").on(
-      table.companyId,
+    workspaceBillerOccurredIdx: index("cost_events_workspace_biller_occurred_idx").on(
+      table.workspaceId,
       table.biller,
       table.occurredAt,
     ),
-    companyHeartbeatRunIdx: index("cost_events_company_heartbeat_run_idx").on(
-      table.companyId,
+    workspaceHeartbeatRunIdx: index("cost_events_workspace_heartbeat_run_idx").on(
+      table.workspaceId,
       table.heartbeatRunId,
     ),
   }),

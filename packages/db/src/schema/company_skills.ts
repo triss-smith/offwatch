@@ -7,13 +7,13 @@ import {
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-import { companies } from "./companies.js";
+import { workspaces } from "./workspaces.js";
 
 export const companySkills = pgTable(
   "company_skills",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    companyId: uuid("company_id").notNull().references(() => companies.id),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id),
     key: text("key").notNull(),
     slug: text("slug").notNull(),
     name: text("name").notNull(),
@@ -30,7 +30,7 @@ export const companySkills = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    companyKeyUniqueIdx: uniqueIndex("company_skills_company_key_idx").on(table.companyId, table.key),
-    companyNameIdx: index("company_skills_company_name_idx").on(table.companyId, table.name),
+    workspaceKeyUniqueIdx: uniqueIndex("company_skills_workspace_key_idx").on(table.workspaceId, table.key),
+    workspaceNameIdx: index("company_skills_workspace_name_idx").on(table.workspaceId, table.name),
   }),
 );

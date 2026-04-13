@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, timestamp, index } from "drizzle-orm/pg-core";
-import { companies } from "./companies.js";
+import { workspaces } from "./workspaces.js";
 import { issues } from "./issues.js";
 import { agents } from "./agents.js";
 import { heartbeatRuns } from "./heartbeat_runs.js";
@@ -8,7 +8,7 @@ export const issueComments = pgTable(
   "issue_comments",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    companyId: uuid("company_id").notNull().references(() => companies.id),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id),
     issueId: uuid("issue_id").notNull().references(() => issues.id),
     authorAgentId: uuid("author_agent_id").references(() => agents.id),
     authorUserId: text("author_user_id"),
@@ -19,14 +19,14 @@ export const issueComments = pgTable(
   },
   (table) => ({
     issueIdx: index("issue_comments_issue_idx").on(table.issueId),
-    companyIdx: index("issue_comments_company_idx").on(table.companyId),
-    companyIssueCreatedAtIdx: index("issue_comments_company_issue_created_at_idx").on(
-      table.companyId,
+    workspaceIdx: index("issue_comments_workspace_idx").on(table.workspaceId),
+    workspaceIssueCreatedAtIdx: index("issue_comments_workspace_issue_created_at_idx").on(
+      table.workspaceId,
       table.issueId,
       table.createdAt,
     ),
-    companyAuthorIssueCreatedAtIdx: index("issue_comments_company_author_issue_created_at_idx").on(
-      table.companyId,
+    workspaceAuthorIssueCreatedAtIdx: index("issue_comments_workspace_author_issue_created_at_idx").on(
+      table.workspaceId,
       table.authorUserId,
       table.issueId,
       table.createdAt,

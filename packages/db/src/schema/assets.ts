@@ -1,12 +1,12 @@
 import { pgTable, uuid, text, integer, timestamp, index, uniqueIndex } from "drizzle-orm/pg-core";
-import { companies } from "./companies.js";
+import { workspaces } from "./workspaces.js";
 import { agents } from "./agents.js";
 
 export const assets = pgTable(
   "assets",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    companyId: uuid("company_id").notNull().references(() => companies.id),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id),
     provider: text("provider").notNull(),
     objectKey: text("object_key").notNull(),
     contentType: text("content_type").notNull(),
@@ -19,8 +19,8 @@ export const assets = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
-    companyCreatedIdx: index("assets_company_created_idx").on(table.companyId, table.createdAt),
-    companyProviderIdx: index("assets_company_provider_idx").on(table.companyId, table.provider),
-    companyObjectKeyUq: uniqueIndex("assets_company_object_key_uq").on(table.companyId, table.objectKey),
+    workspaceCreatedIdx: index("assets_workspace_created_idx").on(table.workspaceId, table.createdAt),
+    workspaceProviderIdx: index("assets_workspace_provider_idx").on(table.workspaceId, table.provider),
+    workspaceObjectKeyUq: uniqueIndex("assets_workspace_object_key_uq").on(table.workspaceId, table.objectKey),
   }),
 );
