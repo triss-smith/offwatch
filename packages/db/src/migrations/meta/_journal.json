@@ -407,6 +407,13 @@
       "when": 1776056314429,
       "tag": "0057_open_black_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1776142800000,
+      "tag": "0058_rename_companies_to_workspaces",
+      "breakpoints": true
     }
   ]
 }
