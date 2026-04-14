@@ -24,13 +24,13 @@ export function projectRoutes(db: Db) {
 
   async function resolveCompanyIdForProjectReference(req: Request) {
     const workspaceIdQuery = req.query.workspaceId;
-    const requestedCompanyId =
+    const requestedWorkspaceId =
       typeof workspaceIdQuery === "string" && workspaceIdQuery.trim().length > 0
         ? workspaceIdQuery.trim()
         : null;
-    if (requestedCompanyId) {
-      assertCompanyAccess(req, requestedCompanyId);
-      return requestedCompanyId;
+    if (requestedWorkspaceId) {
+      assertCompanyAccess(req, requestedWorkspaceId);
+      return requestedWorkspaceId;
     }
     if (req.actor.type === "agent" && req.actor.workspaceId) {
       return req.actor.workspaceId;

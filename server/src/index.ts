@@ -19,7 +19,7 @@ import {
   formatDatabaseBackupResult,
   runDatabaseBackup,
   authUsers,
-  companies,
+  workspaces,
   companyMemberships,
   instanceUserRoles,
 } from "@paperclipai/db";
@@ -228,14 +228,14 @@ export async function startServer(): Promise<StartedServer> {
       });
     }
   
-    const companyRows = await db.select({ id: companies.id }).from(companies);
+    const companyRows = await db.select({ id: workspaces.id }).from(workspaces);
     for (const company of companyRows) {
       const membership = await db
         .select({ id: companyMemberships.id })
         .from(companyMemberships)
         .where(
           and(
-            eq(companyMemberships.companyId, company.id),
+            eq(companyMemberships.workspaceId, company.id),
             eq(companyMemberships.principalType, "user"),
             eq(companyMemberships.principalId, LOCAL_BOARD_USER_ID),
           ),
@@ -243,7 +243,7 @@ export async function startServer(): Promise<StartedServer> {
         .then((rows: Array<{ id: string }>) => rows[0] ?? null);
       if (membership) continue;
       await db.insert(companyMemberships).values({
-        companyId: company.id,
+        workspaceId: company.id,
         principalType: "user",
         principalId: LOCAL_BOARD_USER_ID,
         status: "active",

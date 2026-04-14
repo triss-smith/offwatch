@@ -47,7 +47,6 @@ export function ApprovalCard({
   const subject = approvalSubject(payload);
   const showResolutionButtons =
     Boolean(onApprove && onReject) &&
-    approval.type !== "budget_override_required" &&
     (approval.status === "pending" || approval.status === "revision_requested");
   const hasFooter = showResolutionButtons || Boolean(detailLink || onOpen);
 

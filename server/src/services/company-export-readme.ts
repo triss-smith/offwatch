@@ -1,7 +1,7 @@
 /**
  * Generates README.md with Mermaid org chart for company exports.
  */
-import type { CompanyPortabilityManifest } from "@paperclipai/shared";
+import type { WorkspacePortabilityManifest } from "@paperclipai/shared";
 
 const ROLE_LABELS: Record<string, string> = {
   ceo: "CEO",
@@ -19,7 +19,7 @@ const ROLE_LABELS: Record<string, string> = {
  * Generate a Mermaid flowchart (TD = top-down) representing the org chart.
  * Returns null if there are no agents.
  */
-export function generateOrgChartMermaid(agents: CompanyPortabilityManifest["agents"]): string | null {
+export function generateOrgChartMermaid(agents: WorkspacePortabilityManifest["agents"]): string | null {
   if (agents.length === 0) return null;
 
   const lines: string[] = [];
@@ -56,7 +56,7 @@ function mermaidEscape(s: string): string {
 }
 
 /** Build a display label for a skill's source, linking to GitHub when available. */
-function skillSourceLabel(skill: CompanyPortabilityManifest["skills"][number]): string {
+function skillSourceLabel(skill: WorkspacePortabilityManifest["skills"][number]): string {
   if (skill.sourceLocator) {
     // For GitHub or URL sources, render as a markdown link
     if (skill.sourceType === "github" || skill.sourceType === "skills_sh" || skill.sourceType === "url") {
@@ -72,15 +72,15 @@ function skillSourceLabel(skill: CompanyPortabilityManifest["skills"][number]): 
  * Generate the README.md content for a company export.
  */
 export function generateReadme(
-  manifest: CompanyPortabilityManifest,
+  manifest: WorkspacePortabilityManifest,
   options: {
-    companyName: string;
+    workspaceName: string;
     companyDescription: string | null;
   },
 ): string {
   const lines: string[] = [];
 
-  lines.push(`# ${options.companyName}`);
+  lines.push(`# ${options.workspaceName}`);
   lines.push("");
   if (options.companyDescription) {
     lines.push(`> ${options.companyDescription}`);

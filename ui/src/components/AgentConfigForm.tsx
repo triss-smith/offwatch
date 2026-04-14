@@ -26,7 +26,7 @@ import { FolderOpen, Heart, ChevronDown, X } from "lucide-react";
 import { cn } from "../lib/utils";
 import { extractModelName, extractProviderId } from "../lib/model-utils";
 import { queryKeys } from "../lib/queryKeys";
-import { useCompany } from "../context/CompanyContext";
+import { useCompany } from "../context/WorkspaceContext";
 import {
   Field,
   ToggleField,
@@ -458,15 +458,6 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
                 immediate
                 className={inputClass}
                 placeholder="e.g. VP of Engineering"
-              />
-            </Field>
-            <Field label="Reports to" hint={help.reportsTo}>
-              <ReportsToPicker
-                agents={companyAgents}
-                value={eff("identity", "reportsTo", props.agent.reportsTo ?? null)}
-                onChange={(id) => mark("identity", "reportsTo", id)}
-                excludeAgentIds={[props.agent.id]}
-                chooseLabel="Choose manager…"
               />
             </Field>
             <Field label="Capabilities" hint={help.capabilities}>

@@ -4,7 +4,7 @@ import {
   activityLog,
   agents,
   assets,
-  companies,
+  workspaces,
   companyMemberships,
   documents,
   goals,
@@ -1496,12 +1496,12 @@ export function issueService(db: Db) {
         const currentMax = maxRow?.maxNum ?? 0;
 
         const [company] = await tx
-          .update(companies)
+          .update(workspaces)
           .set({
-            issueCounter: sql`greatest(${companies.issueCounter}, ${currentMax}) + 1`,
+            issueCounter: sql`greatest(${workspaces.issueCounter}, ${currentMax}) + 1`,
           })
-          .where(eq(companies.id, workspaceId))
-          .returning({ issueCounter: companies.issueCounter, issuePrefix: companies.issuePrefix });
+          .where(eq(workspaces.id, workspaceId))
+          .returning({ issueCounter: workspaces.issueCounter, issuePrefix: workspaces.issuePrefix });
 
         const issueNumber = company.issueCounter;
         const identifier = `${company.issuePrefix}-${issueNumber}`;

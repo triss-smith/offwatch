@@ -81,7 +81,7 @@ const mockSecretService = vi.hoisted(() => ({
 const mockAgentInstructionsService = vi.hoisted(() => ({
   materializeManagedBundle: vi.fn(),
 }));
-const mockCompanySkillService = vi.hoisted(() => ({
+const mockWorkspaceSkillService = vi.hoisted(() => ({
   listRuntimeSkillEntries: vi.fn(),
   resolveRequestedSkillKeys: vi.fn(),
 }));
@@ -104,7 +104,7 @@ vi.mock("../services/index.js", () => ({
   agentInstructionsService: () => mockAgentInstructionsService,
   accessService: () => mockAccessService,
   approvalService: () => mockApprovalService,
-  companySkillService: () => mockCompanySkillService,
+  workspaceSkillService: () => mockWorkspaceSkillService,
   budgetService: () => mockBudgetService,
   heartbeatService: () => mockHeartbeatService,
   issueApprovalService: () => mockIssueApprovalService,
@@ -165,8 +165,8 @@ describe("agent permission routes", () => {
     mockAccessService.listPrincipalGrants.mockResolvedValue([]);
     mockAccessService.ensureMembership.mockResolvedValue(undefined);
     mockAccessService.setPrincipalPermission.mockResolvedValue(undefined);
-    mockCompanySkillService.listRuntimeSkillEntries.mockResolvedValue([]);
-    mockCompanySkillService.resolveRequestedSkillKeys.mockImplementation(async (_companyId, requested) => requested);
+    mockWorkspaceSkillService.listRuntimeSkillEntries.mockResolvedValue([]);
+    mockWorkspaceSkillService.resolveRequestedSkillKeys.mockImplementation(async (_companyId, requested) => requested);
     mockBudgetService.upsertPolicy.mockResolvedValue(undefined);
     mockAgentInstructionsService.materializeManagedBundle.mockImplementation(
       async (agent: Record<string, unknown>, files: Record<string, string>) => ({
@@ -181,8 +181,8 @@ describe("agent permission routes", () => {
         },
       }),
     );
-    mockCompanySkillService.listRuntimeSkillEntries.mockResolvedValue([]);
-    mockCompanySkillService.resolveRequestedSkillKeys.mockImplementation(
+    mockWorkspaceSkillService.listRuntimeSkillEntries.mockResolvedValue([]);
+    mockWorkspaceSkillService.resolveRequestedSkillKeys.mockImplementation(
       async (_companyId: string, requested: string[]) => requested,
     );
     mockSecretService.normalizeAdapterConfigForPersistence.mockImplementation(async (_companyId, config) => config);

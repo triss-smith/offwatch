@@ -4,8 +4,8 @@ import { and, asc, desc, eq, getTableColumns, gte, lte, ne, or } from "drizzle-o
 import type { Db } from "@paperclipai/db";
 import {
   agents,
-  companies,
-  companySkills,
+  workspaces,
+  workspaceSkills,
   costEvents,
   documentRevisions,
   documents,
@@ -200,7 +200,7 @@ function normalizeSkillReference(value: string) {
 }
 
 function matchesSkillReference(
-  skill: typeof companySkills.$inferSelect,
+  skill: typeof workspaceSkills.$inferSelect,
   reference: string,
 ) {
   const normalized = normalizeSkillReference(reference);
@@ -389,7 +389,7 @@ async function buildCodexTraceFiles(input: {
 
   const managedRoot = path.join(
     resolvePaperclipInstanceRoot(),
-    "companies",
+    "workspaces",
     input.workspaceId,
     "codex-home",
     "sessions",
@@ -1090,8 +1090,8 @@ async function buildAgentContext(
     ? []
     : await db
       .select()
-      .from(companySkills)
-      .where(eq(companySkills.workspaceId, workspaceId));
+      .from(workspaceSkills)
+      .where(eq(workspaceSkills.workspaceId, workspaceId));
   const matchedSkills = availableSkills
     .filter((skill) => desiredSkillRefs.some((reference) => matchesSkillReference(skill, reference)))
     .slice(0, MAX_SKILLS);
@@ -1883,37 +1883,19 @@ export function feedbackService(db: Db, options: FeedbackServiceOptions = {}) {
 
         const target = await resolveFeedbackTarget(tx, issue, input.targetType, input.targetId);
 
-        const existingCompany = await tx
-          .select({
-            feedbackDataSharingEnabled: companies.feedbackDataSharingEnabled,
-            feedbackDataSharingTermsVersion: companies.feedbackDataSharingTermsVersion,
-          })
-          .from(companies)
-          .where(eq(companies.id, issue.workspaceId))
+        const workspaceExists = await tx
+          .select({ id: workspaces.id })
+          .from(workspaces)
+          .where(eq(workspaces.id, issue.workspaceId))
           .then((rows) => rows[0] ?? null);
-        if (!existingCompany) throw notFound("Company not found");
+        if (!workspaceExists) throw notFound("Workspace not found");
 
         const now = new Date();
         const normalizedReason = normalizeReason(input.vote, input.reason);
         const sharedWithLabs = input.allowSharing === true;
-        let consentEnabledNow = false;
-        let consentVersion = existingCompany.feedbackDataSharingTermsVersion ?? null;
+        const consentEnabledNow = false;
+        const consentVersion = sharedWithLabs ? DEFAULT_FEEDBACK_DATA_SHARING_TERMS_VERSION : null;
         let persistedSharingPreference: "allowed" | "not_allowed" | null = null;
-
-        if (sharedWithLabs && !existingCompany.feedbackDataSharingEnabled) {
-          consentEnabledNow = true;
-          consentVersion = DEFAULT_FEEDBACK_DATA_SHARING_TERMS_VERSION;
-          await tx
-            .update(companies)
-            .set({
-              feedbackDataSharingEnabled: true,
-              feedbackDataSharingConsentAt: now,
-              feedbackDataSharingConsentByUserId: input.authorUserId,
-              feedbackDataSharingTermsVersion: consentVersion,
-              updatedAt: now,
-            })
-            .where(eq(companies.id, issue.workspaceId));
-        }
 
         const existingInstanceSettings = await tx
           .select({

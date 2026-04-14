@@ -1,43 +1,43 @@
 import type { Project, ProjectWorkspace, WorkspaceOperation } from "@paperclipai/shared";
 import { api } from "./client";
 
-function withCompanyScope(path: string, workspaceId?: string) {
-  if (!workspaceId) return path;
+function withCompanyScope(path: string, companyId?: string) {
+  if (!companyId) return path;
   const separator = path.includes("?") ? "&" : "?";
-  return `${path}${separator}workspaceId=${encodeURIComponent(workspaceId)}`;
+  return `${path}${separator}workspaceId=${encodeURIComponent(companyId)}`;
 }
 
-function projectPath(id: string, workspaceId?: string, suffix = "") {
-  return withCompanyScope(`/projects/${encodeURIComponent(id)}${suffix}`, workspaceId);
+function projectPath(id: string, companyId?: string, suffix = "") {
+  return withCompanyScope(`/projects/${encodeURIComponent(id)}${suffix}`, companyId);
 }
 
 export const projectsApi = {
   list: (workspaceId: string) => api.get<Project[]>(`/workspaces/${workspaceId}/projects`),
-  get: (id: string, workspaceId?: string) => api.get<Project>(projectPath(id, workspaceId)),
+  get: (id: string, companyId?: string) => api.get<Project>(projectPath(id, companyId)),
   create: (workspaceId: string, data: Record<string, unknown>) =>
     api.post<Project>(`/workspaces/${workspaceId}/projects`, data),
-  update: (id: string, data: Record<string, unknown>, workspaceId?: string) =>
-    api.patch<Project>(projectPath(id, workspaceId), data),
-  listWorkspaces: (projectId: string, workspaceId?: string) =>
-    api.get<ProjectWorkspace[]>(projectPath(projectId, workspaceId, "/workspaces")),
-  createWorkspace: (projectId: string, data: Record<string, unknown>, workspaceId?: string) =>
-    api.post<ProjectWorkspace>(projectPath(projectId, workspaceId, "/workspaces"), data),
-  updateWorkspace: (projectId: string, workspaceId: string, data: Record<string, unknown>, workspaceId?: string) =>
+  update: (id: string, data: Record<string, unknown>, companyId?: string) =>
+    api.patch<Project>(projectPath(id, companyId), data),
+  listWorkspaces: (projectId: string, companyId?: string) =>
+    api.get<ProjectWorkspace[]>(projectPath(projectId, companyId, "/workspaces")),
+  createWorkspace: (projectId: string, data: Record<string, unknown>, companyId?: string) =>
+    api.post<ProjectWorkspace>(projectPath(projectId, companyId, "/workspaces"), data),
+  updateWorkspace: (projectId: string, workspaceId: string, data: Record<string, unknown>, companyId?: string) =>
     api.patch<ProjectWorkspace>(
-      projectPath(projectId, workspaceId, `/workspaces/${encodeURIComponent(workspaceId)}`),
+      projectPath(projectId, companyId, `/workspaces/${encodeURIComponent(workspaceId)}`),
       data,
     ),
   controlWorkspaceRuntimeServices: (
     projectId: string,
     workspaceId: string,
     action: "start" | "stop" | "restart",
-    workspaceId?: string,
+    companyId?: string,
   ) =>
     api.post<{ workspace: ProjectWorkspace; operation: WorkspaceOperation }>(
-      projectPath(projectId, workspaceId, `/workspaces/${encodeURIComponent(workspaceId)}/runtime-services/${action}`),
+      projectPath(projectId, companyId, `/workspaces/${encodeURIComponent(workspaceId)}/runtime-services/${action}`),
       {},
     ),
-  removeWorkspace: (projectId: string, workspaceId: string, workspaceId?: string) =>
-    api.delete<ProjectWorkspace>(projectPath(projectId, workspaceId, `/workspaces/${encodeURIComponent(workspaceId)}`)),
-  remove: (id: string, workspaceId?: string) => api.delete<Project>(projectPath(id, workspaceId)),
+  removeWorkspace: (projectId: string, workspaceId: string, companyId?: string) =>
+    api.delete<ProjectWorkspace>(projectPath(projectId, companyId, `/workspaces/${encodeURIComponent(workspaceId)}`)),
+  remove: (id: string, companyId?: string) => api.delete<Project>(projectPath(id, companyId)),
 };

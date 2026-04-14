@@ -3,7 +3,7 @@ import { pluginLogs, agentTaskSessions as agentTaskSessionsTable } from "@paperc
 import { eq, and, like, desc } from "drizzle-orm";
 import type {
   HostServices,
-  Company,
+  Workspace,
   Agent,
   Project,
   Issue,
@@ -448,7 +448,7 @@ export function buildHostServices(
   const registry = pluginRegistryService(db);
   const stateStore = pluginStateStore(db);
   const secretsHandler = createPluginSecretsHandler({ db, pluginId });
-  const companies = workspaceService(db);
+  const workspaces = workspaceService(db);
   const agents = agentService(db);
   const heartbeat = heartbeatService(db);
   const projects = projectService(db);
@@ -688,11 +688,11 @@ export function buildHostServices(
 
     companies: {
       async list(params) {
-        return applyWindow((await companies.list()) as Company[], params);
+        return applyWindow((await workspaces.list()) as Workspace[], params);
       },
       async get(params) {
         await ensurePluginAvailableForCompany(params.workspaceId);
-        return (await companies.getById(params.workspaceId)) as Company;
+        return (await workspaces.getById(params.workspaceId)) as Workspace;
       },
     },
 

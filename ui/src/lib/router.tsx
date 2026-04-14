@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as RouterDom from "react-router-dom";
 import type { NavigateOptions, To } from "react-router-dom";
-import { useCompany } from "@/context/CompanyContext";
+import { useCompany } from "@/context/WorkspaceContext";
 import { IssueLinkQuicklook } from "@/components/IssueLinkQuicklook";
 import {
   applyCompanyPrefix,

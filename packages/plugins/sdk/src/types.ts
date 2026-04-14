@@ -15,7 +15,7 @@ import type {
   PluginEventType,
   PluginToolDeclaration,
   PluginLauncherDeclaration,
-  Company,
+  Workspace,
   Project,
   Issue,
   IssueComment,
@@ -59,7 +59,7 @@ export type {
   PluginWebhookDeliveryStatus,
   PluginEventType,
   PluginBridgeErrorCode,
-  Company,
+  Workspace,
   Project,
   Issue,
   IssueComment,
@@ -112,7 +112,7 @@ export interface EventFilter {
   /** Only receive events for this project. */
   projectId?: string;
   /** Only receive events for this company. */
-  companyId?: string;
+  workspaceId?: string;
   /** Only receive events for this agent. */
   agentId?: string;
   /** Additional arbitrary filter fields. */
@@ -140,7 +140,7 @@ export interface PluginEvent<TPayload = unknown> {
   /** Type of the primary entity. */
   entityType?: string;
   /** UUID of the company this event belongs to. */
-  companyId: string;
+  workspaceId: string;
   /** Typed event payload. */
   payload: TPayload;
 }
@@ -180,7 +180,7 @@ export interface ToolRunContext {
   /** UUID of the current agent run. */
   runId: string;
   /** UUID of the company the run belongs to. */
-  companyId: string;
+  workspaceId: string;
   /** UUID of the project the run belongs to. */
   projectId: string;
 }
@@ -362,10 +362,10 @@ export interface PluginEventsClient {
    * @see PLUGIN_SPEC.md §16.2 — Plugin-to-Plugin Events
    *
    * @param name - Bare event name (e.g. `"sync-done"`)
-   * @param companyId - UUID of the company this event belongs to
+   * @param workspaceId - UUID of the company this event belongs to
    * @param payload - JSON-serializable event payload
    */
-  emit(name: string, companyId: string, payload: unknown): Promise<void>;
+  emit(name: string, workspaceId: string, payload: unknown): Promise<void>;
 }
 
 /**
@@ -463,7 +463,7 @@ export interface PluginSecretsClient {
  */
 export interface PluginActivityLogEntry {
   /** UUID of the company this activity belongs to. Required for auditing. */
-  companyId: string;
+  workspaceId: string;
   /** Human-readable description of the activity. */
   message: string;
   /** Optional entity type this activity relates to. */
@@ -617,32 +617,32 @@ export interface PluginProjectsClient {
    *
    * Requires the `projects.read` capability.
    */
-  list(input: { companyId: string; limit?: number; offset?: number }): Promise<Project[]>;
+  list(input: { workspaceId: string; limit?: number; offset?: number }): Promise<Project[]>;
 
   /**
    * Get a single project by ID.
    *
    * Requires the `projects.read` capability.
    */
-  get(projectId: string, companyId: string): Promise<Project | null>;
+  get(projectId: string, workspaceId: string): Promise<Project | null>;
 
   /**
    * List all workspaces attached to a project.
    *
    * @param projectId - UUID of the project
-   * @param companyId - UUID of the company that owns the project
+   * @param workspaceId - UUID of the company that owns the project
    * @returns All workspaces for the project, ordered with primary first
    */
-  listWorkspaces(projectId: string, companyId: string): Promise<PluginWorkspace[]>;
+  listWorkspaces(projectId: string, workspaceId: string): Promise<PluginWorkspace[]>;
 
   /**
    * Get the primary workspace for a project.
    *
    * @param projectId - UUID of the project
-   * @param companyId - UUID of the company that owns the project
+   * @param workspaceId - UUID of the company that owns the project
    * @returns The primary workspace, or `null` if no workspace is configured
    */
-  getPrimaryWorkspace(projectId: string, companyId: string): Promise<PluginWorkspace | null>;
+  getPrimaryWorkspace(projectId: string, workspaceId: string): Promise<PluginWorkspace | null>;
 
   /**
    * Resolve the primary workspace for an issue by looking up the issue's
@@ -652,13 +652,13 @@ export interface PluginProjectsClient {
    * `getPrimaryWorkspace()` in a single RPC call.
    *
    * @param issueId - UUID of the issue
-   * @param companyId - UUID of the company that owns the issue
+   * @param workspaceId - UUID of the company that owns the issue
    * @returns The primary workspace for the issue's project, or `null` if
    *   the issue has no project or the project has no workspace
    *
    * @see PLUGIN_SPEC.md §20 — Local Tooling
    */
-  getWorkspaceForIssue(issueId: string, companyId: string): Promise<PluginWorkspace | null>;
+  getWorkspaceForIssue(issueId: string, workspaceId: string): Promise<PluginWorkspace | null>;
 }
 
 /**
@@ -792,12 +792,12 @@ export interface PluginCompaniesClient {
   /**
    * List companies visible to this plugin.
    */
-  list(input?: { limit?: number; offset?: number }): Promise<Company[]>;
+  list(input?: { limit?: number; offset?: number }): Promise<Workspace[]>;
 
   /**
    * Get one company by ID.
    */
-  get(companyId: string): Promise<Company | null>;
+  get(workspaceId: string): Promise<Workspace | null>;
 }
 
 /**
@@ -818,7 +818,7 @@ export interface PluginIssueDocumentsClient {
    *
    * Requires the `issue.documents.read` capability.
    */
-  list(issueId: string, companyId: string): Promise<IssueDocumentSummary[]>;
+  list(issueId: string, workspaceId: string): Promise<IssueDocumentSummary[]>;
 
   /**
    * Get a single document by key, including its full body content.
@@ -829,9 +829,9 @@ export interface PluginIssueDocumentsClient {
    *
    * @param issueId - UUID of the issue
    * @param key - Document key (e.g. `"plan"`, `"design-spec"`)
-   * @param companyId - UUID of the company
+   * @param workspaceId - UUID of the company
    */
-  get(issueId: string, key: string, companyId: string): Promise<IssueDocument | null>;
+  get(issueId: string, key: string, workspaceId: string): Promise<IssueDocument | null>;
 
   /**
    * Create or update a document on an issue.
@@ -847,7 +847,7 @@ export interface PluginIssueDocumentsClient {
     issueId: string;
     key: string;
     body: string;
-    companyId: string;
+    workspaceId: string;
     title?: string;
     format?: string;
     changeSummary?: string;
@@ -862,9 +862,9 @@ export interface PluginIssueDocumentsClient {
    *
    * @param issueId - UUID of the issue
    * @param key - Document key to delete
-   * @param companyId - UUID of the company
+   * @param workspaceId - UUID of the company
    */
-  delete(issueId: string, key: string, companyId: string): Promise<void>;
+  delete(issueId: string, key: string, workspaceId: string): Promise<void>;
 }
 
 /**
@@ -881,16 +881,16 @@ export interface PluginIssueDocumentsClient {
  */
 export interface PluginIssuesClient {
   list(input: {
-    companyId: string;
+    workspaceId: string;
     projectId?: string;
     assigneeAgentId?: string;
     status?: Issue["status"];
     limit?: number;
     offset?: number;
   }): Promise<Issue[]>;
-  get(issueId: string, companyId: string): Promise<Issue | null>;
+  get(issueId: string, workspaceId: string): Promise<Issue | null>;
   create(input: {
-    companyId: string;
+    workspaceId: string;
     projectId?: string;
     goalId?: string;
     parentId?: string;
@@ -906,13 +906,13 @@ export interface PluginIssuesClient {
       Issue,
       "title" | "description" | "status" | "priority" | "assigneeAgentId"
     >>,
-    companyId: string,
+    workspaceId: string,
   ): Promise<Issue>;
-  listComments(issueId: string, companyId: string): Promise<IssueComment[]>;
+  listComments(issueId: string, workspaceId: string): Promise<IssueComment[]>;
   createComment(
     issueId: string,
     body: string,
-    companyId: string,
+    workspaceId: string,
     options?: { authorAgentId?: string },
   ): Promise<IssueComment>;
   /** Read and write issue documents. Requires `issue.documents.read` / `issue.documents.write`. */
@@ -926,14 +926,14 @@ export interface PluginIssuesClient {
  * `agents.invoke` for write operations.
  */
 export interface PluginAgentsClient {
-  list(input: { companyId: string; status?: Agent["status"]; limit?: number; offset?: number }): Promise<Agent[]>;
-  get(agentId: string, companyId: string): Promise<Agent | null>;
+  list(input: { workspaceId: string; status?: Agent["status"]; limit?: number; offset?: number }): Promise<Agent[]>;
+  get(agentId: string, workspaceId: string): Promise<Agent | null>;
   /** Pause an agent. Throws if agent is terminated or not found. Requires `agents.pause`. */
-  pause(agentId: string, companyId: string): Promise<Agent>;
+  pause(agentId: string, workspaceId: string): Promise<Agent>;
   /** Resume a paused agent (sets status to idle). Throws if terminated, pending_approval, or not found. Requires `agents.resume`. */
-  resume(agentId: string, companyId: string): Promise<Agent>;
+  resume(agentId: string, workspaceId: string): Promise<Agent>;
   /** Invoke (wake up) an agent with a prompt payload. Throws if paused, terminated, pending_approval, or not found. Requires `agents.invoke`. */
-  invoke(agentId: string, companyId: string, opts: { prompt: string; reason?: string }): Promise<{ runId: string }>;
+  invoke(agentId: string, workspaceId: string, opts: { prompt: string; reason?: string }): Promise<{ runId: string }>;
   /** Create, message, and close agent chat sessions. Requires `agent.sessions.*` capabilities. */
   sessions: PluginAgentSessionsClient;
 }
@@ -949,7 +949,7 @@ export interface PluginAgentsClient {
 export interface AgentSession {
   sessionId: string;
   agentId: string;
-  companyId: string;
+  workspaceId: string;
   status: "active" | "closed";
   createdAt: string;
 }
@@ -984,27 +984,27 @@ export interface AgentSessionSendResult {
  */
 export interface PluginAgentSessionsClient {
   /** Create a new conversational session with an agent. Requires `agent.sessions.create`. */
-  create(agentId: string, companyId: string, opts?: {
+  create(agentId: string, workspaceId: string, opts?: {
     taskKey?: string;
     reason?: string;
   }): Promise<AgentSession>;
 
   /** List active sessions for an agent owned by this plugin. Requires `agent.sessions.list`. */
-  list(agentId: string, companyId: string): Promise<AgentSession[]>;
+  list(agentId: string, workspaceId: string): Promise<AgentSession[]>;
 
   /**
    * Send a message to a session and receive streaming events via the `onEvent` callback.
    * Returns immediately with `{ runId }`. Events are delivered asynchronously.
    * Requires `agent.sessions.send`.
    */
-  sendMessage(sessionId: string, companyId: string, opts: {
+  sendMessage(sessionId: string, workspaceId: string, opts: {
     prompt: string;
     reason?: string;
     onEvent?: (event: AgentSessionEvent) => void;
   }): Promise<AgentSessionSendResult>;
 
   /** Close a session, releasing resources. Requires `agent.sessions.close`. */
-  close(sessionId: string, companyId: string): Promise<void>;
+  close(sessionId: string, workspaceId: string): Promise<void>;
 }
 
 /**
@@ -1017,15 +1017,15 @@ export interface PluginAgentSessionsClient {
  */
 export interface PluginGoalsClient {
   list(input: {
-    companyId: string;
+    workspaceId: string;
     level?: Goal["level"];
     status?: Goal["status"];
     limit?: number;
     offset?: number;
   }): Promise<Goal[]>;
-  get(goalId: string, companyId: string): Promise<Goal | null>;
+  get(goalId: string, workspaceId: string): Promise<Goal | null>;
   create(input: {
-    companyId: string;
+    workspaceId: string;
     title: string;
     description?: string;
     level?: Goal["level"];
@@ -1039,7 +1039,7 @@ export interface PluginGoalsClient {
       Goal,
       "title" | "description" | "level" | "status" | "parentId" | "ownerAgentId"
     >>,
-    companyId: string,
+    workspaceId: string,
   ): Promise<Goal>;
 }
 
@@ -1054,13 +1054,13 @@ export interface PluginGoalsClient {
  * done. On the UI side, `usePluginStream(channel)` receives these events in
  * real time via SSE.
  *
- * Streams are scoped to `(pluginId, channel, companyId)`. Multiple UI clients
+ * Streams are scoped to `(pluginId, channel, workspaceId)`. Multiple UI clients
  * can subscribe to the same channel concurrently.
  *
  * @example
  * ```ts
  * // Worker: stream chat tokens to the UI
- * ctx.streams.open("chat", companyId);
+ * ctx.streams.open("chat", workspaceId);
  * for await (const token of tokenStream) {
  *   ctx.streams.emit("chat", { type: "token", text: token });
  * }
@@ -1074,7 +1074,7 @@ export interface PluginStreamsClient {
    * Open a named stream channel. Optional — `emit()` implicitly opens if needed.
    * Sends a `stream:open` event to connected UI clients.
    */
-  open(channel: string, companyId: string): void;
+  open(channel: string, workspaceId: string): void;
 
   /**
    * Push an event to all UI clients subscribed to this channel.
@@ -1112,8 +1112,8 @@ export interface PluginStreamsClient {
  *       ctx.logger.info("Issue created", { issueId: event.entityId });
  *     });
  *
- *     ctx.data.register("sync-health", async ({ companyId }) => {
- *       const state = await ctx.state.get({ scopeKind: "company", scopeId: String(companyId), stateKey: "last-sync" });
+ *     ctx.data.register("sync-health", async ({ workspaceId }) => {
+ *       const state = await ctx.state.get({ scopeKind: "company", scopeId: String(workspaceId), stateKey: "last-sync" });
  *       return { lastSync: state };
  *     });
  *   },

@@ -7,7 +7,7 @@ import {
   activityLog,
   agentWakeupRequests,
   agents,
-  companies,
+  workspaces,
   companyMemberships,
   createDb,
   executionWorkspaces,
@@ -107,7 +107,7 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
     await db.delete(routines);
     await db.delete(projects);
     await db.delete(agents);
-    await db.delete(companies);
+    await db.delete(workspaces);
     await db.delete(instanceSettings);
   });
 
@@ -142,7 +142,7 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
     const userId = randomUUID();
     const issuePrefix = `T${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix,
@@ -191,7 +191,7 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
     });
 
     const createRes = await request(app)
-      .post(`/api/companies/${companyId}/routines`)
+      .post(`/api/workspaces/${companyId}/routines`)
       .send({
         projectId,
         title: "Daily standup prep",
@@ -291,7 +291,7 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
     });
 
     const createRes = await request(app)
-      .post(`/api/companies/${companyId}/routines`)
+      .post(`/api/workspaces/${companyId}/routines`)
       .send({
         projectId,
         title: "Repository triage",
@@ -339,7 +339,7 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
     });
 
     const createRes = await request(app)
-      .post(`/api/companies/${companyId}/routines`)
+      .post(`/api/workspaces/${companyId}/routines`)
       .send({
         title: "Draft routine",
         description: "No saved defaults",
@@ -421,7 +421,7 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
     });
 
     const createRes = await request(app)
-      .post(`/api/companies/${companyId}/routines`)
+      .post(`/api/workspaces/${companyId}/routines`)
       .send({
         projectId,
         title: "Workspace-aware routine",

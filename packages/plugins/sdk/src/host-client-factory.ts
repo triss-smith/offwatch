@@ -122,7 +122,7 @@ export interface HostServices {
   /** Provides `activity.log`. */
   activity: {
     log(params: {
-      companyId: string;
+      workspaceId: string;
       message: string;
       entityType?: string;
       entityId?: string;

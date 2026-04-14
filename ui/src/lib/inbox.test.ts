@@ -64,7 +64,7 @@ function makeApproval(status: Approval["status"]): Approval {
   return {
     id: `approval-${status}`,
     workspaceId: "company-1",
-    type: "hire_agent",
+    type: "create_agent",
     requestedByAgentId: null,
     requestedByUserId: null,
     status,

@@ -1,5 +1,5 @@
 import type { Db } from "@paperclipai/db";
-import { companies, instanceSettings } from "@paperclipai/db";
+import { workspaces, instanceSettings } from "@paperclipai/db";
 import {
   DEFAULT_FEEDBACK_DATA_SHARING_PREFERENCE,
   DEFAULT_BACKUP_RETENTION,
@@ -139,8 +139,8 @@ export function instanceSettingsService(db: Db) {
 
     listCompanyIds: async (): Promise<string[]> =>
       db
-        .select({ id: companies.id })
-        .from(companies)
+        .select({ id: workspaces.id })
+        .from(workspaces)
         .then((rows) => rows.map((row) => row.id)),
   };
 }

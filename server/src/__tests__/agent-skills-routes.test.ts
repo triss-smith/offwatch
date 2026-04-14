@@ -38,7 +38,7 @@ const mockAgentInstructionsService = vi.hoisted(() => ({
   materializeManagedBundle: vi.fn(),
 }));
 
-const mockCompanySkillService = vi.hoisted(() => ({
+const mockWorkspaceSkillService = vi.hoisted(() => ({
   listRuntimeSkillEntries: vi.fn(),
   resolveRequestedSkillKeys: vi.fn(),
 }));
@@ -72,7 +72,7 @@ function registerModuleMocks() {
     agentInstructionsService: () => mockAgentInstructionsService,
     accessService: () => mockAccessService,
     approvalService: () => mockApprovalService,
-    companySkillService: () => mockCompanySkillService,
+    workspaceSkillService: () => mockWorkspaceSkillService,
     budgetService: () => mockBudgetService,
     heartbeatService: () => mockHeartbeatService,
     issueApprovalService: () => mockIssueApprovalService,
@@ -157,7 +157,7 @@ describe("agent skill routes", () => {
       agent: makeAgent("claude_local"),
     });
     mockSecretService.resolveAdapterConfigForRuntime.mockResolvedValue({ config: { env: {} } });
-    mockCompanySkillService.listRuntimeSkillEntries.mockResolvedValue([
+    mockWorkspaceSkillService.listRuntimeSkillEntries.mockResolvedValue([
       {
         key: "paperclipai/paperclip/paperclip",
         runtimeName: "paperclip",
@@ -166,7 +166,7 @@ describe("agent skill routes", () => {
         requiredReason: "required",
       },
     ]);
-    mockCompanySkillService.resolveRequestedSkillKeys.mockImplementation(
+    mockWorkspaceSkillService.resolveRequestedSkillKeys.mockImplementation(
       async (_companyId: string, requested: string[]) =>
         requested.map((value) =>
           value === "paperclip"

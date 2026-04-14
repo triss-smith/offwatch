@@ -72,19 +72,19 @@ function sanitizeFriendlyPathSegment(value: string | null | undefined, fallback 
 }
 
 export function resolveManagedProjectWorkspaceDir(input: {
-  companyId: string;
+  workspaceId: string;
   projectId: string;
   repoName?: string | null;
 }): string {
-  const companyId = input.companyId.trim();
+  const workspaceId = input.workspaceId.trim();
   const projectId = input.projectId.trim();
-  if (!companyId || !projectId) {
-    throw new Error("Managed project workspace path requires companyId and projectId.");
+  if (!workspaceId || !projectId) {
+    throw new Error("Managed project workspace path requires workspaceId and projectId.");
   }
   return path.resolve(
     resolvePaperclipInstanceRoot(),
     "projects",
-    sanitizeFriendlyPathSegment(companyId, "company"),
+    sanitizeFriendlyPathSegment(workspaceId, "workspace"),
     sanitizeFriendlyPathSegment(projectId, "project"),
     sanitizeFriendlyPathSegment(input.repoName, "_default"),
   );

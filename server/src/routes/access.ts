@@ -14,7 +14,7 @@ import type { Db } from "@paperclipai/db";
 import {
   agentApiKeys,
   authUsers,
-  companies,
+  workspaces,
   invites,
   joinRequests
 } from "@paperclipai/db";
@@ -46,7 +46,6 @@ import {
   boardAuthService,
   deduplicateAgentName,
   logActivity,
-  notifyHireApproved
 } from "../services/index.js";
 import { assertCompanyAccess } from "./authz.js";
 import {
@@ -1447,7 +1446,6 @@ export function agentJoinGrantsFromDefaults(
 type JoinRequestManagerCandidate = {
   id: string;
   role: string;
-  reportsTo: string | null;
 };
 
 export function resolveJoinRequestAgentManagerId(
@@ -1457,10 +1455,7 @@ export function resolveJoinRequestAgentManagerId(
     (candidate) => candidate.role === "ceo"
   );
   if (ceoCandidates.length === 0) return null;
-  const rootCeo = ceoCandidates.find(
-    (candidate) => candidate.reportsTo === null
-  );
-  return (rootCeo ?? ceoCandidates[0] ?? null)?.id ?? null;
+  return (ceoCandidates[0] ?? null)?.id ?? null;
 }
 
 function isInviteTokenHashCollisionError(error: unknown) {
@@ -1706,7 +1701,7 @@ export function accessRoutes(
       if (approved.status === "approved") {
         const workspaceIds = await boardAuth.resolveBoardActivityCompanyIds({
           userId,
-          requestedCompanyId: approved.challenge.requestedCompanyId,
+          requestedWorkspaceId: approved.challenge.requestedWorkspaceId,
           boardApiKeyId: approved.challenge.boardApiKeyId,
         });
         for (const workspaceId of workspaceIds) {
@@ -1720,7 +1715,7 @@ export function accessRoutes(
             details: {
               boardApiKeyId: approved.challenge.boardApiKeyId,
               requestedAccess: approved.challenge.requestedAccess,
-              requestedCompanyId: approved.challenge.requestedCompanyId,
+              requestedWorkspaceId: approved.challenge.requestedWorkspaceId,
               challengeId: approved.challenge.id,
             },
           });
@@ -1899,9 +1894,9 @@ export function accessRoutes(
   async function getInviteCompanyName(workspaceId: string | null) {
     if (!workspaceId) return null;
     const company = await db
-      .select({ name: companies.name })
-      .from(companies)
-      .where(eq(companies.id, workspaceId))
+      .select({ name: workspaces.name })
+      .from(workspaces)
+      .where(eq(workspaces.id, workspaceId))
       .then((rows) => rows[0] ?? null);
     return company?.name ?? null;
   }
@@ -2667,7 +2662,6 @@ export function accessRoutes(
           role: "general",
           title: null,
           status: "idle",
-          reportsTo: managerId,
           capabilities: existing.capabilities ?? null,
           adapterType: existing.adapterType ?? "process",
           adapterConfig:
@@ -2676,8 +2670,6 @@ export function accessRoutes(
               ? (existing.agentDefaultsPayload as Record<string, unknown>)
               : {},
           runtimeConfig: {},
-          budgetMonthlyCents: 0,
-          spentMonthlyCents: 0,
           permissions: {},
           lastHeartbeatAt: null,
           metadata: null
@@ -2725,16 +2717,6 @@ export function accessRoutes(
         entityId: requestId,
         details: { requestType: existing.requestType, createdAgentId }
       });
-
-      if (createdAgentId) {
-        void notifyHireApproved(db, {
-          workspaceId,
-          agentId: createdAgentId,
-          source: "join_request",
-          sourceId: requestId,
-          approvedAt: new Date()
-        }).catch(() => {});
-      }
 
       res.json(toJoinRequestResponse(approved));
     }

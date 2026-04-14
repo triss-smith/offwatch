@@ -183,11 +183,6 @@ export function Workspaces() {
                       </Button>
                     </div>
                   )}
-                  {workspace.description && !isEditing && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                      {workspace.description}
-                    </p>
-                  )}
                 </div>
 
                 {/* Three-dot menu */}

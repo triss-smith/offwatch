@@ -5,7 +5,7 @@ import {
   approvals,
   budgetIncidents,
   budgetPolicies,
-  companies,
+  workspaces,
   costEvents,
   projects,
 } from "@paperclipai/db";
@@ -82,21 +82,19 @@ async function resolveScopeRecord(db: Db, scopeType: BudgetScopeType, scopeId: s
   if (scopeType === "company") {
     const row = await db
       .select({
-        workspaceId: companies.id,
-        name: companies.name,
-        status: companies.status,
-        pauseReason: companies.pauseReason,
-        pausedAt: companies.pausedAt,
+        workspaceId: workspaces.id,
+        name: workspaces.name,
+        status: workspaces.status,
       })
-      .from(companies)
-      .where(eq(companies.id, scopeId))
+      .from(workspaces)
+      .where(eq(workspaces.id, scopeId))
       .then((rows) => rows[0] ?? null);
     if (!row) throw notFound("Company not found");
     return {
       workspaceId: row.workspaceId,
       name: row.name,
-      paused: row.status === "paused" || Boolean(row.pausedAt),
-      pauseReason: (row.pauseReason as ScopeRecord["pauseReason"]) ?? null,
+      paused: row.status === "paused",
+      pauseReason: null,
     };
   }
 
@@ -246,15 +244,14 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
       return;
     }
 
+    // company-level budget pause: update status only (no pauseReason/pausedAt on workspaces)
     await db
-      .update(companies)
+      .update(workspaces)
       .set({
         status: "paused",
-        pauseReason: "budget",
-        pausedAt: now,
         updatedAt: now,
       })
-      .where(eq(companies.id, policy.scopeId));
+      .where(eq(workspaces.id, policy.scopeId));
   }
 
   async function pauseAndCancelScopeForBudget(policy: PolicyRow) {
@@ -293,15 +290,14 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
       return;
     }
 
+    // company-level budget resume: update status only (no pauseReason/pausedAt on workspaces)
     await db
-      .update(companies)
+      .update(workspaces)
       .set({
         status: "active",
-        pauseReason: null,
-        pausedAt: null,
         updatedAt: now,
       })
-      .where(and(eq(companies.id, policy.scopeId), eq(companies.pauseReason, "budget")));
+      .where(eq(workspaces.id, policy.scopeId));
   }
 
   async function getPolicyRow(policyId: string) {
@@ -575,26 +571,6 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
           .returning()
           .then((rows) => rows[0]);
 
-      if (input.scopeType === "company" && windowKind === "calendar_month_utc") {
-        await db
-          .update(companies)
-          .set({
-            budgetMonthlyCents: amount,
-            updatedAt: now,
-          })
-          .where(eq(companies.id, input.scopeId));
-      }
-
-      if (input.scopeType === "agent" && windowKind === "calendar_month_utc") {
-        await db
-          .update(agents)
-          .set({
-            budgetMonthlyCents: amount,
-            updatedAt: now,
-          })
-          .where(eq(agents.id, input.scopeId));
-      }
-
       if (amount > 0) {
         const observedAmount = await computeObservedAmount(db, row);
         if (observedAmount < amount) {
@@ -672,12 +648,7 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
         return false;
       });
 
-      const companyRow = await db
-        .select({ budgetMetric: companies.budgetMetric })
-        .from(companies)
-        .where(eq(companies.id, event.workspaceId))
-        .then((rows) => rows[0] ?? null);
-      const activeMetric = companyRow?.budgetMetric ?? "billed_cents";
+      const activeMetric = "billed_cents";
 
       for (const policy of relevantPolicies) {
         if (policy.metric !== activeMetric || policy.amount <= 0) continue;
@@ -748,25 +719,20 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
 
       const company = await db
         .select({
-          status: companies.status,
-          pauseReason: companies.pauseReason,
-          name: companies.name,
-          budgetMetric: companies.budgetMetric,
+          status: workspaces.status,
+          name: workspaces.name,
         })
-        .from(companies)
-        .where(eq(companies.id, workspaceId))
+        .from(workspaces)
+        .where(eq(workspaces.id, workspaceId))
         .then((rows) => rows[0] ?? null);
       if (!company) throw notFound("Company not found");
-      const activeMetric = company.budgetMetric ?? "billed_cents";
+      const activeMetric = "billed_cents";
       if (company.status === "paused") {
         return {
           scopeType: "company" as const,
           scopeId: workspaceId,
           scopeName: company.name,
-          reason:
-            company.pauseReason === "budget"
-              ? "Company is paused because its budget hard-stop was reached."
-              : "Company is paused and cannot start new work.",
+          reason: "Company is paused and cannot start new work.",
         };
       }
 
@@ -911,20 +877,6 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
             updatedAt: now,
           })
           .where(eq(budgetPolicies.id, policy.id));
-
-        if (policy.scopeType === "company" && policy.windowKind === "calendar_month_utc") {
-          await db
-            .update(companies)
-            .set({ budgetMonthlyCents: nextAmount, updatedAt: now })
-            .where(eq(companies.id, policy.scopeId));
-        }
-
-        if (policy.scopeType === "agent" && policy.windowKind === "calendar_month_utc") {
-          await db
-            .update(agents)
-            .set({ budgetMonthlyCents: nextAmount, updatedAt: now })
-            .where(eq(agents.id, policy.scopeId));
-        }
 
         await resumeScopeFromBudget(policy);
         await db

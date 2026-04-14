@@ -2,14 +2,14 @@ import { useEffect, useMemo, useState, type SVGProps } from "react";
 import { Link, useNavigate, useParams } from "@/lib/router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
-  CompanySkillCreateRequest,
-  CompanySkillDetail,
-  CompanySkillFileDetail,
-  CompanySkillFileInventoryEntry,
-  CompanySkillListItem,
-  CompanySkillProjectScanResult,
-  CompanySkillSourceBadge,
-  CompanySkillUpdateStatus,
+  WorkspaceSkillCreateRequest,
+  WorkspaceSkillDetail,
+  WorkspaceSkillFileDetail,
+  WorkspaceSkillFileInventoryEntry,
+  WorkspaceSkillListItem,
+  WorkspaceSkillProjectScanResult,
+  WorkspaceSkillSourceBadge,
+  WorkspaceSkillUpdateStatus,
 } from "@paperclipai/shared";
 import { companySkillsApi } from "../api/companySkills";
 import { useWorkspace } from "../context/WorkspaceContext";
@@ -59,7 +59,7 @@ type SkillTreeNode = {
   name: string;
   path: string | null;
   kind: "dir" | "file";
-  fileKind?: CompanySkillFileInventoryEntry["kind"];
+  fileKind?: WorkspaceSkillFileInventoryEntry["kind"];
   children: SkillTreeNode[];
 };
 
@@ -104,7 +104,7 @@ function mergeFrontmatter(markdown: string, body: string) {
   return ["---", parsed.frontmatter, "---", "", body].join("\n");
 }
 
-function buildTree(entries: CompanySkillFileInventoryEntry[]) {
+function buildTree(entries: WorkspaceSkillFileInventoryEntry[]) {
   const root: SkillTreeNode = { name: "", path: null, kind: "dir", children: [] };
 
   for (const entry of entries) {
@@ -143,7 +143,7 @@ function buildTree(entries: CompanySkillFileInventoryEntry[]) {
   return root.children;
 }
 
-function sourceMeta(sourceBadge: CompanySkillSourceBadge, sourceLabel: string | null) {
+function sourceMeta(sourceBadge: WorkspaceSkillSourceBadge, sourceLabel: string | null) {
   const normalizedLabel = sourceLabel?.toLowerCase() ?? "";
   const isSkillsShManaged =
     normalizedLabel.includes("skills.sh") || normalizedLabel.includes("vercel-labs/skills");
@@ -171,7 +171,7 @@ function shortRef(ref: string | null | undefined) {
   return ref.slice(0, 7);
 }
 
-function formatProjectScanSummary(result: CompanySkillProjectScanResult) {
+function formatProjectScanSummary(result: WorkspaceSkillProjectScanResult) {
   const parts = [
     `${result.discovered} found`,
     `${result.imported.length} imported`,
@@ -182,7 +182,7 @@ function formatProjectScanSummary(result: CompanySkillProjectScanResult) {
   return `${parts.join(", ")} across ${result.scannedWorkspaces} workspace${result.scannedWorkspaces === 1 ? "" : "s"}.`;
 }
 
-function fileIcon(kind: CompanySkillFileInventoryEntry["kind"]) {
+function fileIcon(kind: WorkspaceSkillFileInventoryEntry["kind"]) {
   if (kind === "script" || kind === "reference") return FileCode2;
   return FileText;
 }
@@ -246,7 +246,7 @@ function NewSkillForm({
   isPending,
   onCancel,
 }: {
-  onCreate: (payload: CompanySkillCreateRequest) => void;
+  onCreate: (payload: WorkspaceSkillCreateRequest) => void;
   isPending: boolean;
   onCancel: () => void;
 }) {
@@ -392,7 +392,7 @@ function SkillList({
   onSelectSkill,
   onSelectPath,
 }: {
-  skills: CompanySkillListItem[];
+  skills: WorkspaceSkillListItem[];
   selectedSkillId: string | null;
   skillFilter: string;
   expandedSkillId: string | null;
@@ -510,10 +510,10 @@ function SkillPane({
   savePending,
 }: {
   loading: boolean;
-  detail: CompanySkillDetail | null | undefined;
-  file: CompanySkillFileDetail | null | undefined;
+  detail: WorkspaceSkillDetail | null | undefined;
+  file: WorkspaceSkillFileDetail | null | undefined;
   fileLoading: boolean;
-  updateStatus: CompanySkillUpdateStatus | null | undefined;
+  updateStatus: WorkspaceSkillUpdateStatus | null | undefined;
   updateStatusLoading: boolean;
   viewMode: "preview" | "code";
   editMode: boolean;
@@ -753,7 +753,7 @@ function SkillPane({
   );
 }
 
-export function CompanySkills() {
+export function WorkspaceSkills() {
   const { "*": routePath } = useParams<{ "*": string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -769,12 +769,12 @@ export function CompanySkills() {
   const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
   const [editMode, setEditMode] = useState(false);
   const [draft, setDraft] = useState("");
-  const [displayedDetail, setDisplayedDetail] = useState<CompanySkillDetail | null>(null);
-  const [displayedFile, setDisplayedFile] = useState<CompanySkillFileDetail | null>(null);
+  const [displayedDetail, setDisplayedDetail] = useState<WorkspaceSkillDetail | null>(null);
+  const [displayedFile, setDisplayedFile] = useState<WorkspaceSkillFileDetail | null>(null);
   const [scanStatusMessage, setScanStatusMessage] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteTargetSkillId, setDeleteTargetSkillId] = useState<string | null>(null);
-  const [deleteTargetDetail, setDeleteTargetDetail] = useState<CompanySkillDetail | null>(null);
+  const [deleteTargetDetail, setDeleteTargetDetail] = useState<WorkspaceSkillDetail | null>(null);
   const parsedRoute = useMemo(() => parseSkillRoute(routePath), [routePath]);
   const routeSkillId = parsedRoute.skillId;
   const selectedPath = parsedRoute.filePath;
@@ -911,7 +911,7 @@ export function CompanySkills() {
   });
 
   const createSkill = useMutation({
-    mutationFn: (payload: CompanySkillCreateRequest) => companySkillsApi.create(selectedCompanyId!, payload),
+    mutationFn: (payload: WorkspaceSkillCreateRequest) => companySkillsApi.create(selectedCompanyId!, payload),
     onSuccess: async (skill) => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.list(selectedCompanyId!) });
       navigate(skillRoute(skill.id));

@@ -25,7 +25,7 @@ import { Router } from "express";
 import type { Request } from "express";
 import { and, desc, eq, gte } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
-import { companies, pluginLogs, pluginWebhookDeliveries } from "@paperclipai/db";
+import { workspaces, pluginLogs, pluginWebhookDeliveries } from "@paperclipai/db";
 import type {
   PluginStatus,
   PaperclipPluginManifestV1,
@@ -317,8 +317,8 @@ export function pluginRoutes(
   async function resolvePluginAuditCompanyIds(req: Request): Promise<string[]> {
     if (typeof (db as { select?: unknown }).select === "function") {
       const rows = await db
-        .select({ id: companies.id })
-        .from(companies);
+        .select({ id: workspaces.id })
+        .from(workspaces);
       return rows.map((row) => row.id);
     }
 

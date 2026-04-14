@@ -262,8 +262,8 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   const desiredSkillNames = resolveCodexDesiredSkillNames(config, codexSkillEntries);
   await ensureAbsoluteDirectory(cwd, { createIfMissing: true });
   const preparedManagedCodexHome =
-    configuredCodexHome ? null : await prepareManagedCodexHome(process.env, onLog, agent.companyId);
-  const defaultCodexHome = resolveManagedCodexHomeDir(process.env, agent.companyId);
+    configuredCodexHome ? null : await prepareManagedCodexHome(process.env, onLog, agent.workspaceId);
+  const defaultCodexHome = resolveManagedCodexHomeDir(process.env, agent.workspaceId);
   const effectiveCodexHome = configuredCodexHome ?? preparedManagedCodexHome ?? defaultCodexHome;
   await fs.mkdir(effectiveCodexHome, { recursive: true });
   // Inject skills into the same CODEX_HOME that Codex will actually run with
@@ -428,9 +428,9 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   const bootstrapPromptTemplate = asString(config.bootstrapPromptTemplate, "");
   const templateData = {
     agentId: agent.id,
-    companyId: agent.companyId,
+    companyId: agent.workspaceId,
     runId,
-    company: { id: agent.companyId },
+    company: { id: agent.workspaceId },
     agent,
     run: { id: runId, source: "on_demand" },
     context,

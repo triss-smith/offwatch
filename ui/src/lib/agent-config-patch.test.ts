@@ -13,7 +13,6 @@ function makeAgent(): Agent {
     title: "Engineer",
     icon: null,
     status: "active",
-    reportsTo: null,
     capabilities: null,
     adapterType: "claude_local",
     adapterConfig: {
@@ -32,10 +31,6 @@ function makeAgent(): Agent {
         intervalSec: 300,
       },
     },
-    budgetMonthlyCents: 0,
-    spentMonthlyCents: 0,
-    pauseReason: null,
-    pausedAt: null,
     lastHeartbeatAt: null,
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),

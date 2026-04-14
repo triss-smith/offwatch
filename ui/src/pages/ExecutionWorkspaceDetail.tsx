@@ -232,15 +232,15 @@ function WorkspaceLink({
 }
 
 function ExecutionWorkspaceIssuesList({
-  workspaceId,
-  workspaceId,
+  companyId,
+  execWorkspaceId,
   issues,
   isLoading,
   error,
   project,
 }: {
-  workspaceId: string;
-  workspaceId: string;
+  companyId: string;
+  execWorkspaceId: string;
   issues: Issue[];
   isLoading: boolean;
   error: Error | null;
@@ -249,15 +249,15 @@ function ExecutionWorkspaceIssuesList({
   const queryClient = useQueryClient();
 
   const { data: agents } = useQuery({
-    queryKey: queryKeys.agents.list(workspaceId),
-    queryFn: () => agentsApi.list(workspaceId),
-    enabled: !!workspaceId,
+    queryKey: queryKeys.agents.list(companyId),
+    queryFn: () => agentsApi.list(companyId),
+    enabled: !!companyId,
   });
 
   const { data: liveRuns } = useQuery({
-    queryKey: queryKeys.liveRuns(workspaceId),
-    queryFn: () => heartbeatsApi.liveRunsForCompany(workspaceId),
-    enabled: !!workspaceId,
+    queryKey: queryKeys.liveRuns(companyId),
+    queryFn: () => heartbeatsApi.liveRunsForCompany(companyId),
+    enabled: !!companyId,
     refetchInterval: 5000,
   });
 
@@ -272,10 +272,10 @@ function ExecutionWorkspaceIssuesList({
   const updateIssue = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => issuesApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByExecutionWorkspace(workspaceId, workspaceId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByExecutionWorkspace(companyId, execWorkspaceId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.list(companyId) });
       if (project?.id) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByProject(workspaceId, project.id) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.issues.listByProject(companyId, project.id) });
       }
     },
   });
@@ -294,7 +294,7 @@ function ExecutionWorkspaceIssuesList({
       projects={projectOptions}
       liveIssueIds={liveIssueIds}
       projectId={project?.id}
-      viewStateKey={`paperclip:execution-workspace-view:${workspaceId}`}
+      viewStateKey={`paperclip:execution-workspace-view:${execWorkspaceId}`}
       onUpdateIssue={(id, data) => updateIssue.mutate({ id, data })}
     />
   );
@@ -933,8 +933,8 @@ export function ExecutionWorkspaceDetail() {
           </div>
         ) : (
           <ExecutionWorkspaceIssuesList
-            workspaceId={workspace.workspaceId}
-            workspaceId={workspace.id}
+            companyId={workspace.workspaceId}
+            execWorkspaceId={workspace.id}
             issues={linkedIssues}
             isLoading={linkedIssuesQuery.isLoading}
             error={linkedIssuesQuery.error as Error | null}

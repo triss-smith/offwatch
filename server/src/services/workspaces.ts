@@ -26,7 +26,7 @@ import {
   invites,
   principalPermissionGrants,
   companyMemberships,
-  companySkills,
+  workspaceSkills,
 } from "@paperclipai/db";
 import { notFound, unprocessable } from "../errors.js";
 
@@ -36,13 +36,15 @@ export function workspaceService(db: Db) {
   const workspaceSelection = {
     id: workspaces.id,
     name: workspaces.name,
-    description: workspaces.description,
     status: workspaces.status,
     issuePrefix: workspaces.issuePrefix,
     issueCounter: workspaces.issueCounter,
     requireBoardApprovalForNewAgents: workspaces.requireBoardApprovalForNewAgents,
     brandColor: workspaces.brandColor,
     logoAssetId: companyLogos.assetId,
+    issueTrackerConfig: workspaces.issueTrackerConfig,
+    repoPath: workspaces.repoPath,
+    worktreesPath: workspaces.worktreesPath,
     createdAt: workspaces.createdAt,
     updatedAt: workspaces.updatedAt,
   };
@@ -222,7 +224,7 @@ export function workspaceService(db: Db) {
         await tx.delete(invites).where(eq(invites.workspaceId, id));
         await tx.delete(principalPermissionGrants).where(eq(principalPermissionGrants.workspaceId, id));
         await tx.delete(companyMemberships).where(eq(companyMemberships.workspaceId, id));
-        await tx.delete(companySkills).where(eq(companySkills.workspaceId, id));
+        await tx.delete(workspaceSkills).where(eq(workspaceSkills.workspaceId, id));
         await tx.delete(issueReadStates).where(eq(issueReadStates.workspaceId, id));
         await tx.delete(issues).where(eq(issues.workspaceId, id));
         await tx.delete(companyLogos).where(eq(companyLogos.workspaceId, id));

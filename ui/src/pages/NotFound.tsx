@@ -3,7 +3,7 @@ import { Link, useLocation } from "@/lib/router";
 import { AlertTriangle, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
-import { useCompany } from "../context/CompanyContext";
+import { useCompany } from "../context/WorkspaceContext";
 
 type NotFoundScope = "board" | "invalid_company_prefix" | "global";
 

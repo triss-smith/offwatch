@@ -119,9 +119,9 @@ export function SidebarAgents() {
               >
                 <AgentIcon icon={agent.icon} className="shrink-0 h-3.5 w-3.5 text-muted-foreground" />
                 <span className="flex-1 truncate">{agent.name}</span>
-                {(agent.pauseReason === "budget" || runCount > 0) && (
+                {runCount > 0 && (
                   <span className="ml-auto flex items-center gap-1.5 shrink-0">
-                    {agent.pauseReason === "budget" ? (
+                    {false ? (
                       <BudgetSidebarMarker title="Agent paused by budget" />
                     ) : null}
                     {runCount > 0 ? (

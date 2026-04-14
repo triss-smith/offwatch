@@ -4,7 +4,7 @@
 
 export interface AdapterAgent {
   id: string;
-  companyId: string;
+  workspaceId: string;
   name: string;
   adapterType: string | null;
   adapterConfig: unknown;
@@ -192,13 +192,13 @@ export interface AdapterSkillSnapshot {
 
 export interface AdapterSkillContext {
   agentId: string;
-  companyId: string;
+  workspaceId: string;
   adapterType: string;
   config: Record<string, unknown>;
 }
 
 export interface AdapterEnvironmentTestContext {
-  companyId: string;
+  workspaceId: string;
   adapterType: string;
   config: Record<string, unknown>;
   deployment?: {
@@ -211,7 +211,7 @@ export interface AdapterEnvironmentTestContext {
 
 /** Payload for the onHireApproved adapter lifecycle hook (e.g. join-request or hire_agent approval). */
 export interface HireApprovedPayload {
-  companyId: string;
+  workspaceId: string;
   agentId: string;
   agentName: string;
   adapterType: string;

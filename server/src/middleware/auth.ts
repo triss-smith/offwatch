@@ -49,7 +49,7 @@ export function actorMiddleware(db: Db, opts: ActorMiddlewareOptions): RequestHa
               .where(and(eq(instanceUserRoles.userId, userId), eq(instanceUserRoles.role, "instance_admin")))
               .then((rows) => rows[0] ?? null),
             db
-              .select({ companyId: companyMemberships.companyId })
+              .select({ workspaceId: companyMemberships.workspaceId })
               .from(companyMemberships)
               .where(
                 and(
@@ -62,7 +62,7 @@ export function actorMiddleware(db: Db, opts: ActorMiddlewareOptions): RequestHa
           req.actor = {
             type: "board",
             userId,
-            companyIds: memberships.map((row) => row.companyId),
+            workspaceIds: memberships.map((row) => row.workspaceId),
             isInstanceAdmin: Boolean(roleRow),
             runId: runIdHeader ?? undefined,
             source: "session",
@@ -90,7 +90,7 @@ export function actorMiddleware(db: Db, opts: ActorMiddlewareOptions): RequestHa
         req.actor = {
           type: "board",
           userId: boardKey.userId,
-          companyIds: access.companyIds,
+          workspaceIds: access.workspaceIds,
           isInstanceAdmin: access.isInstanceAdmin,
           keyId: boardKey.id,
           runId: runIdHeader || undefined,
@@ -121,7 +121,7 @@ export function actorMiddleware(db: Db, opts: ActorMiddlewareOptions): RequestHa
         .where(eq(agents.id, claims.sub))
         .then((rows) => rows[0] ?? null);
 
-      if (!agentRecord || agentRecord.companyId !== claims.company_id) {
+      if (!agentRecord || agentRecord.workspaceId !== claims.company_id) {
         next();
         return;
       }
@@ -134,7 +134,7 @@ export function actorMiddleware(db: Db, opts: ActorMiddlewareOptions): RequestHa
       req.actor = {
         type: "agent",
         agentId: claims.sub,
-        companyId: claims.company_id,
+        workspaceId: claims.company_id,
         keyId: undefined,
         runId: runIdHeader || claims.run_id || undefined,
         source: "agent_jwt",
@@ -162,7 +162,7 @@ export function actorMiddleware(db: Db, opts: ActorMiddlewareOptions): RequestHa
     req.actor = {
       type: "agent",
       agentId: key.agentId,
-      companyId: key.companyId,
+      workspaceId: key.workspaceId,
       keyId: key.id,
       runId: runIdHeader || undefined,
       source: "agent_key",

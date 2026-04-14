@@ -72,7 +72,7 @@ vi.mock("../context/DialogContext", () => ({
   useDialog: () => dialogState,
 }));
 
-vi.mock("../context/CompanyContext", () => ({
+vi.mock("../context/WorkspaceContext", () => ({
   useCompany: () => companyState,
 }));
 

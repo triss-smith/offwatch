@@ -5,7 +5,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest
 import {
   agents,
   agentWakeupRequests,
-  companies,
+  workspaces,
   createDb,
   heartbeatRunEvents,
   heartbeatRuns,
@@ -139,7 +139,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     await db.delete(heartbeatRuns);
     await db.delete(agentWakeupRequests);
     await db.delete(agents);
-    await db.delete(companies);
+    await db.delete(workspaces);
   });
 
   afterAll(async () => {
@@ -178,7 +178,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     const now = new Date("2026-03-19T00:00:00.000Z");
     const issuePrefix = `T${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix,

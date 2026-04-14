@@ -147,7 +147,7 @@ export function ApprovalDetail() {
   const payload = approval.payload as Record<string, unknown>;
   const linkedAgentId = typeof payload.agentId === "string" ? payload.agentId : null;
   const isActionable = approval.status === "pending" || approval.status === "revision_requested";
-  const isBudgetApproval = approval.type === "budget_override_required";
+  const isBudgetApproval = false;
   const TypeIcon = typeIcon[approval.type] ?? defaultTypeIcon;
   const showApprovedBanner = searchParams.get("resolved") === "approved" && approval.status === "approved";
   const primaryLinkedIssue = linkedIssues?.[0] ?? null;
@@ -304,20 +304,6 @@ export function ApprovalDetail() {
               disabled={resubmitMutation.isPending}
             >
               Mark resubmitted
-            </Button>
-          )}
-          {approval.status === "rejected" && approval.type === "hire_agent" && linkedAgentId && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-destructive border-destructive/40"
-              onClick={() => {
-                if (!window.confirm("Delete this disapproved agent? This cannot be undone.")) return;
-                deleteAgentMutation.mutate(linkedAgentId);
-              }}
-              disabled={deleteAgentMutation.isPending}
-            >
-              Delete disapproved agent
             </Button>
           )}
         </div>

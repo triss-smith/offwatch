@@ -199,7 +199,7 @@ export type {
   PluginEntityRecord,
   PluginEntityQuery,
   PluginWorkspace,
-  Company,
+  Workspace,
   Project,
   Issue,
   IssueComment,

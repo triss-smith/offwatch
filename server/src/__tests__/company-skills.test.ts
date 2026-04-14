@@ -8,7 +8,7 @@ import {
   normalizeGitHubSkillDirectory,
   parseSkillImportSourceInput,
   readLocalSkillImportFromDirectory,
-} from "../services/company-skills.js";
+} from "../services/workspace-skills.js";
 
 const cleanupDirs = new Set<string>();
 

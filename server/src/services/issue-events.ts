@@ -5,7 +5,13 @@
 
 import { randomUUID } from "node:crypto";
 import type { PluginEvent } from "@paperclipai/plugin-sdk";
-import { pluginEventBus } from "./plugin-event-bus.js";
+import type { PluginEventBus } from "./plugin-event-bus.js";
+
+let _pluginEventBus: PluginEventBus | null = null;
+
+export function setIssueEventsPluginBus(bus: PluginEventBus): void {
+  _pluginEventBus = bus;
+}
 
 export interface IssueCheckedOutEvent {
   issueId: string;
@@ -37,7 +43,7 @@ export function emitIssueCheckedOut(event: IssueCheckedOutEvent): void {
     workspaceId: event.workspaceId,
     payload: event,
   };
-  void pluginEventBus.emit(pluginEvent).catch(() => {});
+  void _pluginEventBus?.emit(pluginEvent).catch(() => {});
 }
 
 export function emitIssueCompleted(event: IssueCompletedEvent): void {
@@ -52,5 +58,5 @@ export function emitIssueCompleted(event: IssueCompletedEvent): void {
     workspaceId: event.workspaceId,
     payload: event,
   };
-  void pluginEventBus.emit(pluginEvent).catch(() => {});
+  void _pluginEventBus?.emit(pluginEvent).catch(() => {});
 }

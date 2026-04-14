@@ -18,7 +18,7 @@ const mockAccessService = vi.hoisted(() => ({
   setPrincipalPermission: vi.fn(),
 }));
 
-const mockCompanySkillService = vi.hoisted(() => ({
+const mockWorkspaceSkillService = vi.hoisted(() => ({
   listRuntimeSkillEntries: vi.fn(),
   resolveRequestedSkillKeys: vi.fn(),
 }));
@@ -67,7 +67,7 @@ vi.mock("../services/index.js", () => ({
   agentInstructionsService: () => mockAgentInstructionsService,
   accessService: () => mockAccessService,
   approvalService: () => mockApprovalService,
-  companySkillService: () => mockCompanySkillService,
+  workspaceSkillService: () => mockWorkspaceSkillService,
   budgetService: () => mockBudgetService,
   heartbeatService: () => mockHeartbeatService,
   issueApprovalService: () => mockIssueApprovalService,
@@ -115,8 +115,8 @@ describe("agent routes adapter validation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     unregisterServerAdapter("external_test");
-    mockCompanySkillService.listRuntimeSkillEntries.mockResolvedValue([]);
-    mockCompanySkillService.resolveRequestedSkillKeys.mockResolvedValue([]);
+    mockWorkspaceSkillService.listRuntimeSkillEntries.mockResolvedValue([]);
+    mockWorkspaceSkillService.resolveRequestedSkillKeys.mockResolvedValue([]);
     mockAccessService.canUser.mockResolvedValue(true);
     mockAccessService.hasPermission.mockResolvedValue(true);
     mockAccessService.ensureMembership.mockResolvedValue(undefined);

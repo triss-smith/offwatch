@@ -61,7 +61,7 @@ function rejectUpgrade(socket: Duplex, statusLine: string, message: string) {
 }
 
 function parseCompanyId(pathname: string) {
-  const match = pathname.match(/^\/api\/companies\/([^/]+)\/events\/ws$/);
+  const match = pathname.match(/^\/api\/workspaces\/([^/]+)\/events\/ws$/);
   if (!match) return null;
 
   try {
@@ -131,7 +131,7 @@ async function authorizeUpgrade(
         .where(and(eq(instanceUserRoles.userId, userId), eq(instanceUserRoles.role, "instance_admin")))
         .then((rows) => rows[0] ?? null),
       db
-        .select({ companyId: companyMemberships.companyId })
+        .select({ workspaceId: companyMemberships.workspaceId })
         .from(companyMemberships)
         .where(
           and(
@@ -142,7 +142,7 @@ async function authorizeUpgrade(
         ),
     ]);
 
-    const hasCompanyMembership = memberships.some((row) => row.companyId === companyId);
+    const hasCompanyMembership = memberships.some((row) => row.workspaceId === companyId);
     if (!roleRow && !hasCompanyMembership) return null;
 
     return {
@@ -159,7 +159,7 @@ async function authorizeUpgrade(
     .where(and(eq(agentApiKeys.keyHash, tokenHash), isNull(agentApiKeys.revokedAt)))
     .then((rows) => rows[0] ?? null);
 
-  if (!key || key.companyId !== companyId) {
+  if (!key || key.workspaceId !== companyId) {
     return null;
   }
 

@@ -9,8 +9,8 @@ import { writePaperclipSkillSyncPreference } from "@paperclipai/adapter-utils/se
 import {
   agents,
   applyPendingMigrations,
-  companies,
-  companySkills,
+  workspaces,
+  workspaceSkills,
   costEvents,
   createDb,
   documents,
@@ -117,10 +117,10 @@ describe("feedbackService.saveIssueVote", () => {
     await db.delete(issueComments);
     await db.delete(costEvents);
     await db.delete(heartbeatRuns);
-    await db.delete(companySkills);
+    await db.delete(workspaceSkills);
     await db.delete(issues);
     await db.delete(agents);
-    await db.delete(companies);
+    await db.delete(workspaces);
     for (const dir of tempDirs) {
       fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -141,7 +141,7 @@ describe("feedbackService.saveIssueVote", () => {
     const issueId = randomUUID();
     const commentId = randomUUID();
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix: `F${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`,
@@ -201,14 +201,14 @@ describe("feedbackService.saveIssueVote", () => {
       "utf8",
     );
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix: `R${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`,
       requireBoardApprovalForNewAgents: false,
     });
 
-    await db.insert(companySkills).values([
+    await db.insert(workspaceSkills).values([
       {
         id: randomUUID(),
         companyId,
@@ -345,7 +345,7 @@ describe("feedbackService.saveIssueVote", () => {
     const documentId = randomUUID();
     const revisionId = randomUUID();
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix: `D${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`,
@@ -414,7 +414,7 @@ describe("feedbackService.saveIssueVote", () => {
     const commentId = randomUUID();
     const runId = randomUUID();
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix: `T${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`,
@@ -487,8 +487,8 @@ describe("feedbackService.saveIssueVote", () => {
 
     const company = await db
       .select()
-      .from(companies)
-      .where(eq(companies.id, companyId))
+      .from(workspaces)
+      .where(eq(workspaces.id, companyId))
       .then((rows) => rows[0] ?? null);
 
     expect(company?.feedbackDataSharingEnabled).toBe(false);
@@ -556,8 +556,8 @@ describe("feedbackService.saveIssueVote", () => {
 
     const company = await db
       .select()
-      .from(companies)
-      .where(eq(companies.id, companyId))
+      .from(workspaces)
+      .where(eq(workspaces.id, companyId))
       .then((rows) => rows[0] ?? null);
 
     expect(company?.feedbackDataSharingEnabled).toBe(true);
@@ -983,7 +983,7 @@ describe("feedbackService.saveIssueVote", () => {
     const issueId = randomUUID();
     const commentId = randomUUID();
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix: `H${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`,

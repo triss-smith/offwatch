@@ -4,27 +4,27 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { and, asc, eq } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
-import { companySkills } from "@paperclipai/db";
+import { workspaceSkills } from "@paperclipai/db";
 import { readPaperclipSkillSyncPreference } from "@paperclipai/adapter-utils/server-utils";
 import type { PaperclipSkillEntry } from "@paperclipai/adapter-utils/server-utils";
 import type {
-  CompanySkill,
-  CompanySkillCreateRequest,
-  CompanySkillCompatibility,
-  CompanySkillDetail,
-  CompanySkillFileDetail,
-  CompanySkillFileInventoryEntry,
-  CompanySkillImportResult,
-  CompanySkillListItem,
-  CompanySkillProjectScanConflict,
-  CompanySkillProjectScanRequest,
-  CompanySkillProjectScanResult,
-  CompanySkillProjectScanSkipped,
-  CompanySkillSourceBadge,
-  CompanySkillSourceType,
-  CompanySkillTrustLevel,
-  CompanySkillUpdateStatus,
-  CompanySkillUsageAgent,
+  WorkspaceSkill,
+  WorkspaceSkillCreateRequest,
+  WorkspaceSkillCompatibility,
+  WorkspaceSkillDetail,
+  WorkspaceSkillFileDetail,
+  WorkspaceSkillFileInventoryEntry,
+  WorkspaceSkillImportResult,
+  WorkspaceSkillListItem,
+  WorkspaceSkillProjectScanConflict,
+  WorkspaceSkillProjectScanRequest,
+  WorkspaceSkillProjectScanResult,
+  WorkspaceSkillProjectScanSkipped,
+  WorkspaceSkillSourceBadge,
+  WorkspaceSkillSourceType,
+  WorkspaceSkillTrustLevel,
+  WorkspaceSkillUpdateStatus,
+  WorkspaceSkillUsageAgent,
 } from "@paperclipai/shared";
 import { normalizeAgentUrlKey } from "@paperclipai/shared";
 import { findActiveServerAdapter } from "../adapters/index.js";
@@ -35,7 +35,7 @@ import { agentService } from "./agents.js";
 import { projectService } from "./projects.js";
 import { secretService } from "./secrets.js";
 
-type CompanySkillRow = typeof companySkills.$inferSelect;
+type WorkspaceSkillRow = typeof workspaceSkills.$inferSelect;
 
 type ImportedSkill = {
   key: string;
@@ -44,19 +44,19 @@ type ImportedSkill = {
   description: string | null;
   markdown: string;
   packageDir?: string | null;
-  sourceType: CompanySkillSourceType;
+  sourceType: WorkspaceSkillSourceType;
   sourceLocator: string | null;
   sourceRef: string | null;
-  trustLevel: CompanySkillTrustLevel;
-  compatibility: CompanySkillCompatibility;
-  fileInventory: CompanySkillFileInventoryEntry[];
+  trustLevel: WorkspaceSkillTrustLevel;
+  compatibility: WorkspaceSkillCompatibility;
+  fileInventory: WorkspaceSkillFileInventoryEntry[];
   metadata: Record<string, unknown> | null;
 };
 
 type PackageSkillConflictStrategy = "replace" | "rename" | "skip";
 
 export type ImportPackageSkillResult = {
-  skill: CompanySkill;
+  skill: WorkspaceSkill;
   action: "created" | "updated" | "skipped";
   originalKey: string;
   originalSlug: string;
@@ -298,7 +298,7 @@ function deriveCanonicalSkillKey(
   return `company/${workspaceId}/${slug}`;
 }
 
-function classifyInventoryKind(relativePath: string): CompanySkillFileInventoryEntry["kind"] {
+function classifyInventoryKind(relativePath: string): WorkspaceSkillFileInventoryEntry["kind"] {
   const normalized = normalizePortablePath(relativePath).toLowerCase();
   if (normalized.endsWith("/skill.md") || normalized === "skill.md") return "skill";
   if (normalized.startsWith("references/")) return "reference";
@@ -332,7 +332,7 @@ function classifyInventoryKind(relativePath: string): CompanySkillFileInventoryE
   return "other";
 }
 
-function deriveTrustLevel(fileInventory: CompanySkillFileInventoryEntry[]): CompanySkillTrustLevel {
+function deriveTrustLevel(fileInventory: WorkspaceSkillFileInventoryEntry[]): WorkspaceSkillTrustLevel {
   if (fileInventory.some((entry) => entry.kind === "script")) return "scripts_executables";
   if (fileInventory.some((entry) => entry.kind === "asset" || entry.kind === "other")) return "assets";
   return "markdown_only";
@@ -795,7 +795,7 @@ async function statPath(targetPath: string) {
 async function collectLocalSkillInventory(
   skillDir: string,
   mode: LocalSkillInventoryMode = "full",
-): Promise<CompanySkillFileInventoryEntry[]> {
+): Promise<WorkspaceSkillFileInventoryEntry[]> {
   const skillFilePath = path.join(skillDir, "SKILL.md");
   const skillFileStat = await statPath(skillFilePath);
   if (!skillFileStat?.isFile()) {
@@ -922,7 +922,7 @@ async function readLocalSkillImports(workspaceId: string, sourcePath: string): P
       ...(parsedMetadata ?? {}),
       sourceKind: "local_path",
     };
-    const inventory: CompanySkillFileInventoryEntry[] = [
+    const inventory: WorkspaceSkillFileInventoryEntry[] = [
       { path: "SKILL.md", kind: "skill" },
     ];
     return [{
@@ -1100,7 +1100,7 @@ async function readUrlSkillImports(
       ...(skillKey ? { skillKey } : {}),
       sourceKind: "url",
     };
-    const inventory: CompanySkillFileInventoryEntry[] = [{ path: "SKILL.md", kind: "skill" }];
+    const inventory: WorkspaceSkillFileInventoryEntry[] = [{ path: "SKILL.md", kind: "skill" }];
     return {
       skills: [{
         key: deriveCanonicalSkillKey(workspaceId, {
@@ -1128,21 +1128,21 @@ async function readUrlSkillImports(
   throw unprocessable("Unsupported skill source. Use a local path or URL.");
 }
 
-function toCompanySkill(row: CompanySkillRow): CompanySkill {
+function toWorkspaceSkill(row: WorkspaceSkillRow): WorkspaceSkill {
   return {
     ...row,
     description: row.description ?? null,
-    sourceType: row.sourceType as CompanySkillSourceType,
+    sourceType: row.sourceType as WorkspaceSkillSourceType,
     sourceLocator: row.sourceLocator ?? null,
     sourceRef: row.sourceRef ?? null,
-    trustLevel: row.trustLevel as CompanySkillTrustLevel,
-    compatibility: row.compatibility as CompanySkillCompatibility,
+    trustLevel: row.trustLevel as WorkspaceSkillTrustLevel,
+    compatibility: row.compatibility as WorkspaceSkillCompatibility,
     fileInventory: Array.isArray(row.fileInventory)
       ? row.fileInventory.flatMap((entry) => {
         if (!isPlainRecord(entry)) return [];
         return [{
           path: String(entry.path ?? ""),
-          kind: (String(entry.kind ?? "other") as CompanySkillFileInventoryEntry["kind"]),
+          kind: (String(entry.kind ?? "other") as WorkspaceSkillFileInventoryEntry["kind"]),
         }];
       })
       : [],
@@ -1151,7 +1151,7 @@ function toCompanySkill(row: CompanySkillRow): CompanySkill {
 }
 
 function serializeFileInventory(
-  fileInventory: CompanySkillFileInventoryEntry[],
+  fileInventory: WorkspaceSkillFileInventoryEntry[],
 ): Array<Record<string, unknown>> {
   return fileInventory.map((entry) => ({
     path: entry.path,
@@ -1159,14 +1159,14 @@ function serializeFileInventory(
   }));
 }
 
-function getSkillMeta(skill: CompanySkill): SkillSourceMeta {
+function getSkillMeta(skill: WorkspaceSkill): SkillSourceMeta {
   return isPlainRecord(skill.metadata) ? skill.metadata as SkillSourceMeta : {};
 }
 
 function resolveSkillReference(
-  skills: CompanySkill[],
+  skills: WorkspaceSkill[],
   reference: string,
-): { skill: CompanySkill | null; ambiguous: boolean } {
+): { skill: WorkspaceSkill | null; ambiguous: boolean } {
   const trimmed = reference.trim();
   if (!trimmed) {
     return { skill: null, ambiguous: false };
@@ -1202,7 +1202,7 @@ function resolveSkillReference(
 }
 
 function resolveRequestedSkillKeysOrThrow(
-  skills: CompanySkill[],
+  skills: WorkspaceSkill[],
   requestedReferences: string[],
 ) {
   const missing = new Set<string>();
@@ -1242,7 +1242,7 @@ function resolveRequestedSkillKeysOrThrow(
 }
 
 function resolveDesiredSkillKeys(
-  skills: CompanySkill[],
+  skills: WorkspaceSkill[],
   config: Record<string, unknown>,
 ) {
   const preference = readPaperclipSkillSyncPreference(config);
@@ -1253,7 +1253,7 @@ function resolveDesiredSkillKeys(
   ));
 }
 
-function normalizeSkillDirectory(skill: CompanySkill) {
+function normalizeSkillDirectory(skill: WorkspaceSkill) {
   if ((skill.sourceType !== "local_path" && skill.sourceType !== "catalog") || !skill.sourceLocator) return null;
   const resolved = path.resolve(skill.sourceLocator);
   if (path.basename(resolved).toLowerCase() === "skill.md") {
@@ -1269,7 +1269,7 @@ function normalizeSourceLocatorDirectory(sourceLocator: string | null) {
 }
 
 export async function findMissingLocalSkillIds(
-  skills: Array<Pick<CompanySkill, "id" | "sourceType" | "sourceLocator">>,
+  skills: Array<Pick<WorkspaceSkill, "id" | "sourceType" | "sourceLocator">>,
 ) {
   const missingIds: string[] = [];
 
@@ -1295,7 +1295,7 @@ function resolveManagedSkillsRoot(workspaceId: string) {
   return path.resolve(resolvePaperclipInstanceRoot(), "skills", workspaceId);
 }
 
-function resolveLocalSkillFilePath(skill: CompanySkill, relativePath: string) {
+function resolveLocalSkillFilePath(skill: WorkspaceSkill, relativePath: string) {
   const normalized = normalizePortablePath(relativePath);
   const skillDir = normalizeSkillDirectory(skill);
   if (skillDir) {
@@ -1329,11 +1329,11 @@ function isMarkdownPath(filePath: string) {
   return fileName === "skill.md" || fileName.endsWith(".md");
 }
 
-function deriveSkillSourceInfo(skill: CompanySkill): {
+function deriveSkillSourceInfo(skill: WorkspaceSkill): {
   editable: boolean;
   editableReason: string | null;
   sourceLabel: string | null;
-  sourceBadge: CompanySkillSourceBadge;
+  sourceBadge: WorkspaceSkillSourceBadge;
   sourcePath: string | null;
 } {
   const metadata = getSkillMeta(skill);
@@ -1418,7 +1418,7 @@ function deriveSkillSourceInfo(skill: CompanySkill): {
   };
 }
 
-function enrichSkill(skill: CompanySkill, attachedAgentCount: number, usedByAgents: CompanySkillUsageAgent[] = []) {
+function enrichSkill(skill: WorkspaceSkill, attachedAgentCount: number, usedByAgents: WorkspaceSkillUsageAgent[] = []) {
   const source = deriveSkillSourceInfo(skill);
   return {
     ...skill,
@@ -1428,7 +1428,7 @@ function enrichSkill(skill: CompanySkill, attachedAgentCount: number, usedByAgen
   };
 }
 
-function toCompanySkillListItem(skill: CompanySkill, attachedAgentCount: number): CompanySkillListItem {
+function toWorkspaceSkillListItem(skill: WorkspaceSkill, attachedAgentCount: number): WorkspaceSkillListItem {
   const source = deriveSkillSourceInfo(skill);
   return {
     id: skill.id,
@@ -1454,7 +1454,7 @@ function toCompanySkillListItem(skill: CompanySkill, attachedAgentCount: number)
   };
 }
 
-export function companySkillService(db: Db) {
+export function workspaceSkillService(db: Db) {
   const agents = agentService(db);
   const projects = projectService(db);
   const secretsSvc = secretService(db);
@@ -1488,17 +1488,17 @@ export function companySkillService(db: Db) {
   async function pruneMissingLocalPathSkills(workspaceId: string) {
     const rows = await db
       .select()
-      .from(companySkills)
-      .where(eq(companySkills.workspaceId, workspaceId));
-    const skills = rows.map((row) => toCompanySkill(row));
+      .from(workspaceSkills)
+      .where(eq(workspaceSkills.workspaceId, workspaceId));
+    const skills = rows.map((row) => toWorkspaceSkill(row));
     const missingIds = new Set(await findMissingLocalSkillIds(skills));
     if (missingIds.size === 0) return;
 
     for (const skill of skills) {
       if (!missingIds.has(skill.id)) continue;
       await db
-        .delete(companySkills)
-        .where(eq(companySkills.id, skill.id));
+        .delete(workspaceSkills)
+        .where(eq(workspaceSkills.id, skill.id));
       await fs.rm(resolveRuntimeSkillMaterializedPath(workspaceId, skill), { recursive: true, force: true });
     }
   }
@@ -1525,7 +1525,7 @@ export function companySkillService(db: Db) {
     }
   }
 
-  async function list(workspaceId: string): Promise<CompanySkillListItem[]> {
+  async function list(workspaceId: string): Promise<WorkspaceSkillListItem[]> {
     const rows = await listFull(workspaceId);
     const agentRows = await agents.list(workspaceId);
     return rows.map((skill) => {
@@ -1533,39 +1533,39 @@ export function companySkillService(db: Db) {
         const desiredSkills = resolveDesiredSkillKeys(rows, agent.adapterConfig as Record<string, unknown>);
         return desiredSkills.includes(skill.key);
       }).length;
-      return toCompanySkillListItem(skill, attachedAgentCount);
+      return toWorkspaceSkillListItem(skill, attachedAgentCount);
     });
   }
 
-  async function listFull(workspaceId: string): Promise<CompanySkill[]> {
+  async function listFull(workspaceId: string): Promise<WorkspaceSkill[]> {
     await ensureSkillInventoryCurrent(workspaceId);
     const rows = await db
       .select()
-      .from(companySkills)
-      .where(eq(companySkills.workspaceId, workspaceId))
-      .orderBy(asc(companySkills.name), asc(companySkills.key));
-    return rows.map((row) => toCompanySkill(row));
+      .from(workspaceSkills)
+      .where(eq(workspaceSkills.workspaceId, workspaceId))
+      .orderBy(asc(workspaceSkills.name), asc(workspaceSkills.key));
+    return rows.map((row) => toWorkspaceSkill(row));
   }
 
   async function getById(id: string) {
     const row = await db
       .select()
-      .from(companySkills)
-      .where(eq(companySkills.id, id))
+      .from(workspaceSkills)
+      .where(eq(workspaceSkills.id, id))
       .then((rows) => rows[0] ?? null);
-    return row ? toCompanySkill(row) : null;
+    return row ? toWorkspaceSkill(row) : null;
   }
 
   async function getByKey(workspaceId: string, key: string) {
     const row = await db
       .select()
-      .from(companySkills)
-      .where(and(eq(companySkills.workspaceId, workspaceId), eq(companySkills.key, key)))
+      .from(workspaceSkills)
+      .where(and(eq(workspaceSkills.workspaceId, workspaceId), eq(workspaceSkills.key, key)))
       .then((rows) => rows[0] ?? null);
-    return row ? toCompanySkill(row) : null;
+    return row ? toWorkspaceSkill(row) : null;
   }
 
-  async function usage(workspaceId: string, key: string): Promise<CompanySkillUsageAgent[]> {
+  async function usage(workspaceId: string, key: string): Promise<WorkspaceSkillUsageAgent[]> {
     const skills = await listFull(workspaceId);
     const agentRows = await agents.list(workspaceId);
     const desiredAgents = agentRows.filter((agent) => {
@@ -1615,7 +1615,7 @@ export function companySkillService(db: Db) {
     );
   }
 
-  async function detail(workspaceId: string, id: string): Promise<CompanySkillDetail | null> {
+  async function detail(workspaceId: string, id: string): Promise<WorkspaceSkillDetail | null> {
     await ensureSkillInventoryCurrent(workspaceId);
     const skill = await getById(id);
     if (!skill || skill.workspaceId !== workspaceId) return null;
@@ -1623,7 +1623,7 @@ export function companySkillService(db: Db) {
     return enrichSkill(skill, usedByAgents.length, usedByAgents);
   }
 
-  async function updateStatus(workspaceId: string, skillId: string): Promise<CompanySkillUpdateStatus | null> {
+  async function updateStatus(workspaceId: string, skillId: string): Promise<WorkspaceSkillUpdateStatus | null> {
     await ensureSkillInventoryCurrent(workspaceId);
     const skill = await getById(skillId);
     if (!skill || skill.workspaceId !== workspaceId) return null;
@@ -1667,7 +1667,7 @@ export function companySkillService(db: Db) {
     };
   }
 
-  async function readFile(workspaceId: string, skillId: string, relativePath: string): Promise<CompanySkillFileDetail | null> {
+  async function readFile(workspaceId: string, skillId: string, relativePath: string): Promise<WorkspaceSkillFileDetail | null> {
     await ensureSkillInventoryCurrent(workspaceId);
     const skill = await getById(skillId);
     if (!skill || skill.workspaceId !== workspaceId) return null;
@@ -1722,7 +1722,7 @@ export function companySkillService(db: Db) {
     };
   }
 
-  async function createLocalSkill(workspaceId: string, input: CompanySkillCreateRequest): Promise<CompanySkill> {
+  async function createLocalSkill(workspaceId: string, input: WorkspaceSkillCreateRequest): Promise<WorkspaceSkill> {
     const slug = normalizeSkillSlug(input.slug ?? input.name) ?? "skill";
     const managedRoot = resolveManagedSkillsRoot(workspaceId);
     const skillDir = path.resolve(managedRoot, slug);
@@ -1765,7 +1765,7 @@ export function companySkillService(db: Db) {
     return imported[0]!;
   }
 
-  async function updateFile(workspaceId: string, skillId: string, relativePath: string, content: string): Promise<CompanySkillFileDetail> {
+  async function updateFile(workspaceId: string, skillId: string, relativePath: string, content: string): Promise<WorkspaceSkillFileDetail> {
     await ensureSkillInventoryCurrent(workspaceId);
     const skill = await getById(skillId);
     if (!skill || skill.workspaceId !== workspaceId) throw notFound("Skill not found");
@@ -1785,19 +1785,19 @@ export function companySkillService(db: Db) {
     if (normalizedPath === "SKILL.md") {
       const parsed = parseFrontmatterMarkdown(content);
       await db
-        .update(companySkills)
+        .update(workspaceSkills)
         .set({
           name: asString(parsed.frontmatter.name) ?? skill.name,
           description: asString(parsed.frontmatter.description) ?? skill.description,
           markdown: content,
           updatedAt: new Date(),
         })
-        .where(eq(companySkills.id, skill.id));
+        .where(eq(workspaceSkills.id, skill.id));
     } else {
       await db
-        .update(companySkills)
+        .update(workspaceSkills)
         .set({ updatedAt: new Date() })
-        .where(eq(companySkills.id, skill.id));
+        .where(eq(workspaceSkills.id, skill.id));
     }
 
     const detail = await readFile(workspaceId, skillId, normalizedPath);
@@ -1805,7 +1805,7 @@ export function companySkillService(db: Db) {
     return detail;
   }
 
-  async function installUpdate(workspaceId: string, skillId: string): Promise<CompanySkill | null> {
+  async function installUpdate(workspaceId: string, skillId: string): Promise<WorkspaceSkill | null> {
     await ensureSkillInventoryCurrent(workspaceId);
     const skill = await getById(skillId);
     if (!skill || skill.workspaceId !== workspaceId) return null;
@@ -1830,18 +1830,18 @@ export function companySkillService(db: Db) {
 
   async function scanProjectWorkspaces(
     workspaceId: string,
-    input: CompanySkillProjectScanRequest = {},
-  ): Promise<CompanySkillProjectScanResult> {
+    input: WorkspaceSkillProjectScanRequest = {},
+  ): Promise<WorkspaceSkillProjectScanResult> {
     await ensureSkillInventoryCurrent(workspaceId);
     const projectRows = input.projectIds?.length
       ? await projects.listByIds(workspaceId, input.projectIds)
       : await projects.list(workspaceId);
     const workspaceFilter = new Set(input.workspaceIds ?? []);
-    const skipped: CompanySkillProjectScanSkipped[] = [];
-    const conflicts: CompanySkillProjectScanConflict[] = [];
+    const skipped: WorkspaceSkillProjectScanSkipped[] = [];
+    const conflicts: WorkspaceSkillProjectScanConflict[] = [];
     const warnings: string[] = [];
-    const imported: CompanySkill[] = [];
-    const updated: CompanySkill[] = [];
+    const imported: WorkspaceSkill[] = [];
+    const updated: WorkspaceSkill[] = [];
     const availableSkills = await listFull(workspaceId);
     const acceptedSkills = [...availableSkills];
     const acceptedByKey = new Map(acceptedSkills.map((skill) => [skill.key, skill]));
@@ -1853,7 +1853,7 @@ export function companySkillService(db: Db) {
       warnings.push(message);
       return message;
     };
-    const upsertAcceptedSkill = (skill: CompanySkill) => {
+    const upsertAcceptedSkill = (skill: WorkspaceSkill) => {
       const nextIndex = acceptedSkills.findIndex((entry) => entry.id === skill.id || entry.key === skill.key);
       if (nextIndex >= 0) acceptedSkills[nextIndex] = skill;
       else acceptedSkills.push(skill);
@@ -2031,7 +2031,7 @@ export function companySkillService(db: Db) {
     return skillDir;
   }
 
-  async function materializeRuntimeSkillFiles(workspaceId: string, skill: CompanySkill) {
+  async function materializeRuntimeSkillFiles(workspaceId: string, skill: WorkspaceSkill) {
     const runtimeRoot = path.resolve(resolveManagedSkillsRoot(workspaceId), "__runtime__");
     const skillDir = path.resolve(runtimeRoot, buildSkillRuntimeName(skill.key, skill.slug));
     await fs.rm(skillDir, { recursive: true, force: true });
@@ -2048,7 +2048,7 @@ export function companySkillService(db: Db) {
     return skillDir;
   }
 
-  function resolveRuntimeSkillMaterializedPath(workspaceId: string, skill: CompanySkill) {
+  function resolveRuntimeSkillMaterializedPath(workspaceId: string, skill: WorkspaceSkill) {
     const runtimeRoot = path.resolve(resolveManagedSkillsRoot(workspaceId), "__runtime__");
     return path.resolve(runtimeRoot, buildSkillRuntimeName(skill.key, skill.slug));
   }
@@ -2120,7 +2120,7 @@ export function companySkillService(db: Db) {
       skill: ImportedSkill;
       originalKey: string;
       originalSlug: string;
-      existingBefore: CompanySkill | null;
+      existingBefore: WorkspaceSkill | null;
       actionHint: "created" | "updated";
       reason: string | null;
     }> = [];
@@ -2207,8 +2207,8 @@ export function companySkillService(db: Db) {
     return out;
   }
 
-  async function upsertImportedSkills(workspaceId: string, imported: ImportedSkill[]): Promise<CompanySkill[]> {
-    const out: CompanySkill[] = [];
+  async function upsertImportedSkills(workspaceId: string, imported: ImportedSkill[]): Promise<WorkspaceSkill[]> {
+    const out: WorkspaceSkill[] = [];
     for (const skill of imported) {
       const existing = await getByKey(workspaceId, skill.key);
       const existingMeta = existing ? getSkillMeta(existing) : {};
@@ -2249,23 +2249,23 @@ export function companySkillService(db: Db) {
       };
       const row = existing
         ? await db
-          .update(companySkills)
+          .update(workspaceSkills)
           .set(values)
-          .where(eq(companySkills.id, existing.id))
+          .where(eq(workspaceSkills.id, existing.id))
           .returning()
           .then((rows) => rows[0] ?? null)
         : await db
-          .insert(companySkills)
+          .insert(workspaceSkills)
           .values(values)
           .returning()
           .then((rows) => rows[0] ?? null);
       if (!row) throw notFound("Failed to persist company skill");
-      out.push(toCompanySkill(row));
+      out.push(toWorkspaceSkill(row));
     }
     return out;
   }
 
-  async function importFromSource(workspaceId: string, source: string): Promise<CompanySkillImportResult> {
+  async function importFromSource(workspaceId: string, source: string): Promise<WorkspaceSkillImportResult> {
     await ensureSkillInventoryCurrent(workspaceId);
     const parsed = parseSkillImportSourceInput(source);
     const local = !/^https?:\/\//i.test(parsed.resolvedSource);
@@ -2305,15 +2305,15 @@ export function companySkillService(db: Db) {
     return { imported, warnings };
   }
 
-  async function deleteSkill(workspaceId: string, skillId: string): Promise<CompanySkill | null> {
+  async function deleteSkill(workspaceId: string, skillId: string): Promise<WorkspaceSkill | null> {
     const row = await db
       .select()
-      .from(companySkills)
-      .where(and(eq(companySkills.id, skillId), eq(companySkills.workspaceId, workspaceId)))
+      .from(workspaceSkills)
+      .where(and(eq(workspaceSkills.id, skillId), eq(workspaceSkills.workspaceId, workspaceId)))
       .then((rows) => rows[0] ?? null);
     if (!row) return null;
 
-    const skill = toCompanySkill(row);
+    const skill = toWorkspaceSkill(row);
     const usedByAgents = await usage(workspaceId, skill.key);
 
     if (usedByAgents.length > 0) {
@@ -2335,8 +2335,8 @@ export function companySkillService(db: Db) {
 
     // Delete DB row
     await db
-      .delete(companySkills)
-      .where(eq(companySkills.id, skillId));
+      .delete(workspaceSkills)
+      .where(eq(workspaceSkills.id, skillId));
 
     // Clean up materialized runtime files
     await fs.rm(resolveRuntimeSkillMaterializedPath(workspaceId, skill), { recursive: true, force: true });

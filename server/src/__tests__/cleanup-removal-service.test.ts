@@ -4,8 +4,8 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
   activityLog,
   agents,
-  companies,
-  companySkills,
+  workspaces,
+  workspaceSkills,
   createDb,
   heartbeatRuns,
   issueComments,
@@ -18,7 +18,7 @@ import {
   startEmbeddedPostgresTestDatabase,
 } from "./helpers/embedded-postgres.js";
 import { agentService } from "../services/agents.ts";
-import { companyService } from "../services/companies.ts";
+import { companyService } from "../services/workspaces.ts";
 
 const embeddedPostgresSupport = await getEmbeddedPostgresTestSupport();
 const describeEmbeddedPostgres = embeddedPostgresSupport.supported ? describe : describe.skip;
@@ -43,11 +43,11 @@ describeEmbeddedPostgres("cleanup removal services", () => {
     await db.delete(issueReadStates);
     await db.delete(issueComments);
     await db.delete(issueExecutionDecisions);
-    await db.delete(companySkills);
+    await db.delete(workspaceSkills);
     await db.delete(heartbeatRuns);
     await db.delete(issues);
     await db.delete(agents);
-    await db.delete(companies);
+    await db.delete(workspaces);
   });
 
   afterAll(async () => {
@@ -61,7 +61,7 @@ describeEmbeddedPostgres("cleanup removal services", () => {
     const runId = randomUUID();
     const issuePrefix = `T${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix,
@@ -156,7 +156,7 @@ describeEmbeddedPostgres("cleanup removal services", () => {
       userId: "user-1",
     });
 
-    await db.insert(companySkills).values({
+    await db.insert(workspaceSkills).values({
       id: randomUUID(),
       companyId,
       key: "paperclipai/paperclip/paperclip",
@@ -180,7 +180,7 @@ describeEmbeddedPostgres("cleanup removal services", () => {
     const removed = await companyService(db).remove(companyId);
 
     expect(removed?.id).toBe(companyId);
-    await expect(db.select().from(companies).where(eq(companies.id, companyId))).resolves.toHaveLength(0);
+    await expect(db.select().from(workspaces).where(eq(workspaces.id, companyId))).resolves.toHaveLength(0);
     await expect(db.select().from(issues).where(eq(issues.id, issueId))).resolves.toHaveLength(0);
     await expect(db.select().from(issueReadStates).where(eq(issueReadStates.companyId, companyId))).resolves.toHaveLength(0);
     await expect(db.select().from(activityLog).where(eq(activityLog.companyId, companyId))).resolves.toHaveLength(0);

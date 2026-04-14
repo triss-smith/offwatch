@@ -50,7 +50,7 @@ export function costRoutes(db: Db) {
   const costs = costService(db, budgetHooks);
   const finance = financeService(db);
   const budgets = budgetService(db, budgetHooks);
-  const companies = workspaceService(db);
+  const workspaces = workspaceService(db);
   const agents = agentService(db);
 
   router.post("/workspaces/:workspaceId/cost-events", validate(createCostEventSchema), async (req, res) => {
@@ -198,7 +198,7 @@ export function costRoutes(db: Db) {
     assertBoard(req);
     // validate workspaceId resolves to a real company so the "__none__" sentinel
     // and any forged ids are rejected before we touch provider credentials
-    const company = await companies.getById(workspaceId);
+    const company = await workspaces.getById(workspaceId);
     if (!company) {
       res.status(404).json({ error: "Company not found" });
       return;
@@ -245,89 +245,6 @@ export function costRoutes(db: Db) {
     const range = parseCostDateRange(req.query);
     const rows = await costs.byProject(workspaceId, range);
     res.json(rows);
-  });
-
-  router.patch("/workspaces/:workspaceId/budgets", validate(updateBudgetSchema), async (req, res) => {
-    assertBoard(req);
-    const workspaceId = req.params.workspaceId as string;
-    assertCompanyAccess(req, workspaceId);
-    const company = await companies.update(workspaceId, { budgetMonthlyCents: req.body.budgetMonthlyCents });
-    if (!company) {
-      res.status(404).json({ error: "Company not found" });
-      return;
-    }
-
-    await logActivity(db, {
-      workspaceId,
-      actorType: "user",
-      actorId: req.actor.userId ?? "board",
-      action: "company.budget_updated",
-      entityType: "company",
-      entityId: workspaceId,
-      details: { budgetMonthlyCents: req.body.budgetMonthlyCents },
-    });
-
-    await budgets.upsertPolicy(
-      workspaceId,
-      {
-        scopeType: "company",
-        scopeId: workspaceId,
-        amount: req.body.budgetMonthlyCents,
-        windowKind: "calendar_month_utc",
-      },
-      req.actor.userId ?? "board",
-    );
-
-    res.json(company);
-  });
-
-  router.patch("/agents/:agentId/budgets", validate(updateBudgetSchema), async (req, res) => {
-    const agentId = req.params.agentId as string;
-    const agent = await agents.getById(agentId);
-    if (!agent) {
-      res.status(404).json({ error: "Agent not found" });
-      return;
-    }
-
-    assertCompanyAccess(req, agent.workspaceId);
-
-    if (req.actor.type === "agent") {
-      if (req.actor.agentId !== agentId) {
-        res.status(403).json({ error: "Agent can only change its own budget" });
-        return;
-      }
-    }
-
-    const updated = await agents.update(agentId, { budgetMonthlyCents: req.body.budgetMonthlyCents });
-    if (!updated) {
-      res.status(404).json({ error: "Agent not found" });
-      return;
-    }
-
-    const actor = getActorInfo(req);
-    await logActivity(db, {
-      workspaceId: updated.workspaceId,
-      actorType: actor.actorType,
-      actorId: actor.actorId,
-      agentId: actor.agentId,
-      action: "agent.budget_updated",
-      entityType: "agent",
-      entityId: updated.id,
-      details: { budgetMonthlyCents: updated.budgetMonthlyCents },
-    });
-
-    await budgets.upsertPolicy(
-      updated.workspaceId,
-      {
-        scopeType: "agent",
-        scopeId: updated.id,
-        amount: updated.budgetMonthlyCents,
-        windowKind: "calendar_month_utc",
-      },
-      req.actor.type === "board" ? req.actor.userId ?? "board" : null,
-    );
-
-    res.json(updated);
   });
 
   return router;

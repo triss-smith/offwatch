@@ -1,12 +1,9 @@
 import { Router, type Request } from "express";
-import { and, eq } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
-import { budgetPolicies } from "@paperclipai/db";
 import {
-  DEFAULT_FEEDBACK_DATA_SHARING_TERMS_VERSION,
-  companyPortabilityExportSchema,
-  companyPortabilityImportSchema,
-  companyPortabilityPreviewSchema,
+  workspacePortabilityExportSchema,
+  workspacePortabilityImportSchema,
+  workspacePortabilityPreviewSchema,
   createWorkspaceSchema,
   feedbackTargetTypeSchema,
   feedbackTraceStatusSchema,
@@ -19,8 +16,7 @@ import { validate } from "../middleware/validate.js";
 import {
   accessService,
   agentService,
-  budgetService,
-  companyPortabilityService,
+  workspacePortabilityService,
   workspaceService,
   feedbackService,
   logActivity,
@@ -32,9 +28,8 @@ export function workspaceRoutes(db: Db, storage?: StorageService) {
   const router = Router();
   const svc = workspaceService(db);
   const agents = agentService(db);
-  const portability = companyPortabilityService(db, storage);
+  const portability = workspacePortabilityService(db, storage);
   const access = accessService(db);
-  const budgets = budgetService(db);
   const feedback = feedbackService(db);
 
   function parseBooleanQuery(value: unknown) {
@@ -164,59 +159,59 @@ export function workspaceRoutes(db: Db, storage?: StorageService) {
     res.json(traces);
   });
 
-  router.post("/:workspaceId/export", validate(companyPortabilityExportSchema), async (req, res) => {
+  router.post("/:workspaceId/export", validate(workspacePortabilityExportSchema), async (req, res) => {
     const workspaceId = req.params.workspaceId as string;
     assertCompanyAccess(req, workspaceId);
     const result = await portability.exportBundle(workspaceId, req.body);
     res.json(result);
   });
 
-  router.post("/import/preview", validate(companyPortabilityPreviewSchema), async (req, res) => {
+  router.post("/import/preview", validate(workspacePortabilityPreviewSchema), async (req, res) => {
     assertBoard(req);
     assertImportTargetAccess(req, req.body.target);
     const preview = await portability.previewImport(req.body);
     res.json(preview);
   });
 
-  router.post("/import", validate(companyPortabilityImportSchema), async (req, res) => {
+  router.post("/import", validate(workspacePortabilityImportSchema), async (req, res) => {
     assertBoard(req);
     assertImportTargetAccess(req, req.body.target);
     const actor = getActorInfo(req);
     const result = await portability.importBundle(req.body, req.actor.type === "board" ? req.actor.userId : null);
     await logActivity(db, {
-      workspaceId: result.company.id,
+      workspaceId: result.workspace.id,
       actorType: actor.actorType,
       actorId: actor.actorId,
       action: "company.imported",
       entityType: "company",
-      entityId: result.company.id,
+      entityId: result.workspace.id,
       agentId: actor.agentId,
       runId: actor.runId,
       details: {
         include: req.body.include ?? null,
         agentCount: result.agents.length,
         warningCount: result.warnings.length,
-        companyAction: result.company.action,
+        companyAction: result.workspace.action,
       },
     });
     res.json(result);
   });
 
-  router.post("/:workspaceId/exports/preview", validate(companyPortabilityExportSchema), async (req, res) => {
+  router.post("/:workspaceId/exports/preview", validate(workspacePortabilityExportSchema), async (req, res) => {
     const workspaceId = req.params.workspaceId as string;
     await assertCanManagePortability(req, workspaceId, "exports");
     const preview = await portability.previewExport(workspaceId, req.body);
     res.json(preview);
   });
 
-  router.post("/:workspaceId/exports", validate(companyPortabilityExportSchema), async (req, res) => {
+  router.post("/:workspaceId/exports", validate(workspacePortabilityExportSchema), async (req, res) => {
     const workspaceId = req.params.workspaceId as string;
     await assertCanManagePortability(req, workspaceId, "exports");
     const result = await portability.exportBundle(workspaceId, req.body);
     res.json(result);
   });
 
-  router.post("/:workspaceId/imports/preview", validate(companyPortabilityPreviewSchema), async (req, res) => {
+  router.post("/:workspaceId/imports/preview", validate(workspacePortabilityPreviewSchema), async (req, res) => {
     const workspaceId = req.params.workspaceId as string;
     await assertCanManagePortability(req, workspaceId, "imports");
     if (req.body.target.mode === "existing_company" && req.body.target.workspaceId !== workspaceId) {
@@ -232,7 +227,7 @@ export function workspaceRoutes(db: Db, storage?: StorageService) {
     res.json(preview);
   });
 
-  router.post("/:workspaceId/imports/apply", validate(companyPortabilityImportSchema), async (req, res) => {
+  router.post("/:workspaceId/imports/apply", validate(workspacePortabilityImportSchema), async (req, res) => {
     const workspaceId = req.params.workspaceId as string;
     await assertCanManagePortability(req, workspaceId, "imports");
     if (req.body.target.mode === "existing_company" && req.body.target.workspaceId !== workspaceId) {
@@ -247,11 +242,11 @@ export function workspaceRoutes(db: Db, storage?: StorageService) {
       sourceCompanyId: workspaceId,
     });
     await logActivity(db, {
-      workspaceId: result.company.id,
+      workspaceId: result.workspace.id,
       actorType: actor.actorType,
       actorId: actor.actorId,
       entityType: "company",
-      entityId: result.company.id,
+      entityId: result.workspace.id,
       agentId: actor.agentId,
       runId: actor.runId,
       action: "company.imported",
@@ -259,7 +254,7 @@ export function workspaceRoutes(db: Db, storage?: StorageService) {
         include: req.body.include ?? null,
         agentCount: result.agents.length,
         warningCount: result.warnings.length,
-        companyAction: result.company.action,
+        companyAction: result.workspace.action,
         importMode: "agent_safe",
       },
     });
@@ -282,18 +277,6 @@ export function workspaceRoutes(db: Db, storage?: StorageService) {
       entityId: company.id,
       details: { name: company.name },
     });
-    if (company.budgetMonthlyCents > 0) {
-      await budgets.upsertPolicy(
-        company.id,
-        {
-          scopeType: "company",
-          scopeId: company.id,
-          amount: company.budgetMonthlyCents,
-          windowKind: "calendar_month_utc",
-        },
-        req.actor.userId ?? "board",
-      );
-    }
     res.status(201).json(company);
   });
 
@@ -324,36 +307,12 @@ export function workspaceRoutes(db: Db, storage?: StorageService) {
       assertBoard(req);
       body = updateWorkspaceSchema.parse(req.body);
 
-      if (body.feedbackDataSharingEnabled === true && !existingCompany.feedbackDataSharingEnabled) {
-        body = {
-          ...body,
-          feedbackDataSharingConsentAt: new Date(),
-          feedbackDataSharingConsentByUserId: req.actor.userId ?? "local-board",
-          feedbackDataSharingTermsVersion:
-            typeof body.feedbackDataSharingTermsVersion === "string" && body.feedbackDataSharingTermsVersion.length > 0
-              ? body.feedbackDataSharingTermsVersion
-              : DEFAULT_FEEDBACK_DATA_SHARING_TERMS_VERSION,
-        };
-      }
     }
 
     const company = await svc.update(workspaceId, body);
     if (!company) {
       res.status(404).json({ error: "Workspace not found" });
       return;
-    }
-    // When budgetMetric changes, deactivate all policies using the old metric
-    const newMetric = typeof body.budgetMetric === "string" ? body.budgetMetric : null;
-    if (newMetric && newMetric !== existingCompany.budgetMetric) {
-      await db
-        .update(budgetPolicies)
-        .set({ isActive: false, updatedAt: new Date() })
-        .where(
-          and(
-            eq(budgetPolicies.workspaceId, workspaceId),
-            eq(budgetPolicies.metric, existingCompany.budgetMetric),
-          ),
-        );
     }
     await logActivity(db, {
       workspaceId,

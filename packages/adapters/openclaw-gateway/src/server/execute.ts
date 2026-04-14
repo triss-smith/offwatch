@@ -303,7 +303,7 @@ function buildWakePayload(ctx: AdapterExecutionContext): WakePayload {
   return {
     runId,
     agentId: agent.id,
-    companyId: agent.companyId,
+    companyId: agent.workspaceId,
     taskId: nonEmpty(context.taskId) ?? nonEmpty(context.issueId),
     issueId: nonEmpty(context.issueId),
     wakeReason: nonEmpty(context.wakeReason),
@@ -479,7 +479,7 @@ function buildStandardPaperclipPayload(
 
   const standardPaperclip: Record<string, unknown> = {
     runId: ctx.runId,
-    companyId: ctx.agent.companyId,
+    companyId: ctx.agent.workspaceId,
     agentId: ctx.agent.id,
     agentName: ctx.agent.name,
     taskId: wakePayload.taskId,

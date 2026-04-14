@@ -11,7 +11,7 @@ import {
   agents,
   agentWakeupRequests,
   applyPendingMigrations,
-  companies,
+  workspaces,
   createDb,
   ensurePostgresDatabase,
   heartbeatRuns,
@@ -240,7 +240,7 @@ describe("heartbeat comment wake batching", () => {
     const heartbeat = heartbeatService(db);
 
     try {
-      await db.insert(companies).values({
+      await db.insert(workspaces).values({
         id: companyId,
         name: "Paperclip",
         issuePrefix,
@@ -433,7 +433,7 @@ describe("heartbeat comment wake batching", () => {
     const heartbeat = heartbeatService(db);
 
     try {
-      await db.insert(companies).values({
+      await db.insert(workspaces).values({
         id: companyId,
         name: "Paperclip",
         issuePrefix,

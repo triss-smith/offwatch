@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, isNotNull, lt, lte, sql } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
-import { activityLog, agents, companies, costEvents, issues, projects } from "@paperclipai/db";
+import { activityLog, agents, workspaces, costEvents, issues, projects } from "@paperclipai/db";
 import { notFound, unprocessable } from "../errors.js";
 import { budgetService, type BudgetServiceHooks } from "./budgets.js";
 
@@ -70,27 +70,6 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
         .returning()
         .then((rows) => rows[0]);
 
-      const [agentMonthSpend, companyMonthSpend] = await Promise.all([
-        getMonthlySpendTotal(db, { workspaceId, agentId: event.agentId }),
-        getMonthlySpendTotal(db, { workspaceId }),
-      ]);
-
-      await db
-        .update(agents)
-        .set({
-          spentMonthlyCents: agentMonthSpend,
-          updatedAt: new Date(),
-        })
-        .where(eq(agents.id, event.agentId));
-
-      await db
-        .update(companies)
-        .set({
-          spentMonthlyCents: companyMonthSpend,
-          updatedAt: new Date(),
-        })
-        .where(eq(companies.id, workspaceId));
-
       await budgets.evaluateCostEvent(event);
 
       return event;
@@ -99,8 +78,8 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
     summary: async (workspaceId: string, range?: CostDateRange) => {
       const company = await db
         .select()
-        .from(companies)
-        .where(eq(companies.id, workspaceId))
+        .from(workspaces)
+        .where(eq(workspaces.id, workspaceId))
         .then((rows) => rows[0] ?? null);
 
       if (!company) throw notFound("Company not found");
@@ -117,16 +96,12 @@ export function costService(db: Db, budgetHooks: BudgetServiceHooks = {}) {
         .where(and(...conditions));
 
       const spendCents = Number(total);
-      const utilization =
-        company.budgetMonthlyCents > 0
-          ? (spendCents / company.budgetMonthlyCents) * 100
-          : 0;
 
       return {
         workspaceId,
         spendCents,
-        budgetCents: company.budgetMonthlyCents,
-        utilizationPercent: Number(utilization.toFixed(2)),
+        budgetCents: 0,
+        utilizationPercent: 0,
       };
     },
 

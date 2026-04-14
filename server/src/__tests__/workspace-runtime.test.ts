@@ -9,7 +9,7 @@ import { parse as parseEnvContents } from "dotenv";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
   agents,
-  companies,
+  workspaces,
   createDb,
   executionWorkspaces,
   heartbeatRuns,
@@ -1960,7 +1960,7 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
     await db.delete(projects);
     await db.delete(heartbeatRuns);
     await db.delete(agents);
-    await db.delete(companies);
+    await db.delete(workspaces);
   });
 
   it("adopts a live auto-port shared service after runtime state is reset", async () => {
@@ -1974,7 +1974,7 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
     const runId = randomUUID();
     const executionWorkspaceId = randomUUID();
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix: `T${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`,
@@ -2079,7 +2079,7 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
     const projectId = randomUUID();
     const projectWorkspaceId = randomUUID();
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix: `T${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`,
@@ -2169,7 +2169,7 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
     const runId = randomUUID();
     const executionWorkspaceId = randomUUID();
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix: `T${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`,

@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { and, desc, eq, gte, inArray, lt, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, or, sql } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
 import {
   agents,
@@ -9,7 +9,6 @@ import {
   agentTaskSessions,
   agentWakeupRequests,
   activityLog,
-  costEvents,
   heartbeatRunEvents,
   heartbeatRuns,
   issueExecutionDecisions,
@@ -33,12 +32,10 @@ const CONFIG_REVISION_FIELDS = [
   "name",
   "role",
   "title",
-  "reportsTo",
   "capabilities",
   "adapterType",
   "adapterConfig",
   "runtimeConfig",
-  "budgetMonthlyCents",
   "metadata",
 ] as const;
 
@@ -93,12 +90,10 @@ function buildConfigSnapshot(
     name: row.name,
     role: row.role,
     title: row.title,
-    reportsTo: row.reportsTo,
     capabilities: row.capabilities,
     adapterType: row.adapterType,
     adapterConfig,
     runtimeConfig,
-    budgetMonthlyCents: row.budgetMonthlyCents,
     metadata,
   };
 }
@@ -133,16 +128,10 @@ function configPatchFromSnapshot(snapshot: unknown): Partial<typeof agents.$infe
   if (typeof snapshot.adapterType !== "string" || snapshot.adapterType.length === 0) {
     throw unprocessable("Invalid revision snapshot: adapterType");
   }
-  if (typeof snapshot.budgetMonthlyCents !== "number" || !Number.isFinite(snapshot.budgetMonthlyCents)) {
-    throw unprocessable("Invalid revision snapshot: budgetMonthlyCents");
-  }
-
   return {
     name: snapshot.name,
     role: snapshot.role,
     title: typeof snapshot.title === "string" || snapshot.title === null ? snapshot.title : null,
-    reportsTo:
-      typeof snapshot.reportsTo === "string" || snapshot.reportsTo === null ? snapshot.reportsTo : null,
     capabilities:
       typeof snapshot.capabilities === "string" || snapshot.capabilities === null
         ? snapshot.capabilities
@@ -150,7 +139,6 @@ function configPatchFromSnapshot(snapshot: unknown): Partial<typeof agents.$infe
     adapterType: snapshot.adapterType,
     adapterConfig: isPlainRecord(snapshot.adapterConfig) ? snapshot.adapterConfig : {},
     runtimeConfig: isPlainRecord(snapshot.runtimeConfig) ? snapshot.runtimeConfig : {},
-    budgetMonthlyCents: Math.max(0, Math.floor(snapshot.budgetMonthlyCents)),
     metadata: isPlainRecord(snapshot.metadata) || snapshot.metadata === null ? snapshot.metadata : null,
   };
 }
@@ -187,15 +175,6 @@ export function deduplicateAgentName(
 }
 
 export function agentService(db: Db) {
-  function currentUtcMonthWindow(now = new Date()) {
-    const year = now.getUTCFullYear();
-    const month = now.getUTCMonth();
-    return {
-      start: new Date(Date.UTC(year, month, 1, 0, 0, 0, 0)),
-      end: new Date(Date.UTC(year, month + 1, 1, 0, 0, 0, 0)),
-    };
-  }
-
   function withUrlKey<T extends { id: string; name: string }>(row: T) {
     return {
       ...row,
@@ -210,38 +189,6 @@ export function agentService(db: Db) {
     });
   }
 
-  async function getMonthlySpendByAgentIds(workspaceId: string, agentIds: string[]) {
-    if (agentIds.length === 0) return new Map<string, number>();
-    const { start, end } = currentUtcMonthWindow();
-    const rows = await db
-      .select({
-        agentId: costEvents.agentId,
-        spentMonthlyCents: sql<number>`coalesce(sum(${costEvents.costCents}), 0)::int`,
-      })
-      .from(costEvents)
-      .where(
-        and(
-          eq(costEvents.workspaceId, workspaceId),
-          inArray(costEvents.agentId, agentIds),
-          gte(costEvents.occurredAt, start),
-          lt(costEvents.occurredAt, end),
-        ),
-      )
-      .groupBy(costEvents.agentId);
-    return new Map(rows.map((row) => [row.agentId, Number(row.spentMonthlyCents ?? 0)]));
-  }
-
-  async function hydrateAgentSpend<T extends { id: string; workspaceId: string; spentMonthlyCents: number }>(rows: T[]) {
-    const agentIds = rows.map((row) => row.id);
-    const workspaceId = rows[0]?.workspaceId;
-    if (!workspaceId || agentIds.length === 0) return rows;
-    const spendByAgentId = await getMonthlySpendByAgentIds(workspaceId, agentIds);
-    return rows.map((row) => ({
-      ...row,
-      spentMonthlyCents: spendByAgentId.get(row.id) ?? 0,
-    }));
-  }
-
   async function getById(id: string) {
     const row = await db
       .select()
@@ -249,29 +196,7 @@ export function agentService(db: Db) {
       .where(eq(agents.id, id))
       .then((rows) => rows[0] ?? null);
     if (!row) return null;
-    const [hydrated] = await hydrateAgentSpend([row]);
-    return normalizeAgentRow(hydrated);
-  }
-
-  async function ensureManager(workspaceId: string, managerId: string) {
-    const manager = await getById(managerId);
-    if (!manager) throw notFound("Manager not found");
-    if (manager.workspaceId !== workspaceId) {
-      throw unprocessable("Manager must belong to same company");
-    }
-    return manager;
-  }
-
-  async function assertNoCycle(agentId: string, reportsTo: string | null | undefined) {
-    if (!reportsTo) return;
-    if (reportsTo === agentId) throw unprocessable("Agent cannot report to itself");
-
-    let cursor: string | null = reportsTo;
-    while (cursor) {
-      if (cursor === agentId) throw unprocessable("Reporting relationship would create cycle");
-      const next = await getById(cursor);
-      cursor = next?.reportsTo ?? null;
-    }
+    return normalizeAgentRow(row);
   }
 
   async function assertCompanyShortnameAvailable(
@@ -317,13 +242,6 @@ export function agentService(db: Db) {
       data.status !== "terminated"
     ) {
       throw conflict("Pending approval agents cannot be activated directly");
-    }
-
-    if (data.reportsTo !== undefined) {
-      if (data.reportsTo) {
-        await ensureManager(existing.workspaceId, data.reportsTo);
-      }
-      await assertNoCycle(id, data.reportsTo);
     }
 
     if (data.name !== undefined) {
@@ -379,17 +297,12 @@ export function agentService(db: Db) {
         conditions.push(ne(agents.status, "terminated"));
       }
       const rows = await db.select().from(agents).where(and(...conditions));
-      const hydrated = await hydrateAgentSpend(rows);
-      return hydrated.map(normalizeAgentRow);
+      return rows.map(normalizeAgentRow);
     },
 
     getById,
 
     create: async (workspaceId: string, data: Omit<typeof agents.$inferInsert, "workspaceId">) => {
-      if (data.reportsTo) {
-        await ensureManager(workspaceId, data.reportsTo);
-      }
-
       const existingAgents = await db
         .select({ id: agents.id, name: agents.name, status: agents.status })
         .from(agents)
@@ -477,7 +390,6 @@ export function agentService(db: Db) {
       if (!existing) return null;
 
       return db.transaction(async (tx) => {
-        await tx.update(agents).set({ reportsTo: null }).where(eq(agents.reportsTo, id));
         await tx
           .update(issues)
           .set({ assigneeAgentId: null, createdByAgentId: null })
@@ -626,46 +538,6 @@ export function agentService(db: Db) {
         .where(eq(agentApiKeys.id, keyId))
         .returning();
       return rows[0] ?? null;
-    },
-
-    orgForCompany: async (workspaceId: string) => {
-      const rows = await db
-        .select()
-        .from(agents)
-        .where(and(eq(agents.workspaceId, workspaceId), ne(agents.status, "terminated")));
-      const normalizedRows = rows.map(normalizeAgentRow);
-      const byManager = new Map<string | null, typeof normalizedRows>();
-      for (const row of normalizedRows) {
-        const key = row.reportsTo ?? null;
-        const group = byManager.get(key) ?? [];
-        group.push(row);
-        byManager.set(key, group);
-      }
-
-      const build = (managerId: string | null): Array<Record<string, unknown>> => {
-        const members = byManager.get(managerId) ?? [];
-        return members.map((member) => ({
-          ...member,
-          reports: build(member.id),
-        }));
-      };
-
-      return build(null);
-    },
-
-    getChainOfCommand: async (agentId: string) => {
-      const chain: { id: string; name: string; role: string; title: string | null }[] = [];
-      const visited = new Set<string>([agentId]);
-      const start = await getById(agentId);
-      let currentId = start?.reportsTo ?? null;
-      while (currentId && !visited.has(currentId) && chain.length < 50) {
-        visited.add(currentId);
-        const mgr = await getById(currentId);
-        if (!mgr) break;
-        chain.push({ id: mgr.id, name: mgr.name, role: mgr.role, title: mgr.title ?? null });
-        currentId = mgr.reportsTo ?? null;
-      }
-      return chain;
     },
 
     runningForAgent: (agentId: string) =>

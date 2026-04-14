@@ -24,7 +24,7 @@ const mockBudgetService = vi.hoisted(() => ({
   upsertPolicy: vi.fn(),
 }));
 
-const mockCompanyPortabilityService = vi.hoisted(() => ({
+const mockWorkspacePortabilityService = vi.hoisted(() => ({
   exportBundle: vi.fn(),
   previewExport: vi.fn(),
   previewImport: vi.fn(),
@@ -44,7 +44,7 @@ function registerServiceMocks() {
     accessService: () => mockAccessService,
     agentService: () => mockAgentService,
     budgetService: () => mockBudgetService,
-    companyPortabilityService: () => mockCompanyPortabilityService,
+    workspacePortabilityService: () => mockWorkspacePortabilityService,
     companyService: () => mockCompanyService,
     feedbackService: () => mockFeedbackService,
     logActivity: mockLogActivity,
@@ -92,7 +92,7 @@ describe("company portability routes", () => {
 
     expect(res.status).toBe(403);
     expect(res.body.error).toContain("Only CEO agents");
-    expect(mockCompanyPortabilityService.previewExport).not.toHaveBeenCalled();
+    expect(mockWorkspacePortabilityService.previewExport).not.toHaveBeenCalled();
   });
 
   it("allows CEO agents to use company-scoped export preview routes", async () => {
@@ -101,7 +101,7 @@ describe("company portability routes", () => {
       companyId: "11111111-1111-4111-8111-111111111111",
       role: "ceo",
     });
-    mockCompanyPortabilityService.previewExport.mockResolvedValue({
+    mockWorkspacePortabilityService.previewExport.mockResolvedValue({
       rootPath: "paperclip",
       manifest: { agents: [], skills: [], projects: [], issues: [], envInputs: [], includes: { company: true, agents: true, projects: true, issues: false, skills: false }, company: null, schemaVersion: 1, generatedAt: new Date().toISOString(), source: null },
       files: {},
@@ -151,7 +151,7 @@ describe("company portability routes", () => {
 
     expect(res.status).toBe(403);
     expect(res.body.error).toContain("does not allow replace");
-    expect(mockCompanyPortabilityService.previewImport).not.toHaveBeenCalled();
+    expect(mockWorkspacePortabilityService.previewImport).not.toHaveBeenCalled();
   });
 
   it("keeps global import preview routes board-only", async () => {
@@ -196,7 +196,7 @@ describe("company portability routes", () => {
 
     expect(res.status).toBe(403);
     expect(res.body.error).toContain("Instance admin");
-    expect(mockCompanyPortabilityService.previewImport).not.toHaveBeenCalled();
+    expect(mockWorkspacePortabilityService.previewImport).not.toHaveBeenCalled();
   });
 
   it("requires instance admin for new-company import apply", async () => {
@@ -219,6 +219,6 @@ describe("company portability routes", () => {
 
     expect(res.status).toBe(403);
     expect(res.body.error).toContain("Instance admin");
-    expect(mockCompanyPortabilityService.importBundle).not.toHaveBeenCalled();
+    expect(mockWorkspacePortabilityService.importBundle).not.toHaveBeenCalled();
   });
 });

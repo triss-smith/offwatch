@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import { promisify } from "node:util";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
-  companies,
+  workspaces,
   createDb,
   executionWorkspaces,
   issues,
@@ -138,7 +138,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     await db.delete(executionWorkspaces);
     await db.delete(projectWorkspaces);
     await db.delete(projects);
-    await db.delete(companies);
+    await db.delete(workspaces);
 
     for (const dir of tempDirs) {
       await fs.rm(dir, { recursive: true, force: true });
@@ -156,7 +156,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     const projectWorkspaceId = randomUUID();
     const executionWorkspaceId = randomUUID();
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix: "PAP",
@@ -241,7 +241,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     const projectWorkspaceId = randomUUID();
     const executionWorkspaceId = randomUUID();
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix: "PAP",
@@ -337,7 +337,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     const stoppedAt = new Date("2026-04-04T17:05:00.000Z");
     const runningAt = new Date("2026-04-04T17:10:00.000Z");
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix: "PAP",

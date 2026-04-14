@@ -1,14 +1,14 @@
 import { Router, type Request } from "express";
 import type { Db } from "@paperclipai/db";
 import {
-  companySkillCreateSchema,
-  companySkillFileUpdateSchema,
-  companySkillImportSchema,
-  companySkillProjectScanRequestSchema,
+  workspaceSkillCreateSchema,
+  workspaceSkillFileUpdateSchema,
+  workspaceSkillImportSchema,
+  workspaceSkillProjectScanRequestSchema,
 } from "@paperclipai/shared";
 import { trackSkillImported } from "@paperclipai/shared/telemetry";
 import { validate } from "../middleware/validate.js";
-import { accessService, agentService, companySkillService, logActivity } from "../services/index.js";
+import { accessService, agentService, workspaceSkillService, logActivity } from "../services/index.js";
 import { forbidden } from "../errors.js";
 import { assertCompanyAccess, getActorInfo } from "./authz.js";
 import { getTelemetryClient } from "../telemetry.js";
@@ -21,11 +21,11 @@ type SkillTelemetryInput = {
   metadata: Record<string, unknown> | null;
 };
 
-export function companySkillRoutes(db: Db) {
+export function workspaceSkillRoutes(db: Db) {
   const router = Router();
   const agents = agentService(db);
   const access = accessService(db);
-  const svc = companySkillService(db);
+  const svc = workspaceSkillService(db);
 
   function canCreateAgents(agent: { permissions: Record<string, unknown> | null | undefined }) {
     if (!agent.permissions || typeof agent.permissions !== "object") return false;
@@ -52,7 +52,7 @@ export function companySkillRoutes(db: Db) {
     return skill.key;
   }
 
-  async function assertCanMutateCompanySkills(req: Request, workspaceId: string) {
+  async function assertCanMutateWorkspaceSkills(req: Request, workspaceId: string) {
     assertCompanyAccess(req, workspaceId);
 
     if (req.actor.type === "board") {
@@ -127,10 +127,10 @@ export function companySkillRoutes(db: Db) {
 
   router.post(
     "/workspaces/:workspaceId/skills",
-    validate(companySkillCreateSchema),
+    validate(workspaceSkillCreateSchema),
     async (req, res) => {
       const workspaceId = req.params.workspaceId as string;
-      await assertCanMutateCompanySkills(req, workspaceId);
+      await assertCanMutateWorkspaceSkills(req, workspaceId);
       const result = await svc.createLocalSkill(workspaceId, req.body);
 
       const actor = getActorInfo(req);
@@ -155,11 +155,11 @@ export function companySkillRoutes(db: Db) {
 
   router.patch(
     "/workspaces/:workspaceId/skills/:skillId/files",
-    validate(companySkillFileUpdateSchema),
+    validate(workspaceSkillFileUpdateSchema),
     async (req, res) => {
       const workspaceId = req.params.workspaceId as string;
       const skillId = req.params.skillId as string;
-      await assertCanMutateCompanySkills(req, workspaceId);
+      await assertCanMutateWorkspaceSkills(req, workspaceId);
       const result = await svc.updateFile(
         workspaceId,
         skillId,
@@ -189,10 +189,10 @@ export function companySkillRoutes(db: Db) {
 
   router.post(
     "/workspaces/:workspaceId/skills/import",
-    validate(companySkillImportSchema),
+    validate(workspaceSkillImportSchema),
     async (req, res) => {
       const workspaceId = req.params.workspaceId as string;
-      await assertCanMutateCompanySkills(req, workspaceId);
+      await assertCanMutateWorkspaceSkills(req, workspaceId);
       const source = String(req.body.source ?? "");
       const result = await svc.importFromSource(workspaceId, source);
 
@@ -229,10 +229,10 @@ export function companySkillRoutes(db: Db) {
 
   router.post(
     "/workspaces/:workspaceId/skills/scan-projects",
-    validate(companySkillProjectScanRequestSchema),
+    validate(workspaceSkillProjectScanRequestSchema),
     async (req, res) => {
       const workspaceId = req.params.workspaceId as string;
-      await assertCanMutateCompanySkills(req, workspaceId);
+      await assertCanMutateWorkspaceSkills(req, workspaceId);
       const result = await svc.scanProjectWorkspaces(workspaceId, req.body);
 
       const actor = getActorInfo(req);
@@ -263,7 +263,7 @@ export function companySkillRoutes(db: Db) {
   router.delete("/workspaces/:workspaceId/skills/:skillId", async (req, res) => {
     const workspaceId = req.params.workspaceId as string;
     const skillId = req.params.skillId as string;
-    await assertCanMutateCompanySkills(req, workspaceId);
+    await assertCanMutateWorkspaceSkills(req, workspaceId);
     const result = await svc.deleteSkill(workspaceId, skillId);
     if (!result) {
       res.status(404).json({ error: "Skill not found" });
@@ -292,7 +292,7 @@ export function companySkillRoutes(db: Db) {
   router.post("/workspaces/:workspaceId/skills/:skillId/install-update", async (req, res) => {
     const workspaceId = req.params.workspaceId as string;
     const skillId = req.params.skillId as string;
-    await assertCanMutateCompanySkills(req, workspaceId);
+    await assertCanMutateWorkspaceSkills(req, workspaceId);
     const result = await svc.installUpdate(workspaceId, skillId);
     if (!result) {
       res.status(404).json({ error: "Skill not found" });

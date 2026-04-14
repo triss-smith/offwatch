@@ -68,15 +68,10 @@ export interface Agent {
   title: string | null;
   icon: string | null;
   status: AgentStatus;
-  reportsTo: string | null;
   capabilities: string | null;
   adapterType: AgentAdapterType;
   adapterConfig: Record<string, unknown>;
   runtimeConfig: Record<string, unknown>;
-  budgetMonthlyCents: number;
-  spentMonthlyCents: number;
-  pauseReason: PauseReason | null;
-  pausedAt: Date | null;
   permissions: AgentPermissions;
   lastHeartbeatAt: Date | null;
   metadata: Record<string, unknown> | null;
@@ -85,7 +80,6 @@ export interface Agent {
 }
 
 export interface AgentDetail extends Agent {
-  chainOfCommand: AgentChainOfCommandEntry[];
   access: AgentAccessState;
 }
 

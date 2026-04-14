@@ -5,28 +5,28 @@ import path from "node:path";
 import { promisify } from "node:util";
 import type { Db } from "@paperclipai/db";
 import type {
-  CompanyPortabilityAgentManifestEntry,
-  CompanyPortabilityCollisionStrategy,
-  CompanyPortabilityEnvInput,
-  CompanyPortabilityExport,
-  CompanyPortabilityFileEntry,
-  CompanyPortabilityExportPreviewResult,
-  CompanyPortabilityExportResult,
-  CompanyPortabilityImport,
-  CompanyPortabilityImportResult,
-  CompanyPortabilityInclude,
-  CompanyPortabilityManifest,
-  CompanyPortabilityPreview,
-  CompanyPortabilityPreviewAgentPlan,
-  CompanyPortabilityPreviewResult,
-  CompanyPortabilityProjectManifestEntry,
-  CompanyPortabilityProjectWorkspaceManifestEntry,
-  CompanyPortabilityIssueRoutineManifestEntry,
-  CompanyPortabilityIssueRoutineTriggerManifestEntry,
-  CompanyPortabilityIssueManifestEntry,
-  CompanyPortabilitySidebarOrder,
-  CompanyPortabilitySkillManifestEntry,
-  CompanySkill,
+  WorkspacePortabilityAgentManifestEntry,
+  WorkspacePortabilityCollisionStrategy,
+  WorkspacePortabilityEnvInput,
+  WorkspacePortabilityExport,
+  WorkspacePortabilityFileEntry,
+  WorkspacePortabilityExportPreviewResult,
+  WorkspacePortabilityExportResult,
+  WorkspacePortabilityImport,
+  WorkspacePortabilityImportResult,
+  WorkspacePortabilityInclude,
+  WorkspacePortabilityManifest,
+  WorkspacePortabilityPreview,
+  WorkspacePortabilityPreviewAgentPlan,
+  WorkspacePortabilityPreviewResult,
+  WorkspacePortabilityProjectManifestEntry,
+  WorkspacePortabilityProjectWorkspaceManifestEntry,
+  WorkspacePortabilityIssueRoutineManifestEntry,
+  WorkspacePortabilityIssueRoutineTriggerManifestEntry,
+  WorkspacePortabilityIssueManifestEntry,
+  WorkspacePortabilitySidebarOrder,
+  WorkspacePortabilitySkillManifestEntry,
+  WorkspaceSkill,
   AgentEnvConfig,
   RoutineVariable,
 } from "@paperclipai/shared";
@@ -55,60 +55,17 @@ import { agentService } from "./agents.js";
 import { agentInstructionsService } from "./agent-instructions.js";
 import { assetService } from "./assets.js";
 import { generateReadme } from "./company-export-readme.js";
-import { renderOrgChartPng, type OrgNode } from "../routes/org-chart-svg.js";
-import { companySkillService } from "./company-skills.js";
+// org-chart-svg removed (org chart feature removed)
+import { workspaceSkillService } from "./workspace-skills.js";
 import { workspaceService } from "./workspaces.js";
 import { validateCron } from "./cron.js";
 import { issueService } from "./issues.js";
 import { projectService } from "./projects.js";
 import { routineService } from "./routines.js";
 
-/** Build OrgNode tree from manifest agent list (slug + reportsToSlug). */
-function buildOrgTreeFromManifest(agents: CompanyPortabilityManifest["agents"]): OrgNode[] {
-  const ROLE_LABELS: Record<string, string> = {
-    ceo: "Chief Executive", cto: "Technology", cmo: "Marketing",
-    cfo: "Finance", coo: "Operations", vp: "VP", manager: "Manager",
-    engineer: "Engineer", agent: "Agent",
-  };
-  const bySlug = new Map(agents.map((a) => [a.slug, a]));
-  const childrenOf = new Map<string | null, typeof agents>();
-  for (const a of agents) {
-    const parent = a.reportsToSlug ?? null;
-    const list = childrenOf.get(parent) ?? [];
-    list.push(a);
-    childrenOf.set(parent, list);
-  }
-  const build = (parentSlug: string | null): OrgNode[] => {
-    const members = childrenOf.get(parentSlug) ?? [];
-    return members.map((m) => ({
-      id: m.slug,
-      name: m.name,
-      role: ROLE_LABELS[m.role] ?? m.role,
-      status: "active",
-      reports: build(m.slug),
-    }));
-  };
-  // Find roots: agents whose reportsToSlug is null or points to a non-existent slug
-  const roots = agents.filter((a) => !a.reportsToSlug || !bySlug.has(a.reportsToSlug));
-  const rootSlugs = new Set(roots.map((r) => r.slug));
-  // Start from null parent, but also include orphans
-  const tree = build(null);
-  for (const root of roots) {
-    if (root.reportsToSlug && !bySlug.has(root.reportsToSlug)) {
-      // Orphan root (parent slug doesn't exist)
-      tree.push({
-        id: root.slug,
-        name: root.name,
-        role: ROLE_LABELS[root.role] ?? root.role,
-        status: "active",
-        reports: build(root.slug),
-      });
-    }
-  }
-  return tree;
-}
+// buildOrgTreeFromManifest removed (org chart feature removed)
 
-const DEFAULT_INCLUDE: CompanyPortabilityInclude = {
+const DEFAULT_INCLUDE: WorkspacePortabilityInclude = {
   company: true,
   agents: true,
   projects: false,
@@ -116,7 +73,7 @@ const DEFAULT_INCLUDE: CompanyPortabilityInclude = {
   skills: false,
 };
 
-const DEFAULT_COLLISION_STRATEGY: CompanyPortabilityCollisionStrategy = "rename";
+const DEFAULT_COLLISION_STRATEGY: WorkspacePortabilityCollisionStrategy = "rename";
 const execFileAsync = promisify(execFile);
 let bundledSkillsCommitPromise: Promise<string | null> | null = null;
 
@@ -124,12 +81,12 @@ function resolveImportMode(options?: ImportBehaviorOptions): ImportMode {
   return options?.mode ?? "board_full";
 }
 
-function resolveSkillConflictStrategy(mode: ImportMode, collisionStrategy: CompanyPortabilityCollisionStrategy) {
+function resolveSkillConflictStrategy(mode: ImportMode, collisionStrategy: WorkspacePortabilityCollisionStrategy) {
   if (mode === "board_full") return "replace" as const;
   return collisionStrategy === "skip" ? "skip" as const : "rename" as const;
 }
 
-function classifyPortableFileKind(pathValue: string): CompanyPortabilityExportPreviewResult["fileInventory"][number]["kind"] {
+function classifyPortableFileKind(pathValue: string): WorkspacePortabilityExportPreviewResult["fileInventory"][number]["kind"] {
   const normalized = normalizePortablePath(pathValue);
   if (normalized === "COMPANY.md") return "company";
   if (normalized === ".paperclip.yaml" || normalized === ".paperclip.yml") return "extension";
@@ -214,12 +171,12 @@ function normalizeExportPathSegment(value: string | null | undefined, preserveCa
   return preserveCase ? normalized : normalized.toLowerCase();
 }
 
-function readSkillSourceKind(skill: CompanySkill) {
+function readSkillSourceKind(skill: WorkspaceSkill) {
   const metadata = isPlainRecord(skill.metadata) ? skill.metadata : null;
   return asString(metadata?.sourceKind);
 }
 
-function deriveLocalExportNamespace(skill: CompanySkill, slug: string) {
+function deriveLocalExportNamespace(skill: WorkspaceSkill, slug: string) {
   const metadata = isPlainRecord(skill.metadata) ? skill.metadata : null;
   const candidates = [
     asString(metadata?.projectName),
@@ -240,7 +197,7 @@ function deriveLocalExportNamespace(skill: CompanySkill, slug: string) {
 }
 
 function derivePrimarySkillExportDir(
-  skill: CompanySkill,
+  skill: WorkspaceSkill,
   slug: string,
   companyIssuePrefix: string | null | undefined,
 ) {
@@ -289,7 +246,7 @@ function appendSkillExportDirSuffix(packageDir: string, suffix: string) {
 }
 
 function deriveSkillExportDirCandidates(
-  skill: CompanySkill,
+  skill: WorkspaceSkill,
   slug: string,
   companyIssuePrefix: string | null | undefined,
 ) {
@@ -334,7 +291,7 @@ function deriveSkillExportDirCandidates(
   return [primaryDir, ...Array.from(suffixes, (suffix) => appendSkillExportDirSuffix(primaryDir, suffix))];
 }
 
-function buildSkillExportDirMap(skills: CompanySkill[], companyIssuePrefix: string | null | undefined) {
+function buildSkillExportDirMap(skills: WorkspaceSkill[], companyIssuePrefix: string | null | undefined) {
   const usedDirs = new Set<string>();
   const keyToDir = new Map<string, string>();
   const orderedSkills = [...skills].sort((left, right) => left.key.localeCompare(right.key));
@@ -403,10 +360,10 @@ function extractPortableScopedEnvInputs(
   },
   envValue: unknown,
   warnings: string[],
-): CompanyPortabilityEnvInput[] {
+): WorkspacePortabilityEnvInput[] {
   if (!isPlainRecord(envValue)) return [];
   const env = envValue as Record<string, unknown>;
-  const inputs: CompanyPortabilityEnvInput[] = [];
+  const inputs: WorkspacePortabilityEnvInput[] = [];
 
   for (const [key, binding] of Object.entries(env)) {
     if (key.toUpperCase() === "PATH") {
@@ -472,8 +429,8 @@ function extractPortableScopedEnvInputs(
 }
 
 type ResolvedSource = {
-  manifest: CompanyPortabilityManifest;
-  files: Record<string, CompanyPortabilityFileEntry>;
+  manifest: WorkspacePortabilityManifest;
+  files: Record<string, WorkspacePortabilityFileEntry>;
   warnings: string[];
 };
 
@@ -541,11 +498,11 @@ type IssueLike = {
 type RoutineLike = NonNullable<Awaited<ReturnType<ReturnType<typeof routineService>["getDetail"]>>>;
 
 type ImportPlanInternal = {
-  preview: CompanyPortabilityPreviewResult;
+  preview: WorkspacePortabilityPreviewResult;
   source: ResolvedSource;
-  include: CompanyPortabilityInclude;
-  collisionStrategy: CompanyPortabilityCollisionStrategy;
-  selectedAgents: CompanyPortabilityAgentManifestEntry[];
+  include: WorkspacePortabilityInclude;
+  collisionStrategy: WorkspacePortabilityCollisionStrategy;
+  selectedAgents: WorkspacePortabilityAgentManifestEntry[];
 };
 
 type ImportMode = "board_full" | "agent_safe";
@@ -639,7 +596,7 @@ function asInteger(value: unknown): number | null {
   return typeof value === "number" && Number.isInteger(value) ? value : null;
 }
 
-function normalizeRoutineTriggerExtension(value: unknown): CompanyPortabilityIssueRoutineTriggerManifestEntry | null {
+function normalizeRoutineTriggerExtension(value: unknown): WorkspacePortabilityIssueRoutineTriggerManifestEntry | null {
   if (!isPlainRecord(value)) return null;
   const kind = asString(value.kind);
   if (!kind) return null;
@@ -677,12 +634,12 @@ function normalizeRoutineVariableExtension(value: unknown): RoutineVariable | nu
   };
 }
 
-function normalizeRoutineExtension(value: unknown): CompanyPortabilityIssueRoutineManifestEntry | null {
+function normalizeRoutineExtension(value: unknown): WorkspacePortabilityIssueRoutineManifestEntry | null {
   if (!isPlainRecord(value)) return null;
   const triggers = Array.isArray(value.triggers)
     ? value.triggers
       .map((entry) => normalizeRoutineTriggerExtension(entry))
-      .filter((entry): entry is CompanyPortabilityIssueRoutineTriggerManifestEntry => entry !== null)
+      .filter((entry): entry is WorkspacePortabilityIssueRoutineTriggerManifestEntry => entry !== null)
     : [];
   const variables = Array.isArray(value.variables)
     ? value.variables
@@ -698,7 +655,7 @@ function normalizeRoutineExtension(value: unknown): CompanyPortabilityIssueRouti
   return stripEmptyValues(routine) ? routine : null;
 }
 
-function buildRoutineManifestFromLiveRoutine(routine: RoutineLike): CompanyPortabilityIssueRoutineManifestEntry {
+function buildRoutineManifestFromLiveRoutine(routine: RoutineLike): WorkspacePortabilityIssueRoutineManifestEntry {
   return {
     concurrencyPolicy: routine.concurrencyPolicy,
     catchUpPolicy: routine.catchUpPolicy,
@@ -748,7 +705,7 @@ function disableImportedTimerHeartbeat(runtimeConfig: unknown) {
 function normalizePortableProjectWorkspaceExtension(
   workspaceKey: string,
   value: unknown,
-): CompanyPortabilityProjectWorkspaceManifestEntry | null {
+): WorkspacePortabilityProjectWorkspaceManifestEntry | null {
   if (!isPlainRecord(value)) return null;
   const normalizedKey = normalizeAgentUrlKey(workspaceKey) ?? workspaceKey.trim();
   if (!normalizedKey) return null;
@@ -890,10 +847,10 @@ async function buildPortableProjectWorkspaces(
   warnings: string[],
 ) {
   const exportedWorkspaces: Record<string, Record<string, unknown>> = {};
-  const manifestWorkspaces: CompanyPortabilityProjectWorkspaceManifestEntry[] = [];
+  const manifestWorkspaces: WorkspacePortabilityProjectWorkspaceManifestEntry[] = [];
   const workspaceKeyById = new Map<string, string>();
   const workspaceKeyBySignature = new Map<string, string>();
-  const manifestWorkspaceByKey = new Map<string, CompanyPortabilityProjectWorkspaceManifestEntry>();
+  const manifestWorkspaceByKey = new Map<string, WorkspacePortabilityProjectWorkspaceManifestEntry>();
   const usedKeys = new Set<string>();
 
   for (const workspace of workspaces ?? []) {
@@ -1036,7 +993,7 @@ function normalizeCronList(values: string[]) {
 }
 
 function buildLegacyRoutineTriggerFromRecurrence(
-  issue: Pick<CompanyPortabilityIssueManifestEntry, "slug" | "legacyRecurrence">,
+  issue: Pick<WorkspacePortabilityIssueManifestEntry, "slug" | "legacyRecurrence">,
   scheduleValue: unknown,
 ) {
   const warnings: string[] = [];
@@ -1182,14 +1139,14 @@ function buildLegacyRoutineTriggerFromRecurrence(
       timezone,
       signingMode: null,
       replayWindowSec: null,
-    } satisfies CompanyPortabilityIssueRoutineTriggerManifestEntry,
+    } satisfies WorkspacePortabilityIssueRoutineTriggerManifestEntry,
     warnings,
     errors,
   };
 }
 
 function resolvePortableRoutineDefinition(
-  issue: Pick<CompanyPortabilityIssueManifestEntry, "slug" | "recurring" | "routine" | "legacyRecurrence">,
+  issue: Pick<WorkspacePortabilityIssueManifestEntry, "slug" | "recurring" | "routine" | "legacyRecurrence">,
   scheduleValue: unknown,
 ) {
   const warnings: string[] = [];
@@ -1209,7 +1166,7 @@ function resolvePortableRoutineDefinition(
       concurrencyPolicy: null,
       catchUpPolicy: null,
       variables: null,
-      triggers: [] as CompanyPortabilityIssueRoutineTriggerManifestEntry[],
+      triggers: [] as WorkspacePortabilityIssueRoutineTriggerManifestEntry[],
     };
 
   if (routine.concurrencyPolicy && !ROUTINE_CONCURRENCY_POLICIES.includes(routine.concurrencyPolicy as any)) {
@@ -1296,7 +1253,7 @@ function uniqueProjectName(baseName: string, existingProjectSlugs: Set<string>) 
   }
 }
 
-function normalizeInclude(input?: Partial<CompanyPortabilityInclude>): CompanyPortabilityInclude {
+function normalizeInclude(input?: Partial<WorkspacePortabilityInclude>): WorkspacePortabilityInclude {
   return {
     company: input?.company ?? DEFAULT_INCLUDE.company,
     agents: input?.agents ?? DEFAULT_INCLUDE.agents,
@@ -1326,13 +1283,13 @@ function resolvePortablePath(fromPath: string, targetPath: string) {
 }
 
 function isPortableBinaryFile(
-  value: CompanyPortabilityFileEntry,
-): value is Extract<CompanyPortabilityFileEntry, { encoding: "base64" }> {
+  value: WorkspacePortabilityFileEntry,
+): value is Extract<WorkspacePortabilityFileEntry, { encoding: "base64" }> {
   return typeof value === "object" && value !== null && value.encoding === "base64" && typeof value.data === "string";
 }
 
 function readPortableTextFile(
-  files: Record<string, CompanyPortabilityFileEntry>,
+  files: Record<string, WorkspacePortabilityFileEntry>,
   filePath: string,
 ) {
   const value = files[filePath];
@@ -1366,11 +1323,11 @@ function resolveCompanyLogoExtension(contentType: string | null | undefined, ori
   return extension || ".png";
 }
 
-function portableBinaryFileToBuffer(entry: Extract<CompanyPortabilityFileEntry, { encoding: "base64" }>) {
+function portableBinaryFileToBuffer(entry: Extract<WorkspacePortabilityFileEntry, { encoding: "base64" }>) {
   return Buffer.from(entry.data, "base64");
 }
 
-function portableFileToBuffer(entry: CompanyPortabilityFileEntry, filePath: string) {
+function portableFileToBuffer(entry: WorkspacePortabilityFileEntry, filePath: string) {
   if (typeof entry === "string") {
     return Buffer.from(entry, "utf8");
   }
@@ -1380,7 +1337,7 @@ function portableFileToBuffer(entry: CompanyPortabilityFileEntry, filePath: stri
   throw unprocessable(`Unsupported file entry encoding for ${filePath}`);
 }
 
-function bufferToPortableBinaryFile(buffer: Buffer, contentType: string | null): CompanyPortabilityFileEntry {
+function bufferToPortableBinaryFile(buffer: Buffer, contentType: string | null): WorkspacePortabilityFileEntry {
   return {
     encoding: "base64",
     data: buffer.toString("base64"),
@@ -1397,11 +1354,11 @@ async function streamToBuffer(stream: NodeJS.ReadableStream) {
 }
 
 function normalizeFileMap(
-  files: Record<string, CompanyPortabilityFileEntry>,
+  files: Record<string, WorkspacePortabilityFileEntry>,
   rootPath?: string | null,
-): Record<string, CompanyPortabilityFileEntry> {
+): Record<string, WorkspacePortabilityFileEntry> {
   const normalizedRoot = rootPath ? normalizePortablePath(rootPath) : null;
-  const out: Record<string, CompanyPortabilityFileEntry> = {};
+  const out: Record<string, WorkspacePortabilityFileEntry> = {};
   for (const [rawPath, content] of Object.entries(files)) {
     let nextPath = normalizePortablePath(rawPath);
     if (normalizedRoot && nextPath === normalizedRoot) {
@@ -1416,7 +1373,7 @@ function normalizeFileMap(
   return out;
 }
 
-function pickTextFiles(files: Record<string, CompanyPortabilityFileEntry>) {
+function pickTextFiles(files: Record<string, WorkspacePortabilityFileEntry>) {
   const out: Record<string, string> = {};
   for (const [filePath, content] of Object.entries(files)) {
     if (typeof content === "string") {
@@ -1455,7 +1412,7 @@ function normalizePortableSlugList(value: unknown) {
   return normalized;
 }
 
-function normalizePortableSidebarOrder(value: unknown): CompanyPortabilitySidebarOrder | null {
+function normalizePortableSidebarOrder(value: unknown): WorkspacePortabilitySidebarOrder | null {
   if (!isPlainRecord(value)) return null;
   const sidebar = {
     agents: normalizePortableSlugList(value.agents),
@@ -1464,13 +1421,13 @@ function normalizePortableSidebarOrder(value: unknown): CompanyPortabilitySideba
   return sidebar.agents.length > 0 || sidebar.projects.length > 0 ? sidebar : null;
 }
 
-function sortAgentsBySidebarOrder<T extends { id: string; name: string; reportsTo: string | null }>(agents: T[]) {
+function sortAgentsBySidebarOrder<T extends { id: string; name: string }>(agents: T[]) {
   if (agents.length === 0) return [];
 
   const byId = new Map(agents.map((agent) => [agent.id, agent]));
   const childrenOf = new Map<string | null, T[]>();
   for (const agent of agents) {
-    const parentId = agent.reportsTo && byId.has(agent.reportsTo) ? agent.reportsTo : null;
+    const parentId = null;
     const siblings = childrenOf.get(parentId) ?? [];
     siblings.push(agent);
     childrenOf.set(parentId, siblings);
@@ -1538,7 +1495,7 @@ function filterPortableExtensionYaml(yaml: string, selectedFiles: Set<string>) {
 }
 
 function filterExportFiles(
-  files: Record<string, CompanyPortabilityFileEntry>,
+  files: Record<string, WorkspacePortabilityFileEntry>,
   selectedFilesInput: string[] | undefined,
   paperclipExtensionPath: string,
 ) {
@@ -1551,7 +1508,7 @@ function filterExportFiles(
       .map((entry) => normalizePortablePath(entry))
       .filter((entry) => entry.length > 0),
   );
-  const filtered: Record<string, CompanyPortabilityFileEntry> = {};
+  const filtered: Record<string, WorkspacePortabilityFileEntry> = {};
   for (const [filePath, content] of Object.entries(files)) {
     if (!selectedFiles.has(filePath)) continue;
     filtered[filePath] = content;
@@ -1565,7 +1522,7 @@ function filterExportFiles(
   return filtered;
 }
 
-function findPaperclipExtensionPath(files: Record<string, CompanyPortabilityFileEntry>) {
+function findPaperclipExtensionPath(files: Record<string, WorkspacePortabilityFileEntry>) {
   if (typeof files[".paperclip.yaml"] === "string") return ".paperclip.yaml";
   if (typeof files[".paperclip.yml"] === "string") return ".paperclip.yml";
   return Object.keys(files).find((entry) => entry.endsWith("/.paperclip.yaml") || entry.endsWith("/.paperclip.yml")) ?? null;
@@ -1612,7 +1569,7 @@ function extractPortableEnvInputs(
   agentSlug: string,
   envValue: unknown,
   warnings: string[],
-): CompanyPortabilityEnvInput[] {
+): WorkspacePortabilityEnvInput[] {
   return extractPortableScopedEnvInputs(
     {
       label: `agent ${agentSlug}`,
@@ -1629,7 +1586,7 @@ function extractPortableProjectEnvInputs(
   projectSlug: string,
   envValue: unknown,
   warnings: string[],
-): CompanyPortabilityEnvInput[] {
+): WorkspacePortabilityEnvInput[] {
   return extractPortableScopedEnvInputs(
     {
       label: `project ${projectSlug}`,
@@ -1899,7 +1856,7 @@ function applySelectedFilesToSource(source: ResolvedSource, selectedFiles?: stri
     throw unprocessable("Company package is missing COMPANY.md");
   }
 
-  const effectiveFiles: Record<string, CompanyPortabilityFileEntry> = {};
+  const effectiveFiles: Record<string, WorkspacePortabilityFileEntry> = {};
   for (const [filePath, content] of Object.entries(source.files)) {
     const normalizedPath = normalizePortablePath(filePath);
     if (!normalizedSelection.has(normalizedPath)) continue;
@@ -1943,7 +1900,7 @@ async function resolveBundledSkillsCommit() {
   return bundledSkillsCommitPromise;
 }
 
-async function buildSkillSourceEntry(skill: CompanySkill) {
+async function buildSkillSourceEntry(skill: WorkspaceSkill) {
   const metadata = isPlainRecord(skill.metadata) ? skill.metadata : null;
   if (asString(metadata?.sourceKind) === "paperclip_bundled") {
     const commit = await resolveBundledSkillsCommit();
@@ -1982,14 +1939,14 @@ async function buildSkillSourceEntry(skill: CompanySkill) {
   return null;
 }
 
-function shouldReferenceSkillOnExport(skill: CompanySkill, expandReferencedSkills: boolean) {
+function shouldReferenceSkillOnExport(skill: WorkspaceSkill, expandReferencedSkills: boolean) {
   if (expandReferencedSkills) return false;
   const metadata = isPlainRecord(skill.metadata) ? skill.metadata : null;
   if (asString(metadata?.sourceKind) === "paperclip_bundled") return true;
   return skill.sourceType === "github" || skill.sourceType === "skills_sh" || skill.sourceType === "url";
 }
 
-async function buildReferencedSkillMarkdown(skill: CompanySkill) {
+async function buildReferencedSkillMarkdown(skill: WorkspaceSkill) {
   const sourceEntry = await buildSkillSourceEntry(skill);
   const frontmatter: Record<string, unknown> = {
     key: skill.key,
@@ -2005,7 +1962,7 @@ async function buildReferencedSkillMarkdown(skill: CompanySkill) {
   return buildMarkdown(frontmatter, "");
 }
 
-async function withSkillSourceMetadata(skill: CompanySkill, markdown: string) {
+async function withSkillSourceMetadata(skill: WorkspaceSkill, markdown: string) {
   const sourceEntry = await buildSkillSourceEntry(skill);
   const parsed = parseFrontmatterMarkdown(markdown);
   const metadata = isPlainRecord(parsed.frontmatter.metadata)
@@ -2221,9 +2178,9 @@ async function fetchJson<T>(url: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-function dedupeEnvInputs(values: CompanyPortabilityManifest["envInputs"]) {
+function dedupeEnvInputs(values: WorkspacePortabilityManifest["envInputs"]) {
   const seen = new Set<string>();
-  const out: CompanyPortabilityManifest["envInputs"] = [];
+  const out: WorkspacePortabilityManifest["envInputs"] = [];
   for (const value of values) {
     const key = `${value.agentSlug ?? ""}:${value.projectSlug ?? ""}:${value.key.toUpperCase()}`;
     if (seen.has(key)) continue;
@@ -2233,7 +2190,7 @@ function dedupeEnvInputs(values: CompanyPortabilityManifest["envInputs"]) {
   return out;
 }
 
-function buildEnvInputMap(inputs: CompanyPortabilityEnvInput[]) {
+function buildEnvInputMap(inputs: WorkspacePortabilityEnvInput[]) {
   const env: Record<string, Record<string, unknown>> = {};
   for (const input of inputs) {
     const entry: Record<string, unknown> = {
@@ -2270,7 +2227,7 @@ function readIncludeEntries(frontmatter: Record<string, unknown>): CompanyPackag
 function readAgentEnvInputs(
   extension: Record<string, unknown>,
   agentSlug: string,
-): CompanyPortabilityManifest["envInputs"] {
+): WorkspacePortabilityManifest["envInputs"] {
   const inputs = isPlainRecord(extension.inputs) ? extension.inputs : null;
   const env = inputs && isPlainRecord(inputs.env) ? inputs.env : null;
   if (!env) return [];
@@ -2294,7 +2251,7 @@ function readAgentEnvInputs(
 function readProjectEnvInputs(
   extension: Record<string, unknown>,
   projectSlug: string,
-): CompanyPortabilityManifest["envInputs"] {
+): WorkspacePortabilityManifest["envInputs"] {
   const inputs = isPlainRecord(extension.inputs) ? extension.inputs : null;
   const env = inputs && isPlainRecord(inputs.env) ? inputs.env : null;
   if (!env) return [];
@@ -2327,8 +2284,8 @@ function readAgentSkillRefs(frontmatter: Record<string, unknown>) {
 }
 
 function buildManifestFromPackageFiles(
-  files: Record<string, CompanyPortabilityFileEntry>,
-  opts?: { sourceLabel?: { workspaceId: string; companyName: string } | null },
+  files: Record<string, WorkspacePortabilityFileEntry>,
+  opts?: { sourceLabel?: { workspaceId: string; workspaceName: string } | null },
 ): ResolvedSource {
   const normalizedFiles = normalizeFileMap(files);
   const companyPath = typeof normalizedFiles["COMPANY.md"] === "string"
@@ -2357,13 +2314,13 @@ function buildManifestFromPackageFiles(
   const paperclipProjects = isPlainRecord(paperclipExtension.projects) ? paperclipExtension.projects : {};
   const paperclipTasks = isPlainRecord(paperclipExtension.tasks) ? paperclipExtension.tasks : {};
   const paperclipRoutines = isPlainRecord(paperclipExtension.routines) ? paperclipExtension.routines : {};
-  const companyName =
+  const workspaceName =
     asString(companyFrontmatter.name)
-    ?? opts?.sourceLabel?.companyName
+    ?? opts?.sourceLabel?.workspaceName
     ?? "Imported Company";
   const companySlug =
     asString(companyFrontmatter.slug)
-    ?? normalizeAgentUrlKey(companyName)
+    ?? normalizeAgentUrlKey(workspaceName)
     ?? "company";
 
   const includeEntries = readIncludeEntries(companyFrontmatter);
@@ -2396,7 +2353,7 @@ function buildManifestFromPackageFiles(
   const taskPaths = Array.from(new Set([...referencedTaskPaths, ...discoveredTaskPaths])).sort();
   const skillPaths = Array.from(new Set([...referencedSkillPaths, ...discoveredSkillPaths])).sort();
 
-  const manifest: CompanyPortabilityManifest = {
+  const manifest: WorkspacePortabilityManifest = {
     schemaVersion: 5,
     generatedAt: new Date().toISOString(),
     source: opts?.sourceLabel ?? null,
@@ -2409,7 +2366,7 @@ function buildManifestFromPackageFiles(
     },
     company: {
       path: resolvedCompanyPath,
-      name: companyName,
+      name: workspaceName,
       description: asString(companyFrontmatter.description),
       brandColor: asString(paperclipCompany.brandColor),
       logoPath: asString(paperclipCompany.logoPath) ?? asString(paperclipCompany.logo),
@@ -2417,18 +2374,6 @@ function buildManifestFromPackageFiles(
         typeof paperclipCompany.requireBoardApprovalForNewAgents === "boolean"
           ? paperclipCompany.requireBoardApprovalForNewAgents
           : readCompanyApprovalDefault(companyFrontmatter),
-      feedbackDataSharingEnabled:
-        typeof paperclipCompany.feedbackDataSharingEnabled === "boolean"
-          ? paperclipCompany.feedbackDataSharingEnabled
-          : false,
-      feedbackDataSharingConsentAt:
-        typeof paperclipCompany.feedbackDataSharingConsentAt === "string"
-          ? paperclipCompany.feedbackDataSharingConsentAt
-          : null,
-      feedbackDataSharingConsentByUserId:
-        asString(paperclipCompany.feedbackDataSharingConsentByUserId),
-      feedbackDataSharingTermsVersion:
-        asString(paperclipCompany.feedbackDataSharingTermsVersion),
     },
     sidebar: paperclipSidebar,
     agents: [],
@@ -2472,7 +2417,7 @@ function buildManifestFromPackageFiles(
       title,
       icon: asString(extension.icon),
       capabilities: asString(extension.capabilities),
-      reportsToSlug: asString(frontmatter.reportsTo) ?? asString(extension.reportsTo),
+      reportsToSlug: asString(frontmatter?.reportsTo) ?? asString(extension?.reportsTo),
       adapterType: asString(extensionAdapter?.type) ?? "process",
       adapterConfig,
       runtimeConfig,
@@ -2595,7 +2540,7 @@ function buildManifestFromPackageFiles(
     const workspaceExtensions = isPlainRecord(extension.workspaces) ? extension.workspaces : {};
     const workspaces = Object.entries(workspaceExtensions)
       .map(([workspaceKey, entry]) => normalizePortableProjectWorkspaceExtension(workspaceKey, entry))
-      .filter((entry): entry is CompanyPortabilityProjectWorkspaceManifestEntry => entry !== null);
+      .filter((entry): entry is WorkspacePortabilityProjectWorkspaceManifestEntry => entry !== null);
     manifest.projects.push({
       slug,
       name: asString(frontmatter.name) ?? slug,
@@ -2738,17 +2683,17 @@ export function parseGitHubSourceUrl(rawUrl: string) {
 }
 
 
-export function companyPortabilityService(db: Db, storage?: StorageService) {
-  const companies = workspaceService(db);
+export function workspacePortabilityService(db: Db, storage?: StorageService) {
+  const workspaces = workspaceService(db);
   const agents = agentService(db);
   const assetRecords = assetService(db);
   const instructions = agentInstructionsService();
   const access = accessService(db);
   const projects = projectService(db);
   const issues = issueService(db);
-  const companySkills = companySkillService(db);
+  const workspaceSkills = workspaceSkillService(db);
 
-  async function resolveSource(source: CompanyPortabilityPreview["source"]): Promise<ResolvedSource> {
+  async function resolveSource(source: WorkspacePortabilityPreview["source"]): Promise<ResolvedSource> {
     if (source.type === "inline") {
       return buildManifestFromPackageFiles(
         normalizeFileMap(source.files, source.rootPath),
@@ -2784,7 +2729,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     const companyPath = parsed.companyPath === "COMPANY.md"
       ? "COMPANY.md"
       : normalizePortablePath(path.posix.relative(parsed.basePath || ".", parsed.companyPath));
-    const files: Record<string, CompanyPortabilityFileEntry> = {
+    const files: Record<string, WorkspacePortabilityFileEntry> = {
       [companyPath]: companyMarkdown,
     };
     const apiBase = gitHubApiBase(parsed.hostname);
@@ -2844,8 +2789,8 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
 
   async function exportBundle(
     workspaceId: string,
-    input: CompanyPortabilityExport,
-  ): Promise<CompanyPortabilityExportResult> {
+    input: WorkspacePortabilityExport,
+  ): Promise<WorkspacePortabilityExportResult> {
     const include = normalizeInclude({
       ...input.include,
       agents: input.agents && input.agents.length > 0 ? true : input.include?.agents,
@@ -2856,19 +2801,19 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
           : input.include?.issues,
       skills: input.skills && input.skills.length > 0 ? true : input.include?.skills,
     });
-    const company = await companies.getById(workspaceId);
+    const company = await workspaces.getById(workspaceId);
     if (!company) throw notFound("Company not found");
 
-    const files: Record<string, CompanyPortabilityFileEntry> = {};
+    const files: Record<string, WorkspacePortabilityFileEntry> = {};
     const warnings: string[] = [];
-    const envInputs: CompanyPortabilityManifest["envInputs"] = [];
+    const envInputs: WorkspacePortabilityManifest["envInputs"] = [];
     const requestedSidebarOrder = normalizePortableSidebarOrder(input.sidebarOrder);
     const rootPath = normalizeAgentUrlKey(company.name) ?? "company-package";
     let companyLogoPath: string | null = null;
 
     const allAgentRows = include.agents ? await agents.list(workspaceId, { includeTerminated: true }) : [];
     const liveAgentRows = allAgentRows.filter((agent) => agent.status !== "terminated");
-    const companySkillRows = include.skills || include.agents ? await companySkills.listFull(workspaceId) : [];
+    const workspaceSkillRows = include.skills || include.agents ? await workspaceSkills.listFull(workspaceId) : [];
     if (include.agents) {
       const skipped = allAgentRows.length - liveAgentRows.length;
       if (skipped > 0) {
@@ -3057,7 +3002,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     files[companyPath] = buildMarkdown(
       {
         name: company.name,
-        description: company.description ?? null,
+        description: null,
         schema: "agentcompanies/v1",
         slug: rootPath,
       },
@@ -3090,14 +3035,14 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     const unportableTaskWorkspaceRefs = new Map<string, { workspaceId: string; taskSlugs: string[] }>();
     const paperclipRoutinesOut: Record<string, Record<string, unknown>> = {};
 
-    const skillByReference = new Map<string, typeof companySkillRows[number]>();
-    for (const skill of companySkillRows) {
+    const skillByReference = new Map<string, typeof workspaceSkillRows[number]>();
+    for (const skill of workspaceSkillRows) {
       skillByReference.set(skill.id, skill);
       skillByReference.set(skill.key, skill);
       skillByReference.set(skill.slug, skill);
       skillByReference.set(skill.name, skill);
     }
-    const selectedSkills = new Map<string, typeof companySkillRows[number]>();
+    const selectedSkills = new Map<string, typeof workspaceSkillRows[number]>();
     for (const selector of input.skills ?? []) {
       const trimmed = selector.trim();
       if (!trimmed) continue;
@@ -3110,7 +3055,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
       selectedSkills.set(match.id, match);
     }
     if (selectedSkills.size === 0) {
-      for (const skill of companySkillRows) {
+      for (const skill of workspaceSkillRows) {
         selectedSkills.set(skill.id, skill);
       }
     }
@@ -3126,7 +3071,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
       }
 
       for (const inventoryEntry of skill.fileInventory) {
-        const fileDetail = await companySkills.readFile(workspaceId, skill.id, inventoryEntry.path).catch(() => null);
+        const fileDetail = await workspaceSkills.readFile(workspaceId, skill.id, inventoryEntry.path).catch(() => null);
         if (!fileDetail) continue;
         const filePath = `${packageDir}/${inventoryEntry.path}`;
         files[filePath] = inventoryEntry.path === "SKILL.md"
@@ -3169,7 +3114,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
             .slice(envInputsStart)
             .filter((inputValue) => inputValue.agentSlug === slug),
         );
-        const reportsToSlug = agent.reportsTo ? (idToSlug.get(agent.reportsTo) ?? null) : null;
+        const reportsToSlug = null; // reportsTo field removed (org hierarchy removed)
         const desiredSkills = readPaperclipSkillSyncPreference(
           (agent.adapterConfig as Record<string, unknown>) ?? {},
         ).desiredSkills;
@@ -3206,7 +3151,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
           },
           runtime: portableRuntimeConfig,
           permissions: portablePermissions,
-          budgetMonthlyCents: (agent.budgetMonthlyCents ?? 0) > 0 ? agent.budgetMonthlyCents : undefined,
+          budgetMonthlyCents: undefined, // field removed
           metadata: (agent.metadata as Record<string, unknown> | null) ?? null,
         });
         if (isPlainRecord(extension) && agentEnvInputs.length > 0) {
@@ -3363,10 +3308,6 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
           brandColor: company.brandColor ?? null,
           logoPath: companyLogoPath,
           requireBoardApprovalForNewAgents: company.requireBoardApprovalForNewAgents ? undefined : false,
-          feedbackDataSharingEnabled: company.feedbackDataSharingEnabled ? true : undefined,
-          feedbackDataSharingConsentAt: company.feedbackDataSharingConsentAt?.toISOString() ?? null,
-          feedbackDataSharingConsentByUserId: company.feedbackDataSharingConsentByUserId ?? null,
-          feedbackDataSharingTermsVersion: company.feedbackDataSharingTermsVersion ?? null,
         }),
         sidebar: stripEmptyValues(sidebarOrder),
         agents: Object.keys(paperclipAgents).length > 0 ? paperclipAgents : undefined,
@@ -3381,7 +3322,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     let resolved = buildManifestFromPackageFiles(finalFiles, {
       sourceLabel: {
         workspaceId: company.id,
-        companyName: company.name,
+        workspaceName: company.name,
       },
     });
     resolved.manifest.includes = {
@@ -3394,28 +3335,17 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     resolved.manifest.envInputs = dedupeEnvInputs(envInputs);
     resolved.warnings.unshift(...warnings);
 
-    // Generate org chart PNG from manifest agents
-    if (resolved.manifest.agents.length > 0) {
-      try {
-        const orgNodes = buildOrgTreeFromManifest(resolved.manifest.agents);
-        const pngBuffer = await renderOrgChartPng(orgNodes);
-        finalFiles["images/org-chart.png"] = bufferToPortableBinaryFile(pngBuffer, "image/png");
-      } catch {
-        // Non-fatal: export still works without the org chart image
-      }
-    }
-
     if (!input.selectedFiles || input.selectedFiles.some((entry) => normalizePortablePath(entry) === "README.md")) {
       finalFiles["README.md"] = generateReadme(resolved.manifest, {
-        companyName: company.name,
-        companyDescription: company.description ?? null,
+        workspaceName: company.name,
+        companyDescription: null,
       });
     }
 
     resolved = buildManifestFromPackageFiles(finalFiles, {
       sourceLabel: {
         workspaceId: company.id,
-        companyName: company.name,
+        workspaceName: company.name,
       },
     });
     resolved.manifest.includes = {
@@ -3439,9 +3369,9 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
 
   async function previewExport(
     workspaceId: string,
-    input: CompanyPortabilityExport,
-  ): Promise<CompanyPortabilityExportPreviewResult> {
-    const previewInput: CompanyPortabilityExport = {
+    input: WorkspacePortabilityExport,
+  ): Promise<WorkspacePortabilityExportPreviewResult> {
+    const previewInput: WorkspacePortabilityExport = {
       ...input,
       include: {
         ...input.include,
@@ -3474,14 +3404,14 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
   }
 
   async function buildPreview(
-    input: CompanyPortabilityPreview,
+    input: WorkspacePortabilityPreview,
     options?: ImportBehaviorOptions,
   ): Promise<ImportPlanInternal> {
     const mode = resolveImportMode(options);
     const requestedInclude = normalizeInclude(input.include);
     const source = applySelectedFilesToSource(await resolveSource(input.source), input.selectedFiles);
     const manifest = source.manifest;
-    const include: CompanyPortabilityInclude = {
+    const include: WorkspacePortabilityInclude = {
       company: requestedInclude.company && manifest.company !== null,
       agents: requestedInclude.agents && manifest.agents.length > 0,
       projects: requestedInclude.projects && manifest.projects.length > 0,
@@ -3520,7 +3450,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     }
 
     const availableSkillKeys = new Set(source.manifest.skills.map((skill) => skill.key));
-    const availableSkillSlugs = new Map<string, CompanyPortabilitySkillManifestEntry[]>();
+    const availableSkillSlugs = new Map<string, WorkspacePortabilitySkillManifestEntry[]>();
     for (const skill of source.manifest.skills) {
       const existing = availableSkillSlugs.get(skill.slug) ?? [];
       existing.push(skill);
@@ -3605,25 +3535,25 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
       }
     }
 
-    let targetCompanyId: string | null = null;
-    let targetCompanyName: string | null = null;
+    let targetWorkspaceId: string | null = null;
+    let targetWorkspaceName: string | null = null;
 
-    if (input.target.mode === "existing_company") {
-      const targetCompany = await companies.getById(input.target.workspaceId);
+    if (input.target.mode === "existing_workspace") {
+      const targetCompany = await workspaces.getById(input.target.workspaceId);
       if (!targetCompany) throw notFound("Target company not found");
-      targetCompanyId = targetCompany.id;
-      targetCompanyName = targetCompany.name;
+      targetWorkspaceId = targetCompany.id;
+      targetWorkspaceName = targetCompany.name;
     }
 
-    const agentPlans: CompanyPortabilityPreviewAgentPlan[] = [];
+    const agentPlans: WorkspacePortabilityPreviewAgentPlan[] = [];
     const existingSlugToAgent = new Map<string, { id: string; name: string }>();
     const existingSlugs = new Set<string>();
-    const projectPlans: CompanyPortabilityPreviewResult["plan"]["projectPlans"] = [];
-    const issuePlans: CompanyPortabilityPreviewResult["plan"]["issuePlans"] = [];
+    const projectPlans: WorkspacePortabilityPreviewResult["plan"]["projectPlans"] = [];
+    const issuePlans: WorkspacePortabilityPreviewResult["plan"]["issuePlans"] = [];
     const existingProjectSlugToProject = new Map<string, { id: string; name: string }>();
     const existingProjectSlugs = new Set<string>();
 
-    if (input.target.mode === "existing_company") {
+    if (input.target.mode === "existing_workspace") {
       const existingAgents = await agents.list(input.target.workspaceId);
       for (const existing of existingAgents) {
         const slug = normalizeAgentUrlKey(existing.name) ?? existing.id;
@@ -3638,7 +3568,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
         existingProjectSlugs.add(existing.urlKey);
       }
 
-      const existingSkills = await companySkills.listFull(input.target.workspaceId);
+      const existingSkills = await workspaceSkills.listFull(input.target.workspaceId);
       const existingSkillKeys = new Set(existingSkills.map((skill) => skill.key));
       const existingSkillSlugs = new Set(existingSkills.map((skill) => normalizeSkillSlug(skill.slug) ?? skill.slug));
       for (const skill of manifest.skills) {
@@ -3791,14 +3721,14 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
       }
     }
 
-    const preview: CompanyPortabilityPreviewResult = {
+    const preview: WorkspacePortabilityPreviewResult = {
       include,
-      targetCompanyId,
-      targetCompanyName,
+      targetWorkspaceId,
+      targetWorkspaceName,
       collisionStrategy,
       selectedAgentSlugs: selectedAgents.map((agent) => agent.slug),
       plan: {
-        companyAction: input.target.mode === "new_company"
+        workspaceAction: input.target.mode === "new_workspace"
           ? "create"
           : include.company && mode === "board_full"
             ? "update"
@@ -3824,18 +3754,18 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
   }
 
   async function previewImport(
-    input: CompanyPortabilityPreview,
+    input: WorkspacePortabilityPreview,
     options?: ImportBehaviorOptions,
-  ): Promise<CompanyPortabilityPreviewResult> {
+  ): Promise<WorkspacePortabilityPreviewResult> {
     const plan = await buildPreview(input, options);
     return plan.preview;
   }
 
   async function importBundle(
-    input: CompanyPortabilityImport,
+    input: WorkspacePortabilityImport,
     actorUserId: string | null | undefined,
     options?: ImportBehaviorOptions,
-  ): Promise<CompanyPortabilityImportResult> {
+  ): Promise<WorkspacePortabilityImportResult> {
     const mode = resolveImportMode(options);
     const plan = await buildPreview(input, options);
     if (plan.preview.errors.length > 0) {
@@ -3844,7 +3774,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     if (
       mode === "agent_safe"
       && (
-        plan.preview.plan.companyAction === "update"
+        plan.preview.plan.workspaceAction === "update"
         || plan.preview.plan.agentPlans.some((entry) => entry.action === "update")
         || plan.preview.plan.projectPlans.some((entry) => entry.action === "update")
       )
@@ -3857,9 +3787,9 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     const include = plan.include;
 
     let targetCompany: { id: string; name: string } | null = null;
-    let companyAction: "created" | "updated" | "unchanged" = "unchanged";
+    let workspaceAction: "created" | "updated" | "unchanged" = "unchanged";
 
-    if (input.target.mode === "new_company") {
+    if (input.target.mode === "new_workspace") {
       if (mode === "agent_safe" && !options?.sourceCompanyId) {
         throw unprocessable("Safe new-company imports require a source company context.");
       }
@@ -3869,30 +3799,17 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
           throw unprocessable("Safe new-company import requires at least one active user membership on the source company.");
         }
       }
-      const companyName =
-        asString(input.target.newCompanyName) ??
+      const workspaceName =
+        asString(input.target.newWorkspaceName) ??
         sourceManifest.company?.name ??
-        sourceManifest.source?.companyName ??
+        sourceManifest.source?.workspaceName ??
         "Imported Company";
-      const created = await companies.create({
-        name: companyName,
-        description: include.company ? (sourceManifest.company?.description ?? null) : null,
+      const created = await workspaces.create({
+        name: workspaceName,
         brandColor: include.company ? (sourceManifest.company?.brandColor ?? null) : null,
         requireBoardApprovalForNewAgents: include.company
           ? (sourceManifest.company?.requireBoardApprovalForNewAgents ?? true)
           : true,
-        feedbackDataSharingEnabled: include.company
-          ? (sourceManifest.company?.feedbackDataSharingEnabled ?? false)
-          : false,
-        feedbackDataSharingConsentAt: include.company && sourceManifest.company?.feedbackDataSharingConsentAt
-          ? new Date(sourceManifest.company.feedbackDataSharingConsentAt)
-          : null,
-        feedbackDataSharingConsentByUserId: include.company
-          ? (sourceManifest.company?.feedbackDataSharingConsentByUserId ?? null)
-          : null,
-        feedbackDataSharingTermsVersion: include.company
-          ? (sourceManifest.company?.feedbackDataSharingTermsVersion ?? null)
-          : null,
       });
       if (mode === "agent_safe" && options?.sourceCompanyId) {
         await access.copyActiveUserMemberships(options.sourceCompanyId, created.id);
@@ -3900,25 +3817,18 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
         await access.ensureMembership(created.id, "user", actorUserId ?? "board", "owner", "active");
       }
       targetCompany = created;
-      companyAction = "created";
+      workspaceAction = "created";
     } else {
-      targetCompany = await companies.getById(input.target.workspaceId);
+      targetCompany = await workspaces.getById(input.target.workspaceId);
       if (!targetCompany) throw notFound("Target company not found");
       if (include.company && sourceManifest.company && mode === "board_full") {
-        const updated = await companies.update(targetCompany.id, {
+        const updated = await workspaces.update(targetCompany.id, {
           name: sourceManifest.company.name,
-          description: sourceManifest.company.description,
           brandColor: sourceManifest.company.brandColor,
           requireBoardApprovalForNewAgents: sourceManifest.company.requireBoardApprovalForNewAgents,
-          feedbackDataSharingEnabled: sourceManifest.company.feedbackDataSharingEnabled,
-          feedbackDataSharingConsentAt: sourceManifest.company.feedbackDataSharingConsentAt
-            ? new Date(sourceManifest.company.feedbackDataSharingConsentAt)
-            : null,
-          feedbackDataSharingConsentByUserId: sourceManifest.company.feedbackDataSharingConsentByUserId,
-          feedbackDataSharingTermsVersion: sourceManifest.company.feedbackDataSharingTermsVersion,
         });
         targetCompany = updated ?? targetCompany;
-        companyAction = "updated";
+        workspaceAction = "updated";
       }
     }
 
@@ -3927,7 +3837,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     if (include.company) {
       const logoPath = sourceManifest.company?.logoPath ?? null;
       if (!logoPath) {
-        const cleared = await companies.update(targetCompany.id, { logoAssetId: null });
+        const cleared = await workspaces.update(targetCompany.id, { logoAssetId: null });
         targetCompany = cleared ?? targetCompany;
       } else {
         const logoFile = plan.source.files[logoPath];
@@ -3946,7 +3856,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
               const body = portableFileToBuffer(logoFile, logoPath);
               const stored = await storage.putFile({
                 workspaceId: targetCompany.id,
-                namespace: "assets/companies",
+                namespace: "assets/workspaces",
                 originalFilename: path.posix.basename(logoPath),
                 contentType,
                 body,
@@ -3961,7 +3871,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
                 createdByAgentId: null,
                 createdByUserId: actorUserId ?? null,
               });
-              const updated = await companies.update(targetCompany.id, {
+              const updated = await workspaces.update(targetCompany.id, {
                 logoAssetId: createdAsset.id,
               });
               targetCompany = updated ?? targetCompany;
@@ -3973,8 +3883,8 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
       }
     }
 
-    const resultAgents: CompanyPortabilityImportResult["agents"] = [];
-    const resultProjects: CompanyPortabilityImportResult["projects"] = [];
+    const resultAgents: WorkspacePortabilityImportResult["agents"] = [];
+    const resultProjects: WorkspacePortabilityImportResult["projects"] = [];
     const importedSlugToAgentId = new Map<string, string>();
     const existingSlugToAgentId = new Map<string, string>();
     const existingAgents = await agents.list(targetCompany.id);
@@ -3990,7 +3900,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     }
 
     const importedSkills = include.skills || include.agents
-      ? await companySkills.importPackageFiles(targetCompany.id, pickTextFiles(plan.source.files), {
+      ? await workspaceSkills.importPackageFiles(targetCompany.id, pickTextFiles(plan.source.files), {
           onConflict: resolveSkillConflictStrategy(mode, plan.collisionStrategy),
         })
       : [];
@@ -4144,20 +4054,7 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
         });
       }
 
-      // Apply reporting links once all imported agent ids are available.
-      for (const manifestAgent of plan.selectedAgents) {
-        const agentId = importedSlugToAgentId.get(manifestAgent.slug);
-        if (!agentId) continue;
-        const managerSlug = manifestAgent.reportsToSlug;
-        if (!managerSlug) continue;
-        const managerId = importedSlugToAgentId.get(managerSlug) ?? existingSlugToAgentId.get(managerSlug) ?? null;
-        if (!managerId || managerId === agentId) continue;
-        try {
-          await agents.update(agentId, { reportsTo: managerId });
-        } catch {
-          warnings.push(`Could not assign manager ${managerSlug} for imported agent ${manifestAgent.slug}.`);
-        }
-      }
+      // reportsTo (org hierarchy) removed — skip manager link assignment
     }
 
     if (include.projects) {
@@ -4394,10 +4291,10 @@ export function companyPortabilityService(db: Db, storage?: StorageService) {
     }
 
     return {
-      company: {
+      workspace: {
         id: targetCompany.id,
         name: targetCompany.name,
-        action: companyAction,
+        action: workspaceAction,
       },
       agents: resultAgents,
       projects: resultProjects,

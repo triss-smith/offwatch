@@ -17,7 +17,7 @@ import { activityApi } from "../api/activity";
 import { issuesApi } from "../api/issues";
 import { usePanel } from "../context/PanelContext";
 import { useSidebar } from "../context/SidebarContext";
-import { useWorkspace } from "../context/WorkspaceContext";
+import { useWorkspace, useCompany } from "../context/WorkspaceContext";
 import { useToast } from "../context/ToastContext";
 import { useDialog } from "../context/DialogContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
@@ -691,15 +691,11 @@ export function AgentDetail() {
 
   const assignedIssues = (allIssues ?? [])
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  const reportsToAgent = (allAgents ?? []).find((a) => a.id === agent?.reportsTo);
-  const directReports = (allAgents ?? []).filter((a) => a.reportsTo === agent?.id && a.status !== "terminated");
   const agentBudgetSummary = useMemo(() => {
     const matched = budgetOverview?.policies.find(
       (policy) => policy.scopeType === "agent" && policy.scopeId === (agent?.id ?? routeAgentRef),
     );
     if (matched) return matched;
-    const budgetMonthlyCents = agent?.budgetMonthlyCents ?? 0;
-    const spentMonthlyCents = agent?.spentMonthlyCents ?? 0;
     return {
       policyId: "",
       workspaceId: resolvedCompanyId ?? "",
@@ -708,18 +704,17 @@ export function AgentDetail() {
       scopeName: agent?.name ?? "Agent",
       metric: "billed_cents",
       windowKind: "calendar_month_utc",
-      amount: budgetMonthlyCents,
-      observedAmount: spentMonthlyCents,
-      remainingAmount: Math.max(0, budgetMonthlyCents - spentMonthlyCents),
-      utilizationPercent:
-        budgetMonthlyCents > 0 ? Number(((spentMonthlyCents / budgetMonthlyCents) * 100).toFixed(2)) : 0,
+      amount: 0,
+      observedAmount: 0,
+      remainingAmount: 0,
+      utilizationPercent: 0,
       warnPercent: 80,
       hardStopEnabled: true,
       notifyEnabled: true,
-      isActive: budgetMonthlyCents > 0,
-      status: budgetMonthlyCents > 0 && spentMonthlyCents >= budgetMonthlyCents ? "hard_stop" : "ok",
+      isActive: false,
+      status: "ok",
       paused: agent?.status === "paused",
-      pauseReason: agent?.pauseReason ?? null,
+      pauseReason: null,
       windowStart: new Date(),
       windowEnd: new Date(),
     } satisfies BudgetPolicySummary;

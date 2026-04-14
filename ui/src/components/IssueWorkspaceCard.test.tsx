@@ -24,7 +24,7 @@ vi.mock("../api/execution-workspaces", () => ({
   executionWorkspacesApi: mockExecutionWorkspacesApi,
 }));
 
-vi.mock("../context/CompanyContext", () => ({
+vi.mock("../context/WorkspaceContext", () => ({
   useCompany: () => ({
     selectedCompanyId: "company-1",
   }),

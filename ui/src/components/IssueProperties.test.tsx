@@ -26,7 +26,7 @@ const mockAuthApi = vi.hoisted(() => ({
   getSession: vi.fn(),
 }));
 
-vi.mock("../context/CompanyContext", () => ({
+vi.mock("../context/WorkspaceContext", () => ({
   useCompany: () => ({
     selectedCompanyId: "company-1",
   }),

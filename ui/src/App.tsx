@@ -22,7 +22,7 @@ import { ApprovalDetail } from "./pages/ApprovalDetail";
 import { Activity } from "./pages/Activity";
 import { Inbox } from "./pages/Inbox";
 import { WorkspaceSettings } from "./pages/WorkspaceSettings";
-import { CompanySkills } from "./pages/CompanySkills";
+import { WorkspaceSkills } from "./pages/CompanySkills";
 import { DesignGuide } from "./pages/DesignGuide";
 import { InstanceGeneralSettings } from "./pages/InstanceGeneralSettings";
 import { InstanceSettings } from "./pages/InstanceSettings";
@@ -120,7 +120,7 @@ function boardRoutes() {
       <Route path="onboarding" element={<OnboardingRoutePage />} />
       <Route path="workspaces" element={<Workspaces />} />
       <Route path="workspace/settings" element={<WorkspaceSettings />} />
-      <Route path="skills/*" element={<CompanySkills />} />
+      <Route path="skills/*" element={<WorkspaceSkills />} />
       <Route path="settings" element={<LegacySettingsRedirect />} />
       <Route path="settings/*" element={<LegacySettingsRedirect />} />
       <Route path="plugins/:pluginId" element={<PluginPage />} />

@@ -21,7 +21,7 @@ import type {
   PluginLauncherRenderContextSnapshot,
   PluginLauncherRenderEnvironment,
   PluginStateScopeKind,
-  Company,
+  Workspace,
   Project,
   Issue,
   IssueComment,
@@ -481,7 +481,7 @@ export interface WorkerToHostMethods {
 
   // Events
   "events.emit": [
-    params: { name: string; companyId: string; payload: unknown },
+    params: { name: string; workspaceId: string; payload: unknown },
     result: void,
   ];
   "events.subscribe": [
@@ -504,7 +504,7 @@ export interface WorkerToHostMethods {
   // Activity
   "activity.log": [
     params: {
-      companyId: string;
+      workspaceId: string;
       message: string;
       entityType?: string;
       entityId?: string;
@@ -534,39 +534,39 @@ export interface WorkerToHostMethods {
   // Companies (read)
   "companies.list": [
     params: { limit?: number; offset?: number },
-    result: Company[],
+    result: Workspace[],
   ];
   "companies.get": [
-    params: { companyId: string },
-    result: Company | null,
+    params: { workspaceId: string },
+    result: Workspace | null,
   ];
 
   // Projects (read)
   "projects.list": [
-    params: { companyId: string; limit?: number; offset?: number },
+    params: { workspaceId: string; limit?: number; offset?: number },
     result: Project[],
   ];
   "projects.get": [
-    params: { projectId: string; companyId: string },
+    params: { projectId: string; workspaceId: string },
     result: Project | null,
   ];
   "projects.listWorkspaces": [
-    params: { projectId: string; companyId: string },
+    params: { projectId: string; workspaceId: string },
     result: PluginWorkspace[],
   ];
   "projects.getPrimaryWorkspace": [
-    params: { projectId: string; companyId: string },
+    params: { projectId: string; workspaceId: string },
     result: PluginWorkspace | null,
   ];
   "projects.getWorkspaceForIssue": [
-    params: { issueId: string; companyId: string },
+    params: { issueId: string; workspaceId: string },
     result: PluginWorkspace | null,
   ];
 
   // Issues
   "issues.list": [
     params: {
-      companyId: string;
+      workspaceId: string;
       projectId?: string;
       assigneeAgentId?: string;
       status?: string;
@@ -576,12 +576,12 @@ export interface WorkerToHostMethods {
     result: Issue[],
   ];
   "issues.get": [
-    params: { issueId: string; companyId: string },
+    params: { issueId: string; workspaceId: string },
     result: Issue | null,
   ];
   "issues.create": [
     params: {
-      companyId: string;
+      workspaceId: string;
       projectId?: string;
       goalId?: string;
       parentId?: string;
@@ -597,26 +597,26 @@ export interface WorkerToHostMethods {
     params: {
       issueId: string;
       patch: Record<string, unknown>;
-      companyId: string;
+      workspaceId: string;
     },
     result: Issue,
   ];
   "issues.listComments": [
-    params: { issueId: string; companyId: string },
+    params: { issueId: string; workspaceId: string },
     result: IssueComment[],
   ];
   "issues.createComment": [
-    params: { issueId: string; body: string; companyId: string; authorAgentId?: string },
+    params: { issueId: string; body: string; workspaceId: string; authorAgentId?: string },
     result: IssueComment,
   ];
 
   // Issue Documents
   "issues.documents.list": [
-    params: { issueId: string; companyId: string },
+    params: { issueId: string; workspaceId: string },
     result: IssueDocumentSummary[],
   ];
   "issues.documents.get": [
-    params: { issueId: string; key: string; companyId: string },
+    params: { issueId: string; key: string; workspaceId: string },
     result: IssueDocument | null,
   ];
   "issues.documents.upsert": [
@@ -624,7 +624,7 @@ export interface WorkerToHostMethods {
       issueId: string;
       key: string;
       body: string;
-      companyId: string;
+      workspaceId: string;
       title?: string;
       format?: string;
       changeSummary?: string;
@@ -632,64 +632,64 @@ export interface WorkerToHostMethods {
     result: IssueDocument,
   ];
   "issues.documents.delete": [
-    params: { issueId: string; key: string; companyId: string },
+    params: { issueId: string; key: string; workspaceId: string },
     result: void,
   ];
 
   // Agents (read)
   "agents.list": [
-    params: { companyId: string; status?: string; limit?: number; offset?: number },
+    params: { workspaceId: string; status?: string; limit?: number; offset?: number },
     result: Agent[],
   ];
   "agents.get": [
-    params: { agentId: string; companyId: string },
+    params: { agentId: string; workspaceId: string },
     result: Agent | null,
   ];
 
   // Agents (write)
   "agents.pause": [
-    params: { agentId: string; companyId: string },
+    params: { agentId: string; workspaceId: string },
     result: Agent,
   ];
   "agents.resume": [
-    params: { agentId: string; companyId: string },
+    params: { agentId: string; workspaceId: string },
     result: Agent,
   ];
   "agents.invoke": [
-    params: { agentId: string; companyId: string; prompt: string; reason?: string },
+    params: { agentId: string; workspaceId: string; prompt: string; reason?: string },
     result: { runId: string },
   ];
 
   // Agent Sessions
   "agents.sessions.create": [
-    params: { agentId: string; companyId: string; taskKey?: string; reason?: string },
-    result: { sessionId: string; agentId: string; companyId: string; status: "active" | "closed"; createdAt: string },
+    params: { agentId: string; workspaceId: string; taskKey?: string; reason?: string },
+    result: { sessionId: string; agentId: string; workspaceId: string; status: "active" | "closed"; createdAt: string },
   ];
   "agents.sessions.list": [
-    params: { agentId: string; companyId: string },
-    result: Array<{ sessionId: string; agentId: string; companyId: string; status: "active" | "closed"; createdAt: string }>,
+    params: { agentId: string; workspaceId: string },
+    result: Array<{ sessionId: string; agentId: string; workspaceId: string; status: "active" | "closed"; createdAt: string }>,
   ];
   "agents.sessions.sendMessage": [
-    params: { sessionId: string; companyId: string; prompt: string; reason?: string },
+    params: { sessionId: string; workspaceId: string; prompt: string; reason?: string },
     result: { runId: string },
   ];
   "agents.sessions.close": [
-    params: { sessionId: string; companyId: string },
+    params: { sessionId: string; workspaceId: string },
     result: void,
   ];
 
   // Goals
   "goals.list": [
-    params: { companyId: string; level?: string; status?: string; limit?: number; offset?: number },
+    params: { workspaceId: string; level?: string; status?: string; limit?: number; offset?: number },
     result: Goal[],
   ];
   "goals.get": [
-    params: { goalId: string; companyId: string },
+    params: { goalId: string; workspaceId: string },
     result: Goal | null,
   ];
   "goals.create": [
     params: {
-      companyId: string;
+      workspaceId: string;
       title: string;
       description?: string;
       level?: string;
@@ -703,7 +703,7 @@ export interface WorkerToHostMethods {
     params: {
       goalId: string;
       patch: Record<string, unknown>;
-      companyId: string;
+      workspaceId: string;
     },
     result: Goal,
   ];
@@ -728,28 +728,28 @@ export interface WorkerToHostNotifications {
    *
    * Emitted by the worker for each event on a stream channel. The host
    * publishes to the PluginStreamBus, which fans out to all SSE clients
-   * subscribed to the (pluginId, channel, companyId) tuple.
+   * subscribed to the (pluginId, channel, workspaceId) tuple.
    *
    * The `event` payload is JSON-serializable and sent as SSE `data:`.
    * The default SSE event type is `"message"`.
    */
   "streams.emit": {
     channel: string;
-    companyId: string;
+    workspaceId: string;
     event: unknown;
   };
 
   /**
    * Signal that a stream channel has been opened.
    *
-   * Emitted when the worker calls `ctx.streams.open(channel, companyId)`.
+   * Emitted when the worker calls `ctx.streams.open(channel, workspaceId)`.
    * UI clients may use this to display a "connected" indicator or begin
    * buffering input. The host tracks open channels so it can emit synthetic
    * close events if the worker crashes.
    */
   "streams.open": {
     channel: string;
-    companyId: string;
+    workspaceId: string;
   };
 
   /**
@@ -762,7 +762,7 @@ export interface WorkerToHostNotifications {
    */
   "streams.close": {
     channel: string;
-    companyId: string;
+    workspaceId: string;
   };
 }
 

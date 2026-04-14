@@ -1,6 +1,6 @@
 export { workspaceService } from "./workspaces.js";
 export { feedbackService } from "./feedback.js";
-export { companySkillService } from "./company-skills.js";
+export { workspaceSkillService } from "./workspace-skills.js";
 export { agentService, deduplicateAgentName } from "./agents.js";
 export { agentInstructionsService, syncInstructionsBundleConfigFromFilePath } from "./agent-instructions.js";
 export { assetService } from "./assets.js";
@@ -23,7 +23,7 @@ export { inboxDismissalService } from "./inbox-dismissals.js";
 export { accessService } from "./access.js";
 export { boardAuthService } from "./board-auth.js";
 export { instanceSettingsService } from "./instance-settings.js";
-export { companyPortabilityService } from "./company-portability.js";
+export { workspacePortabilityService } from "./workspace-portability.js";
 export { executionWorkspaceService } from "./execution-workspaces.js";
 export { workspaceOperationService } from "./workspace-operations.js";
 export { workProductService } from "./work-products.js";

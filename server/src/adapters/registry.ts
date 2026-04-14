@@ -180,13 +180,19 @@ const piLocalAdapter: ServerAdapterModule = {
   agentConfigurationDoc: piAgentConfigurationDoc,
 };
 
+// hermes-paperclip-adapter is an external npm package built against an older
+// version of @paperclipai/adapter-utils — cast to suppress the type mismatch.
 const hermesLocalAdapter: ServerAdapterModule = {
   type: "hermes_local",
-  execute: hermesExecute,
-  testEnvironment: hermesTestEnvironment,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  execute: hermesExecute as any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  testEnvironment: hermesTestEnvironment as any,
   sessionCodec: hermesSessionCodec,
-  listSkills: hermesListSkills,
-  syncSkills: hermesSyncSkills,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  listSkills: hermesListSkills as any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  syncSkills: hermesSyncSkills as any,
   models: hermesModels,
   supportsLocalAgentJwt: true,
   agentConfigurationDoc: hermesAgentConfigurationDoc,

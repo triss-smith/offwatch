@@ -99,7 +99,7 @@ describe("cli auth routes", () => {
       command: "paperclipai company import",
       clientName: "paperclipai cli",
       requestedAccess: "board",
-      requestedCompanyId: null,
+      requestedWorkspaceId: null,
       requestedCompanyName: null,
       approvedAt: null,
       cancelledAt: null,
@@ -122,7 +122,7 @@ describe("cli auth routes", () => {
         id: "challenge-1",
         boardApiKeyId: "board-key-1",
         requestedAccess: "board",
-        requestedCompanyId: "company-1",
+        requestedWorkspaceId: "company-1",
         expiresAt: new Date("2026-03-23T13:00:00.000Z"),
       },
     });
@@ -167,7 +167,7 @@ describe("cli auth routes", () => {
         id: "challenge-2",
         boardApiKeyId: "board-key-2",
         requestedAccess: "instance_admin_required",
-        requestedCompanyId: null,
+        requestedWorkspaceId: null,
         expiresAt: new Date("2026-03-23T13:00:00.000Z"),
       },
     });
@@ -187,7 +187,7 @@ describe("cli auth routes", () => {
     expect(res.status).toBe(200);
     expect(mockBoardAuthService.resolveBoardActivityCompanyIds).toHaveBeenCalledWith({
       userId: "admin-1",
-      requestedCompanyId: null,
+      requestedWorkspaceId: null,
       boardApiKeyId: "board-key-2",
     });
     expect(mockLogActivity).toHaveBeenCalledTimes(2);

@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
   agents,
   approvals,
-  companies,
+  workspaces,
   createDb,
   heartbeatRuns,
   inboxDismissals,
@@ -46,7 +46,7 @@ describeEmbeddedPostgres("inbox dismissals", () => {
     await db.delete(heartbeatRuns);
     await db.delete(approvals);
     await db.delete(agents);
-    await db.delete(companies);
+    await db.delete(workspaces);
   });
 
   afterAll(async () => {
@@ -59,7 +59,7 @@ describeEmbeddedPostgres("inbox dismissals", () => {
     const firstDismissedAt = new Date("2026-03-11T01:00:00.000Z");
     const secondDismissedAt = new Date("2026-03-11T02:00:00.000Z");
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix: "PAP",
@@ -88,7 +88,7 @@ describeEmbeddedPostgres("inbox dismissals", () => {
     const hiddenRunId = randomUUID();
     const visibleRunId = randomUUID();
 
-    await db.insert(companies).values({
+    await db.insert(workspaces).values({
       id: companyId,
       name: "Paperclip",
       issuePrefix: "PAP",

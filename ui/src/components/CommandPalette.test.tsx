@@ -33,7 +33,7 @@ const mockProjectsApi = vi.hoisted(() => ({
   list: vi.fn(),
 }));
 
-vi.mock("../context/CompanyContext", () => ({
+vi.mock("../context/WorkspaceContext", () => ({
   useCompany: () => companyState,
 }));
 

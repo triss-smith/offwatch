@@ -2,7 +2,7 @@ import { Router, type Request } from "express";
 import { generateKeyPairSync, randomUUID } from "node:crypto";
 import path from "node:path";
 import type { Db } from "@paperclipai/db";
-import { agents as agentsTable, companies, heartbeatRuns, issues as issuesTable } from "@paperclipai/db";
+import { agents as agentsTable, workspaces, heartbeatRuns, issues as issuesTable } from "@paperclipai/db";
 import { and, desc, eq, inArray, not, sql } from "drizzle-orm";
 import {
   agentSkillSyncSchema,
@@ -34,8 +34,7 @@ import {
   agentInstructionsService,
   accessService,
   approvalService,
-  companySkillService,
-  budgetService,
+  workspaceSkillService,
   heartbeatService,
   issueApprovalService,
   issueService,
@@ -55,7 +54,6 @@ import {
 } from "../adapters/index.js";
 import { redactEventPayload } from "../redaction.js";
 import { redactCurrentUserValue } from "../log-redaction.js";
-import { renderOrgChartSvg, renderOrgChartPng, type OrgNode, type OrgChartStyle, ORG_CHART_STYLES } from "./org-chart-svg.js";
 import { instanceSettingsService } from "../services/instance-settings.js";
 import { runClaudeLogin } from "@paperclipai/adapter-claude-local/server";
 import {
@@ -96,12 +94,11 @@ export function agentRoutes(db: Db) {
   const svc = agentService(db);
   const access = accessService(db);
   const approvalsSvc = approvalService(db);
-  const budgets = budgetService(db);
   const heartbeat = heartbeatService(db);
   const issueApprovalsSvc = issueApprovalService(db);
   const secretsSvc = secretService(db);
   const instructions = agentInstructionsService();
-  const companySkills = companySkillService(db);
+  const workspaceSkills = workspaceSkillService(db);
   const workspaceOperations = workspaceOperationService(db);
   const instanceSettings = instanceSettingsService(db);
   const strictSecretsMode = process.env.PAPERCLIP_SECRETS_STRICT_MODE === "true";
@@ -163,14 +160,10 @@ export function agentRoutes(db: Db) {
     agent: NonNullable<Awaited<ReturnType<typeof svc.getById>>>,
     options?: { restricted?: boolean },
   ) {
-    const [chainOfCommand, accessState] = await Promise.all([
-      svc.getChainOfCommand(agent.id),
-      buildAgentAccessState(agent),
-    ]);
+    const accessState = await buildAgentAccessState(agent);
 
     return {
       ...(options?.restricted ? redactForRestrictedAgentView(agent) : agent),
-      chainOfCommand,
       access: accessState,
     };
   }
@@ -347,13 +340,13 @@ export function agentRoutes(db: Db) {
 
   async function resolveCompanyIdForAgentReference(req: Request): Promise<string | null> {
     const workspaceIdQuery = req.query.workspaceId;
-    const requestedCompanyId =
+    const requestedWorkspaceId =
       typeof workspaceIdQuery === "string" && workspaceIdQuery.trim().length > 0
         ? workspaceIdQuery.trim()
         : null;
-    if (requestedCompanyId) {
-      assertCompanyAccess(req, requestedCompanyId);
-      return requestedCompanyId;
+    if (requestedWorkspaceId) {
+      assertCompanyAccess(req, requestedWorkspaceId);
+      return requestedWorkspaceId;
     }
     if (req.actor.type === "agent" && req.actor.workspaceId) {
       return req.actor.workspaceId;
@@ -601,10 +594,7 @@ export function agentRoutes(db: Db) {
     }
     if (actorAgent.id === targetAgent.id) return;
 
-    const chainOfCommand = await svc.getChainOfCommand(targetAgent.id);
-    if (chainOfCommand.some((manager) => manager.id === actorAgent.id)) return;
-
-    throw forbidden("Only the target agent or an ancestor manager can update instructions path");
+    throw forbidden("Only the target agent can update instructions path");
   }
 
   function summarizeAgentUpdateDetails(patch: Record<string, unknown>) {
@@ -654,7 +644,7 @@ export function agentRoutes(db: Db) {
     adapterType: string,
     config: Record<string, unknown>,
   ) {
-    const runtimeSkillEntries = await companySkills.listRuntimeSkillEntries(workspaceId, {
+    const runtimeSkillEntries = await workspaceSkills.listRuntimeSkillEntries(workspaceId, {
       materializeMissing: shouldMaterializeRuntimeSkillsForAdapter(adapterType),
     });
     return {
@@ -673,15 +663,15 @@ export function agentRoutes(db: Db) {
       return {
         adapterConfig,
         desiredSkills: null as string[] | null,
-        runtimeSkillEntries: null as Awaited<ReturnType<typeof companySkills.listRuntimeSkillEntries>> | null,
+        runtimeSkillEntries: null as Awaited<ReturnType<typeof workspaceSkills.listRuntimeSkillEntries>> | null,
       };
     }
 
-    const resolvedRequestedSkills = await companySkills.resolveRequestedSkillKeys(
+    const resolvedRequestedSkills = await workspaceSkills.resolveRequestedSkillKeys(
       workspaceId,
       requestedDesiredSkills,
     );
-    const runtimeSkillEntries = await companySkills.listRuntimeSkillEntries(workspaceId, {
+    const runtimeSkillEntries = await workspaceSkills.listRuntimeSkillEntries(workspaceId, {
       materializeMissing: shouldMaterializeRuntimeSkillsForAdapter(adapterType),
     });
     const requiredSkills = runtimeSkillEntries
@@ -714,7 +704,6 @@ export function agentRoutes(db: Db) {
       role: agent.role,
       title: agent.title,
       status: agent.status,
-      reportsTo: agent.reportsTo,
       adapterType: agent.adapterType,
       adapterConfig: redactEventPayload(agent.adapterConfig),
       runtimeConfig: redactEventPayload(agent.runtimeConfig),
@@ -752,19 +741,6 @@ export function agentRoutes(db: Db) {
       ...revision,
       beforeConfig: redactRevisionSnapshot(revision.beforeConfig),
       afterConfig: redactRevisionSnapshot(revision.afterConfig),
-    };
-  }
-
-  function toLeanOrgNode(node: Record<string, unknown>): Record<string, unknown> {
-    const reports = Array.isArray(node.reports)
-      ? (node.reports as Array<Record<string, unknown>>).map((report) => toLeanOrgNode(report))
-      : [];
-    return {
-      id: String(node.id),
-      name: String(node.name),
-      role: String(node.role),
-      status: String(node.status),
-      reports,
     };
   }
 
@@ -840,7 +816,7 @@ export function agentRoutes(db: Db) {
       const preference = readPaperclipSkillSyncPreference(
         agent.adapterConfig as Record<string, unknown>,
       );
-      const runtimeSkillEntries = await companySkills.listRuntimeSkillEntries(agent.workspaceId, {
+      const runtimeSkillEntries = await workspaceSkills.listRuntimeSkillEntries(agent.workspaceId, {
         materializeMissing: false,
       });
       const requiredSkills = runtimeSkillEntries.filter((entry) => entry.required).map((entry) => entry.key);
@@ -987,12 +963,12 @@ export function agentRoutes(db: Db) {
         adapterType: agentsTable.adapterType,
         runtimeConfig: agentsTable.runtimeConfig,
         lastHeartbeatAt: agentsTable.lastHeartbeatAt,
-        companyName: companies.name,
-        companyIssuePrefix: companies.issuePrefix,
+        companyName: workspaces.name,
+        companyIssuePrefix: workspaces.issuePrefix,
       })
       .from(agentsTable)
-      .innerJoin(companies, eq(agentsTable.workspaceId, companies.id))
-      .orderBy(companies.name, agentsTable.name);
+      .innerJoin(workspaces, eq(agentsTable.workspaceId, workspaces.id))
+      .orderBy(workspaces.name, agentsTable.name);
 
     const items: InstanceSchedulerHeartbeatAgent[] = rows
       .map((row) => {
@@ -1034,38 +1010,6 @@ export function agentRoutes(db: Db) {
       });
 
     res.json(items);
-  });
-
-  router.get("/workspaces/:workspaceId/org", async (req, res) => {
-    const workspaceId = req.params.workspaceId as string;
-    assertCompanyAccess(req, workspaceId);
-    const tree = await svc.orgForCompany(workspaceId);
-    const leanTree = tree.map((node) => toLeanOrgNode(node as Record<string, unknown>));
-    res.json(leanTree);
-  });
-
-  router.get("/workspaces/:workspaceId/org.svg", async (req, res) => {
-    const workspaceId = req.params.workspaceId as string;
-    assertCompanyAccess(req, workspaceId);
-    const style = (ORG_CHART_STYLES.includes(req.query.style as OrgChartStyle) ? req.query.style : "warmth") as OrgChartStyle;
-    const tree = await svc.orgForCompany(workspaceId);
-    const leanTree = tree.map((node) => toLeanOrgNode(node as Record<string, unknown>));
-    const svg = renderOrgChartSvg(leanTree as unknown as OrgNode[], style);
-    res.setHeader("Content-Type", "image/svg+xml");
-    res.setHeader("Cache-Control", "no-cache");
-    res.send(svg);
-  });
-
-  router.get("/workspaces/:workspaceId/org.png", async (req, res) => {
-    const workspaceId = req.params.workspaceId as string;
-    assertCompanyAccess(req, workspaceId);
-    const style = (ORG_CHART_STYLES.includes(req.query.style as OrgChartStyle) ? req.query.style : "warmth") as OrgChartStyle;
-    const tree = await svc.orgForCompany(workspaceId);
-    const leanTree = tree.map((node) => toLeanOrgNode(node as Record<string, unknown>));
-    const png = await renderOrgChartPng(leanTree as unknown as OrgNode[], style);
-    res.setHeader("Content-Type", "image/png");
-    res.setHeader("Cache-Control", "no-cache");
-    res.send(png);
   });
 
   router.get("/workspaces/:workspaceId/agent-configurations", async (req, res) => {
@@ -1372,15 +1316,10 @@ export function agentRoutes(db: Db) {
           role: normalizedHireInput.role,
           title: normalizedHireInput.title ?? null,
           icon: normalizedHireInput.icon ?? null,
-          reportsTo: normalizedHireInput.reportsTo ?? null,
           capabilities: normalizedHireInput.capabilities ?? null,
           adapterType: requestedAdapterType,
           adapterConfig: requestedAdapterConfig,
           runtimeConfig: requestedRuntimeConfig,
-          budgetMonthlyCents:
-            typeof normalizedHireInput.budgetMonthlyCents === "number"
-              ? normalizedHireInput.budgetMonthlyCents
-              : agent.budgetMonthlyCents,
           desiredSkills: desiredSkillAssignment.desiredSkills,
           metadata: requestedMetadata,
           agentId: agent.id,
@@ -1522,19 +1461,6 @@ export function agentRoutes(db: Db) {
       agent.id,
       req.actor.type === "board" ? (req.actor.userId ?? null) : null,
     );
-
-    if (agent.budgetMonthlyCents > 0) {
-      await budgets.upsertPolicy(
-        workspaceId,
-        {
-          scopeType: "agent",
-          scopeId: agent.id,
-          amount: agent.budgetMonthlyCents,
-          windowKind: "calendar_month_utc",
-        },
-        actor.actorType === "user" ? actor.actorId : null,
-      );
-    }
 
     res.status(201).json(agent);
   });

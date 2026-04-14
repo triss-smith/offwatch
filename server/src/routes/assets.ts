@@ -258,7 +258,7 @@ export function assetRoutes(db: Db, storage: StorageService) {
     const actor = getActorInfo(req);
     const stored = await storage.putFile({
       workspaceId,
-      namespace: "assets/companies",
+      namespace: "assets/workspaces",
       originalFilename: file.originalname || null,
       contentType,
       body: fileBody,
@@ -288,7 +288,7 @@ export function assetRoutes(db: Db, storage: StorageService) {
         originalFilename: asset.originalFilename,
         contentType: asset.contentType,
         byteSize: asset.byteSize,
-        namespace: "assets/companies",
+        namespace: "assets/workspaces",
       },
     });
 

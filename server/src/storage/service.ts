@@ -43,8 +43,8 @@ function splitFilename(filename: string | null): { stem: string; ext: string } {
   };
 }
 
-function ensureCompanyPrefix(companyId: string, objectKey: string): void {
-  const expectedPrefix = `${companyId}/`;
+function ensureCompanyPrefix(workspaceId: string, objectKey: string): void {
+  const expectedPrefix = `${workspaceId}/`;
   if (!objectKey.startsWith(expectedPrefix)) {
     throw forbidden("Object does not belong to company");
   }
@@ -57,7 +57,7 @@ function hashBuffer(input: Buffer): string {
   return createHash("sha256").update(input).digest("hex");
 }
 
-function buildObjectKey(companyId: string, namespace: string, originalFilename: string | null): string {
+function buildObjectKey(workspaceId: string, namespace: string, originalFilename: string | null): string {
   const ns = normalizeNamespace(namespace);
   const now = new Date();
   const year = String(now.getUTCFullYear());
@@ -66,11 +66,11 @@ function buildObjectKey(companyId: string, namespace: string, originalFilename: 
   const { stem, ext } = splitFilename(originalFilename);
   const suffix = randomUUID();
   const filename = `${suffix}-${stem}${ext}`;
-  return `${companyId}/${ns}/${year}/${month}/${day}/${filename}`;
+  return `${workspaceId}/${ns}/${year}/${month}/${day}/${filename}`;
 }
 
 function assertPutFileInput(input: PutFileInput): void {
-  if (!input.companyId || input.companyId.trim().length === 0) {
+  if (!input.workspaceId || input.workspaceId.trim().length === 0) {
     throw unprocessable("companyId is required");
   }
   if (!input.namespace || input.namespace.trim().length === 0) {
@@ -93,7 +93,7 @@ export function createStorageService(provider: StorageProvider): StorageService 
 
     async putFile(input: PutFileInput): Promise<PutFileResult> {
       assertPutFileInput(input);
-      const objectKey = buildObjectKey(input.companyId, input.namespace, input.originalFilename);
+      const objectKey = buildObjectKey(input.workspaceId, input.namespace, input.originalFilename);
       const byteSize = input.body.length;
       const contentType = input.contentType.trim().toLowerCase();
       await provider.putObject({
@@ -113,18 +113,18 @@ export function createStorageService(provider: StorageProvider): StorageService 
       };
     },
 
-    async getObject(companyId: string, objectKey: string) {
-      ensureCompanyPrefix(companyId, objectKey);
+    async getObject(workspaceId: string, objectKey: string) {
+      ensureCompanyPrefix(workspaceId, objectKey);
       return provider.getObject({ objectKey });
     },
 
-    async headObject(companyId: string, objectKey: string) {
-      ensureCompanyPrefix(companyId, objectKey);
+    async headObject(workspaceId: string, objectKey: string) {
+      ensureCompanyPrefix(workspaceId, objectKey);
       return provider.headObject({ objectKey });
     },
 
-    async deleteObject(companyId: string, objectKey: string) {
-      ensureCompanyPrefix(companyId, objectKey);
+    async deleteObject(workspaceId: string, objectKey: string) {
+      ensureCompanyPrefix(workspaceId, objectKey);
       await provider.deleteObject({ objectKey });
     },
   };

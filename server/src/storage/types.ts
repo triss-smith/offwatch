@@ -37,7 +37,7 @@ export interface StorageProvider {
 }
 
 export interface PutFileInput {
-  companyId: string;
+  workspaceId: string;
   namespace: string;
   originalFilename: string | null;
   contentType: string;

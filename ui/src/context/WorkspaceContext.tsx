@@ -136,3 +136,6 @@ export function useWorkspace() {
   }
   return ctx;
 }
+
+/** Alias for backward compatibility with code that still uses useCompany. */
+export const useCompany = useWorkspace;

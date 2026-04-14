@@ -1,6 +1,6 @@
 import { and, eq, gte, sql } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
-import { agents, approvals, companies, costEvents, issues } from "@paperclipai/db";
+import { agents, approvals, workspaces, costEvents, issues } from "@paperclipai/db";
 import { notFound } from "../errors.js";
 import { budgetService } from "./budgets.js";
 
@@ -8,13 +8,13 @@ export function dashboardService(db: Db) {
   const budgets = budgetService(db);
   return {
     summary: async (workspaceId: string) => {
-      const company = await db
-        .select()
-        .from(companies)
-        .where(eq(companies.id, workspaceId))
+      const workspaceExists = await db
+        .select({ id: workspaces.id })
+        .from(workspaces)
+        .where(eq(workspaces.id, workspaceId))
         .then((rows) => rows[0] ?? null);
 
-      if (!company) throw notFound("Company not found");
+      if (!workspaceExists) throw notFound("Workspace not found");
 
       const agentRows = await db
         .select({ status: agents.status, count: sql<number>`count(*)` })
@@ -76,10 +76,6 @@ export function dashboardService(db: Db) {
         );
 
       const monthSpendCents = Number(monthSpend);
-      const utilization =
-        company.budgetMonthlyCents > 0
-          ? (monthSpendCents / company.budgetMonthlyCents) * 100
-          : 0;
       const budgetOverview = await budgets.overview(workspaceId);
 
       return {
@@ -93,8 +89,8 @@ export function dashboardService(db: Db) {
         tasks: taskCounts,
         costs: {
           monthSpendCents,
-          monthBudgetCents: company.budgetMonthlyCents,
-          monthUtilizationPercent: Number(utilization.toFixed(2)),
+          monthBudgetCents: 0,
+          monthUtilizationPercent: 0,
         },
         pendingApprovals,
         budgets: {
