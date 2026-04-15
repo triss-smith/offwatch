@@ -37,36 +37,6 @@ importers:
       '@clack/prompts':
         specifier: ^0.7.0
         version: 0.7.0
-      '@paperclipai/adapter-claude-local':
-        specifier: workspace:*
-        version: link:../packages/adapters/claude-local
-      '@paperclipai/adapter-codex-local':
-        specifier: workspace:*
-        version: link:../packages/adapters/codex-local
-      '@paperclipai/adapter-cursor-local':
-        specifier: workspace:*
-        version: link:../packages/adapters/cursor-local
-      '@paperclipai/adapter-gemini-local':
-        specifier: workspace:*
-        version: link:../packages/adapters/gemini-local
-      '@paperclipai/adapter-openclaw-gateway':
-        specifier: workspace:*
-        version: link:../packages/adapters/openclaw-gateway
-      '@paperclipai/adapter-opencode-local':
-        specifier: workspace:*
-        version: link:../packages/adapters/opencode-local
-      '@paperclipai/adapter-pi-local':
-        specifier: workspace:*
-        version: link:../packages/adapters/pi-local
-      '@paperclipai/adapter-utils':
-        specifier: workspace:*
-        version: link:../packages/adapter-utils
-      '@paperclipai/db':
-        specifier: workspace:*
-        version: link:../packages/db
-      '@paperclipai/shared':
-        specifier: workspace:*
-        version: link:../packages/shared
       commander:
         specifier: ^13.0.0
         version: 13.1.0
@@ -76,6 +46,9 @@ importers:
       drizzle-orm:
         specifier: ^0.38.0
         version: 0.38.4(@electric-sql/pglite@0.3.15)(@types/react@19.2.14)(kysely@0.28.11)(pg@8.18.0)(postgres@3.4.8)(react@19.2.4)
+      embedded-postgres:
+        specifier: ^18.1.0-beta.16
+        version: 18.1.0-beta.16(patch_hash=55uhvnotpqyiy37rn3pqpukhei)
       fs-extra:
         specifier: ^10.1.0
         version: 10.1.0
@@ -85,6 +58,9 @@ importers:
       picocolors:
         specifier: ^1.1.1
         version: 1.1.1
+      postgres:
+        specifier: ^3.4.5
+        version: 3.4.8
       superjson:
         specifier: ^2.2.1
         version: 2.2.6
@@ -94,6 +70,9 @@ importers:
       undici:
         specifier: ^6.21.0
         version: 6.25.0
+      ws:
+        specifier: ^8.19.0
+        version: 8.19.0
       zod:
         specifier: ^3.24.0
         version: 3.25.76
