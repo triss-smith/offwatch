@@ -90,6 +90,10 @@ const downloadRelease = async (versionDir) => {
     }));
     fs.unlinkSync(tempPath);
   }
+
+  // Copy package.json to bin directory so bundled code can find it
+  const binDir = path.join(versionDir, "..");
+  fs.copyFileSync(__dirname + "/../package.json", path.join(binDir, "package.json"));
 };
 
 export const loadCLIBinPath = async (cwd) => {
