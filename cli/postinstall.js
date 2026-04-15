@@ -1,9 +1,13 @@
-import { loadCLIBinPath } from "offwatch-releases";
+import { loadCLIBinPath } from "./lib/downloader.js";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
 
-// Dumb check to see if dep. Want to skip this script if in workspace
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Skip download in monorepo development
 if (process.cwd().includes("node_modules")) {
   if (process.env.DEBUG) {
-    console.debug(`[DEBUG] download CLI release`);
+    console.debug(`[DEBUG] downloading CLI binary`);
   }
   loadCLIBinPath(__dirname).then(
     () => {
@@ -14,6 +18,4 @@ if (process.cwd().includes("node_modules")) {
       process.exit(1);
     }
   );
-} else if (process.env.DEBUG) {
-  console.debug(`[DEBUG] skipping debug`);
 }

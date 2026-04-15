@@ -30,7 +30,7 @@ const workspacePaths = [
 
 // Collect all external (non-workspace) npm package names
 const externals = new Set();
-const monorepoScopes = new Set(["@paperclipai/", "@offwatch/"]);
+const monorepoScopes = ["@paperclipai/", "@offwatch/"];
 
 for (const p of workspacePaths) {
   try {
@@ -52,6 +52,8 @@ for (const p of workspacePaths) {
 }
 // Remove common Node built-ins
 externals.delete("node");
+// Remove packages that should be bundled (they contain bundled SQL or have issues with externalization)
+externals.delete("postgres");
 // Add embedded-postgres platform-specific packages (optional, only resolved at runtime)
 externals.add("@embedded-postgres/darwin-arm64");
 externals.add("@embedded-postgres/darwin-x64");
