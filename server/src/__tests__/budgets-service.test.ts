@@ -68,7 +68,7 @@ describe("budgetService", () => {
   it("creates a hard-stop incident and pauses an agent when spend exceeds a budget", async () => {
     const policy = {
       id: "policy-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       scopeType: "agent",
       scopeId: "agent-1",
       metric: "billed_cents",
@@ -85,7 +85,7 @@ describe("budgetService", () => {
       [{ total: 150 }],
       [],
       [{
-        companyId: "company-1",
+        workspaceId: "company-1",
         name: "Budget Agent",
         status: "running",
         pauseReason: null,
@@ -94,12 +94,12 @@ describe("budgetService", () => {
 
     dbStub.queueInsert([{
       id: "approval-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       status: "pending",
     }]);
     dbStub.queueInsert([{
       id: "incident-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       policyId: "policy-1",
       approvalId: "approval-1",
     }]);
@@ -108,21 +108,21 @@ describe("budgetService", () => {
 
     const service = budgetService(dbStub.db as any, { cancelWorkForScope });
     await service.evaluateCostEvent({
-      companyId: "company-1",
+      workspaceId: "company-1",
       agentId: "agent-1",
       projectId: null,
     } as any);
 
     expect(dbStub.insertValues).toHaveBeenCalledWith(
       expect.objectContaining({
-        companyId: "company-1",
+        workspaceId: "company-1",
         type: "budget_override_required",
         status: "pending",
       }),
     );
     expect(dbStub.insertValues).toHaveBeenCalledWith(
       expect.objectContaining({
-        companyId: "company-1",
+        workspaceId: "company-1",
         policyId: "policy-1",
         thresholdType: "hard",
         amountLimit: 100,
@@ -145,7 +145,7 @@ describe("budgetService", () => {
       }),
     );
     expect(cancelWorkForScope).toHaveBeenCalledWith({
-      companyId: "company-1",
+      workspaceId: "company-1",
       scopeType: "agent",
       scopeId: "agent-1",
     });
@@ -154,7 +154,7 @@ describe("budgetService", () => {
   it("blocks new work when an agent hard-stop remains exceeded even if the agent is not paused yet", async () => {
     const agentPolicy = {
       id: "policy-agent-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       scopeType: "agent",
       scopeId: "agent-1",
       metric: "billed_cents",
@@ -170,7 +170,7 @@ describe("budgetService", () => {
       [{
         status: "running",
         pauseReason: null,
-        companyId: "company-1",
+        workspaceId: "company-1",
         name: "Budget Agent",
       }],
       [{
@@ -198,7 +198,7 @@ describe("budgetService", () => {
       [{
         status: "idle",
         pauseReason: null,
-        companyId: "company-1",
+        workspaceId: "company-1",
         name: "Budget Agent",
       }],
       [{
@@ -215,7 +215,7 @@ describe("budgetService", () => {
       scopeType: "company",
       scopeId: "company-1",
       scopeName: "Paperclip",
-      reason: "Company is paused because its budget hard-stop was reached.",
+      reason: "Company is paused and cannot start new work.",
     });
   });
 
@@ -223,14 +223,14 @@ describe("budgetService", () => {
     const dbStub = createDbStub([
       [{
         id: "incident-1",
-        companyId: "company-1",
+        workspaceId: "company-1",
         policyId: "policy-1",
         amountObserved: 120,
         approvalId: "approval-1",
       }],
       [{
         id: "policy-1",
-        companyId: "company-1",
+        workspaceId: "company-1",
         scopeType: "company",
         scopeId: "company-1",
         metric: "billed_cents",
@@ -256,7 +256,7 @@ describe("budgetService", () => {
     const dbStub = createDbStub([
       [{
         id: "incident-1",
-        companyId: "company-1",
+        workspaceId: "company-1",
         policyId: "policy-1",
         scopeType: "company",
         scopeId: "company-1",
@@ -275,7 +275,7 @@ describe("budgetService", () => {
       }],
       [{
         id: "policy-1",
-        companyId: "company-1",
+        workspaceId: "company-1",
         scopeType: "company",
         scopeId: "company-1",
         metric: "billed_cents",
@@ -285,7 +285,7 @@ describe("budgetService", () => {
       [{ total: 120 }],
       [{ id: "approval-1", status: "approved" }],
       [{
-        companyId: "company-1",
+        workspaceId: "company-1",
         name: "Paperclip",
         status: "paused",
         pauseReason: "budget",
@@ -303,7 +303,8 @@ describe("budgetService", () => {
 
     expect(dbStub.updateSet).toHaveBeenCalledWith(
       expect.objectContaining({
-        budgetMonthlyCents: 175,
+        amount: 175,
+        isActive: true,
         updatedAt: expect.any(Date),
       }),
     );

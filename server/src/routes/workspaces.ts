@@ -47,9 +47,9 @@ export function workspaceRoutes(db: Db, storage?: StorageService) {
 
   function assertImportTargetAccess(
     req: Request,
-    target: { mode: "new_company" } | { mode: "existing_company"; workspaceId: string },
+    target: { mode: "new_workspace" } | { mode: "existing_workspace"; workspaceId: string },
   ) {
-    if (target.mode === "new_company") {
+    if (target.mode === "new_workspace") {
       assertInstanceAdmin(req);
       return;
     }
@@ -214,7 +214,7 @@ export function workspaceRoutes(db: Db, storage?: StorageService) {
   router.post("/:workspaceId/imports/preview", validate(workspacePortabilityPreviewSchema), async (req, res) => {
     const workspaceId = req.params.workspaceId as string;
     await assertCanManagePortability(req, workspaceId, "imports");
-    if (req.body.target.mode === "existing_company" && req.body.target.workspaceId !== workspaceId) {
+    if (req.body.target.mode === "existing_workspace" && req.body.target.workspaceId !== workspaceId) {
       throw forbidden("Safe import route can only target the route company");
     }
     if (req.body.collisionStrategy === "replace") {
@@ -230,7 +230,7 @@ export function workspaceRoutes(db: Db, storage?: StorageService) {
   router.post("/:workspaceId/imports/apply", validate(workspacePortabilityImportSchema), async (req, res) => {
     const workspaceId = req.params.workspaceId as string;
     await assertCanManagePortability(req, workspaceId, "imports");
-    if (req.body.target.mode === "existing_company" && req.body.target.workspaceId !== workspaceId) {
+    if (req.body.target.mode === "existing_workspace" && req.body.target.workspaceId !== workspaceId) {
       throw forbidden("Safe import route can only target the route company");
     }
     if (req.body.collisionStrategy === "replace") {

@@ -23,7 +23,7 @@ describe("feedback trace share client", () => {
     await client.uploadTraceBundle({
       traceId: "trace-1",
       exportId: "export-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       issueId: "issue-1",
       issueIdentifier: "PAP-1",
       adapterType: "codex_local",
@@ -56,7 +56,7 @@ describe("feedback trace share client", () => {
     await client.uploadTraceBundle({
       traceId: "trace-1",
       exportId: "export-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       issueId: "issue-1",
       issueIdentifier: "PAP-1",
       adapterType: "codex_local",

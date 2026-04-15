@@ -47,7 +47,7 @@ vi.mock("../services/index.js", () => ({
 function createDbStub() {
   const createdInvite = {
     id: "invite-1",
-    companyId: "company-1",
+    workspaceId: "company-1",
     inviteType: "company_join",
     allowedJoinTypes: "agent",
     defaultsPayload: null,
@@ -119,7 +119,7 @@ function createApp(actor: Record<string, unknown>, db: Record<string, unknown>) 
   return app;
 }
 
-describe("POST /companies/:companyId/openclaw/invite-prompt", () => {
+describe("POST /workspaces/:workspaceId/openclaw/invite-prompt", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockAccessService.canUser.mockResolvedValue(false);
@@ -131,21 +131,21 @@ describe("POST /companies/:companyId/openclaw/invite-prompt", () => {
     const db = createDbStub();
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       role: "engineer",
     });
     const app = createApp(
       {
         type: "agent",
         agentId: "agent-1",
-        companyId: "company-1",
+        workspaceId: "company-1",
         source: "agent_key",
       },
       db,
     );
 
     const res = await request(app)
-      .post("/api/companies/company-1/openclaw/invite-prompt")
+      .post("/api/workspaces/company-1/openclaw/invite-prompt")
       .send({});
 
     expect(res.status).toBe(403);
@@ -156,21 +156,21 @@ describe("POST /companies/:companyId/openclaw/invite-prompt", () => {
     const db = createDbStub();
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       role: "ceo",
     });
     const app = createApp(
       {
         type: "agent",
         agentId: "agent-1",
-        companyId: "company-1",
+        workspaceId: "company-1",
         source: "agent_key",
       },
       db,
     );
 
     const res = await request(app)
-      .post("/api/companies/company-1/openclaw/invite-prompt")
+      .post("/api/workspaces/company-1/openclaw/invite-prompt")
       .send({ agentMessage: "Join and configure OpenClaw gateway." });
 
     expect([200, 201]).toContain(res.status);
@@ -178,7 +178,7 @@ describe("POST /companies/:companyId/openclaw/invite-prompt", () => {
     expect(res.body.onboardingTextPath).toContain("/api/invites/");
     expect((db as any).__insertValues).toHaveBeenCalledWith(
       expect.objectContaining({
-        companyId: "company-1",
+        workspaceId: "company-1",
         inviteType: "company_join",
         allowedJoinTypes: "agent",
       }),
@@ -191,7 +191,7 @@ describe("POST /companies/:companyId/openclaw/invite-prompt", () => {
       {
         type: "board",
         userId: "user-1",
-        companyIds: ["company-1"],
+        workspaceIds: ["company-1"],
         source: "session",
         isInstanceAdmin: false,
       },
@@ -213,7 +213,7 @@ describe("POST /companies/:companyId/openclaw/invite-prompt", () => {
       {
         type: "board",
         userId: "user-1",
-        companyIds: ["company-1"],
+        workspaceIds: ["company-1"],
         source: "session",
         isInstanceAdmin: false,
       },
@@ -221,13 +221,13 @@ describe("POST /companies/:companyId/openclaw/invite-prompt", () => {
     );
 
     const res = await request(app)
-      .post("/api/companies/company-1/openclaw/invite-prompt")
+      .post("/api/workspaces/company-1/openclaw/invite-prompt")
       .send({});
 
     expect(res.status).toBe(201);
     expect((db as any).__insertValues).toHaveBeenCalledWith(
       expect.objectContaining({
-        companyId: "company-1",
+        workspaceId: "company-1",
         inviteType: "company_join",
         allowedJoinTypes: "agent",
       }),
@@ -241,7 +241,7 @@ describe("POST /companies/:companyId/openclaw/invite-prompt", () => {
       {
         type: "board",
         userId: "user-1",
-        companyIds: ["company-1"],
+        workspaceIds: ["company-1"],
         source: "session",
         isInstanceAdmin: false,
       },
@@ -249,7 +249,7 @@ describe("POST /companies/:companyId/openclaw/invite-prompt", () => {
     );
 
     const res = await request(app)
-      .post("/api/companies/company-1/openclaw/invite-prompt")
+      .post("/api/workspaces/company-1/openclaw/invite-prompt")
       .send({});
 
     expect(res.status).toBe(403);

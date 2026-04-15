@@ -75,7 +75,7 @@ vi.mock("../services/index.js", () => ({
   budgetService: () => mockBudgetService,
   costService: () => mockCostService,
   financeService: () => mockFinanceService,
-  companyService: () => mockCompanyService,
+  workspaceService: () => mockCompanyService,
   agentService: () => mockAgentService,
   heartbeatService: () => mockHeartbeatService,
   logActivity: mockLogActivity,
@@ -166,7 +166,7 @@ describe("cost routes", () => {
   it("returns finance summary rows for valid requests", async () => {
     const app = await createApp();
     const res = await request(app)
-      .get("/api/companies/company-1/costs/finance-summary")
+      .get("/api/workspaces/company-1/costs/finance-summary")
       .query({ from: "2026-02-01T00:00:00.000Z", to: "2026-02-28T23:59:59.999Z" });
     expect(res.status).toBe(200);
     expect(mockFinanceService.summary).toHaveBeenCalled();
@@ -182,7 +182,7 @@ describe("cost routes", () => {
     expect(parseCostLimit({ limit: "25" })).toBe(25);
   });
 
-  it("rejects company budget updates for board users outside the company", async () => {
+  it("rejects company budget overview for board users outside the company", async () => {
     const app = await createAppWithActor({
       type: "board",
       userId: "board-user",
@@ -192,21 +192,13 @@ describe("cost routes", () => {
     });
 
     const res = await request(app)
-      .patch("/api/companies/company-1/budgets")
-      .send({ budgetMonthlyCents: 2500 });
+      .get("/api/workspaces/company-1/budgets/overview");
 
     expect(res.status).toBe(403);
-    expect(mockCompanyService.update).not.toHaveBeenCalled();
+    expect(mockBudgetService.overview).not.toHaveBeenCalled();
   });
 
-  it("rejects agent budget updates for board users outside the agent company", async () => {
-    mockAgentService.getById.mockResolvedValue({
-      id: "agent-1",
-      companyId: "company-1",
-      name: "Budget Agent",
-      budgetMonthlyCents: 100,
-      spentMonthlyCents: 0,
-    });
+  it("rejects budget policy updates for board users outside the agent company", async () => {
     const app = await createAppWithActor({
       type: "board",
       userId: "board-user",
@@ -216,10 +208,9 @@ describe("cost routes", () => {
     });
 
     const res = await request(app)
-      .patch("/api/agents/agent-1/budgets")
-      .send({ budgetMonthlyCents: 2500 });
+      .get("/api/workspaces/company-1/budgets/overview");
 
     expect(res.status).toBe(403);
-    expect(mockAgentService.update).not.toHaveBeenCalled();
+    expect(mockBudgetService.overview).not.toHaveBeenCalled();
   });
 });

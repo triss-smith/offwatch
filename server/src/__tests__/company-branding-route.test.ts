@@ -44,7 +44,7 @@ vi.mock("../services/index.js", () => ({
   agentService: () => mockAgentService,
   budgetService: () => mockBudgetService,
   workspacePortabilityService: () => mockWorkspacePortabilityService,
-  companyService: () => mockCompanyService,
+  workspaceService: () => mockCompanyService,
   feedbackService: () => mockFeedbackService,
   logActivity: mockLogActivity,
 }));
@@ -70,8 +70,8 @@ function createCompany() {
 }
 
 async function createApp(actor: Record<string, unknown>) {
-  const [{ companyRoutes }, { errorHandler }] = await Promise.all([
-    import("../routes/companies.js"),
+  const [{ workspaceRoutes }, { errorHandler }] = await Promise.all([
+    import("../routes/workspaces.js"),
     import("../middleware/index.js"),
   ]);
   const app = express();
@@ -80,12 +80,12 @@ async function createApp(actor: Record<string, unknown>) {
     (req as any).actor = actor;
     next();
   });
-  app.use("/api/companies", companyRoutes({} as any));
+  app.use("/api/workspaces", workspaceRoutes({} as any));
   app.use(errorHandler);
   return app;
 }
 
-describe("PATCH /api/companies/:companyId/branding", () => {
+describe("PATCH /api/workspaces/:workspaceId/branding", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.resetAllMocks();
@@ -94,19 +94,19 @@ describe("PATCH /api/companies/:companyId/branding", () => {
   it("rejects non-CEO agent callers", async () => {
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       role: "engineer",
     });
     const app = await createApp({
       type: "agent",
       agentId: "agent-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       source: "agent_key",
       runId: "run-1",
     });
 
     const res = await request(app)
-      .patch("/api/companies/company-1/branding")
+      .patch("/api/workspaces/company-1/branding")
       .send({ logoAssetId: "11111111-1111-4111-8111-111111111111" });
 
     expect(res.status).toBe(403);
@@ -118,20 +118,20 @@ describe("PATCH /api/companies/:companyId/branding", () => {
     const company = createCompany();
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       role: "ceo",
     });
     mockCompanyService.update.mockResolvedValue(company);
     const app = await createApp({
       type: "agent",
       agentId: "agent-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       source: "agent_key",
       runId: "run-1",
     });
 
     const res = await request(app)
-      .patch("/api/companies/company-1/branding")
+      .patch("/api/workspaces/company-1/branding")
       .send({
         logoAssetId: "11111111-1111-4111-8111-111111111111",
         brandColor: "#123456",
@@ -146,7 +146,7 @@ describe("PATCH /api/companies/:companyId/branding", () => {
     expect(mockLogActivity).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        companyId: "company-1",
+        workspaceId: "company-1",
         actorType: "agent",
         actorId: "agent-1",
         agentId: "agent-1",
@@ -175,7 +175,7 @@ describe("PATCH /api/companies/:companyId/branding", () => {
     });
 
     const res = await request(app)
-      .patch("/api/companies/company-1/branding")
+      .patch("/api/workspaces/company-1/branding")
       .send({ brandColor: null, logoAssetId: null });
 
     expect(res.status).toBe(200);
@@ -191,7 +191,7 @@ describe("PATCH /api/companies/:companyId/branding", () => {
     });
 
     const res = await request(app)
-      .patch("/api/companies/company-1/branding")
+      .patch("/api/workspaces/company-1/branding")
       .send({
         logoAssetId: "11111111-1111-4111-8111-111111111111",
         status: "archived",

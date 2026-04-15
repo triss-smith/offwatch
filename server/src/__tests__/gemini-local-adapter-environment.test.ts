@@ -52,7 +52,7 @@ describe("gemini_local environment diagnostics", () => {
     await fs.rm(path.dirname(cwd), { recursive: true, force: true });
 
     const result = await testEnvironment({
-      companyId: "company-1",
+      workspaceId: "workspace-1",
       adapterType: "gemini_local",
       config: {
         command: process.execPath,
@@ -79,7 +79,7 @@ describe("gemini_local environment diagnostics", () => {
     await writeFakeGeminiCommand(binDir, argsCapturePath);
 
     const result = await testEnvironment({
-      companyId: "company-1",
+      workspaceId: "workspace-1",
       adapterType: "gemini_local",
       config: {
         command: "gemini",
@@ -115,7 +115,7 @@ describe("gemini_local environment diagnostics", () => {
     await writeQuotaGeminiCommand(binDir);
 
     const result = await testEnvironment({
-      companyId: "company-1",
+      workspaceId: "workspace-1",
       adapterType: "gemini_local",
       config: {
         command: "gemini",

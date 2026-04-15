@@ -82,7 +82,7 @@ describeEmbeddedPostgres("routine run telemetry", () => {
 
     await db.insert(agents).values({
       id: agentId,
-      companyId,
+      workspaceId: companyId,
       name: "CodexCoder",
       role: "engineer",
       status: "active",
@@ -94,7 +94,7 @@ describeEmbeddedPostgres("routine run telemetry", () => {
 
     await db.insert(projects).values({
       id: projectId,
-      companyId,
+      workspaceId: companyId,
       name: "Routines",
       status: "in_progress",
     });
@@ -110,7 +110,7 @@ describeEmbeddedPostgres("routine run telemetry", () => {
           const queuedRunId = randomUUID();
           await db.insert(heartbeatRuns).values({
             id: queuedRunId,
-            companyId,
+            workspaceId: companyId,
             agentId: wakeupAgentId,
             invocationSource: wakeupOpts.source ?? "assignment",
             triggerDetail: wakeupOpts.triggerDetail ?? null,

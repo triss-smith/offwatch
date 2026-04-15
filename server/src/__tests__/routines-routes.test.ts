@@ -12,7 +12,7 @@ const otherAgentId = "55555555-5555-4555-8555-555555555555";
 
 const routine = {
   id: routineId,
-  companyId,
+  workspaceId: companyId,
   projectId,
   goalId: null,
   parentIssueId: null,
@@ -38,7 +38,7 @@ const pausedRoutine = {
 };
 const trigger = {
   id: "66666666-6666-4666-8666-666666666666",
-  companyId,
+  workspaceId: companyId,
   routineId,
   kind: "schedule",
   label: "weekday",
@@ -135,11 +135,11 @@ describe("routine routes", () => {
       userId: "board-user",
       source: "session",
       isInstanceAdmin: false,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const res = await request(app)
-      .post(`/api/companies/${companyId}/routines`)
+      .post(`/api/workspaces/${companyId}/routines`)
       .send({
         projectId,
         title: "Daily routine",
@@ -157,7 +157,7 @@ describe("routine routes", () => {
       userId: "board-user",
       source: "session",
       isInstanceAdmin: false,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const res = await request(app)
@@ -178,7 +178,7 @@ describe("routine routes", () => {
       userId: "board-user",
       source: "session",
       isInstanceAdmin: false,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const res = await request(app)
@@ -198,7 +198,7 @@ describe("routine routes", () => {
       userId: "board-user",
       source: "session",
       isInstanceAdmin: false,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const res = await request(app)
@@ -220,7 +220,7 @@ describe("routine routes", () => {
       userId: "board-user",
       source: "session",
       isInstanceAdmin: false,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const res = await request(app)
@@ -240,7 +240,7 @@ describe("routine routes", () => {
       userId: "board-user",
       source: "session",
       isInstanceAdmin: false,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const res = await request(app)
@@ -259,11 +259,11 @@ describe("routine routes", () => {
       userId: "board-user",
       source: "session",
       isInstanceAdmin: false,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const res = await request(app)
-      .post(`/api/companies/${companyId}/routines`)
+      .post(`/api/workspaces/${companyId}/routines`)
       .send({
         projectId,
         title: "Daily routine",

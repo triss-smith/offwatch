@@ -1982,7 +1982,7 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
     });
     await db.insert(agents).values({
       id: agentId,
-      companyId,
+      workspaceId: companyId,
       name: "Codex Coder",
       role: "engineer",
       status: "active",
@@ -1993,7 +1993,7 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
     });
     await db.insert(heartbeatRuns).values({
       id: runId,
-      companyId,
+      workspaceId: companyId,
       agentId,
       invocationSource: "manual",
       status: "running",
@@ -2014,7 +2014,7 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
       agent: {
         id: agentId,
         name: "Codex Coder",
-        companyId,
+        workspaceId: companyId,
       },
       issue: null,
       workspace,
@@ -2087,13 +2087,13 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
     });
     await db.insert(projects).values({
       id: projectId,
-      companyId,
+      workspaceId: companyId,
       name: "Runtime reconcile test",
       status: "in_progress",
     });
     await db.insert(projectWorkspaces).values({
       id: projectWorkspaceId,
-      companyId,
+      workspaceId: companyId,
       projectId,
       name: "Primary",
       sourceType: "local_path",
@@ -2102,7 +2102,7 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
     });
     await db.insert(workspaceRuntimeServices).values({
       id: runtimeServiceId,
-      companyId,
+      workspaceId: companyId,
       projectId,
       projectWorkspaceId,
       executionWorkspaceId: null,
@@ -2177,7 +2177,7 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
     });
     await db.insert(agents).values({
       id: agentId,
-      companyId,
+      workspaceId: companyId,
       name: "Codex Coder",
       role: "engineer",
       status: "active",
@@ -2188,13 +2188,13 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
     });
     await db.insert(projects).values({
       id: projectId,
-      companyId,
+      workspaceId: companyId,
       name: "Runtime stop test",
       status: "active",
     });
     await db.insert(executionWorkspaces).values({
       id: executionWorkspaceId,
-      companyId,
+      workspaceId: companyId,
       projectId,
       mode: "isolated_workspace",
       strategyType: "git_worktree",
@@ -2206,7 +2206,7 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
     });
     await db.insert(heartbeatRuns).values({
       id: runId,
-      companyId,
+      workspaceId: companyId,
       agentId,
       invocationSource: "manual",
       status: "running",
@@ -2227,7 +2227,7 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
       agent: {
         id: agentId,
         name: "Codex Coder",
-        companyId,
+        workspaceId: companyId,
       },
       issue: null,
       workspace,
@@ -2294,7 +2294,7 @@ describe("normalizeAdapterManagedRuntimeServices", () => {
       agent: {
         id: "agent-1",
         name: "Gateway Agent",
-        companyId: "company-1",
+        workspaceId: "company-1",
       },
       issue: {
         id: "issue-1",
@@ -2319,7 +2319,7 @@ describe("normalizeAdapterManagedRuntimeServices", () => {
       agent: {
         id: "agent-1",
         name: "Gateway Agent",
-        companyId: "company-1",
+        workspaceId: "company-1",
       },
       issue: {
         id: "issue-1",
@@ -2340,7 +2340,7 @@ describe("normalizeAdapterManagedRuntimeServices", () => {
 
     expect(first).toHaveLength(1);
     expect(first[0]).toMatchObject({
-      companyId: "company-1",
+      workspaceId: "company-1",
       projectId: "project-1",
       projectWorkspaceId: "workspace-1",
       executionWorkspaceId: null,
@@ -2363,7 +2363,7 @@ describe("normalizeAdapterManagedRuntimeServices", () => {
       agent: {
         id: "agent-1",
         name: "Gateway Agent",
-        companyId: "company-1",
+        workspaceId: "company-1",
       },
       issue: null,
       workspace,

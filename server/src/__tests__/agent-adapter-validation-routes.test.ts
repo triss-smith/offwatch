@@ -100,7 +100,7 @@ function createApp() {
     (req as any).actor = {
       type: "board",
       userId: "local-board",
-      companyIds: ["company-1"],
+      workspaceIds: ["company-1"],
       source: "local_implicit",
       isInstanceAdmin: false,
     };
@@ -124,7 +124,7 @@ describe("agent routes adapter validation", () => {
     mockLogActivity.mockResolvedValue(undefined);
     mockAgentService.create.mockImplementation(async (_companyId: string, input: Record<string, unknown>) => ({
       id: "11111111-1111-4111-8111-111111111111",
-      companyId: "company-1",
+      workspaceId: "company-1",
       name: String(input.name ?? "Agent"),
       urlKey: "agent",
       role: String(input.role ?? "general"),
@@ -156,7 +156,7 @@ describe("agent routes adapter validation", () => {
     registerServerAdapter(externalAdapter);
 
     const res = await request(createApp())
-      .post("/api/companies/company-1/agents")
+      .post("/api/workspaces/company-1/agents")
       .send({
         name: "External Agent",
         adapterType: "external_test",
@@ -168,7 +168,7 @@ describe("agent routes adapter validation", () => {
 
   it("rejects unknown adapter types even when schema accepts arbitrary strings", async () => {
     const res = await request(createApp())
-      .post("/api/companies/company-1/agents")
+      .post("/api/workspaces/company-1/agents")
       .send({
         name: "Missing Adapter",
         adapterType: "missing_adapter",

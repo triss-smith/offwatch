@@ -79,7 +79,7 @@ describe("company skill mutation permissions", () => {
       source: "local_implicit",
       isInstanceAdmin: false,
     }))
-      .post("/api/companies/company-1/skills/import")
+      .post("/api/workspaces/company-1/skills/import")
       .send({ source: "https://github.com/vercel-labs/agent-browser" });
 
     expect([200, 201], JSON.stringify(res.body)).toContain(res.status);
@@ -125,7 +125,7 @@ describe("company skill mutation permissions", () => {
       source: "local_implicit",
       isInstanceAdmin: false,
     }))
-      .post("/api/companies/company-1/skills/import")
+      .post("/api/workspaces/company-1/skills/import")
       .send({ source: "https://github.com/vercel-labs/agent-browser" });
 
     expect([200, 201], JSON.stringify(res.body)).toContain(res.status);
@@ -171,7 +171,7 @@ describe("company skill mutation permissions", () => {
       source: "local_implicit",
       isInstanceAdmin: false,
     }))
-      .post("/api/companies/company-1/skills/import")
+      .post("/api/workspaces/company-1/skills/import")
       .send({ source: "https://ghe.example.com/acme/private-skill" });
 
     expect([200, 201], JSON.stringify(res.body)).toContain(res.status);
@@ -213,7 +213,7 @@ describe("company skill mutation permissions", () => {
       source: "local_implicit",
       isInstanceAdmin: false,
     }))
-      .post("/api/companies/company-1/skills/import")
+      .post("/api/workspaces/company-1/skills/import")
       .send({ source: "https://github.com/acme/private-skill" });
 
     expect(res.status, JSON.stringify(res.body)).toBe(201);
@@ -226,17 +226,17 @@ describe("company skill mutation permissions", () => {
   it("blocks same-company agents without management permission from mutating company skills", async () => {
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       permissions: {},
     });
 
     const res = await request(await createApp({
       type: "agent",
       agentId: "agent-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       runId: "run-1",
     }))
-      .post("/api/companies/company-1/skills/import")
+      .post("/api/workspaces/company-1/skills/import")
       .send({ source: "https://github.com/vercel-labs/agent-browser" });
 
     expect(res.status, JSON.stringify(res.body)).toBe(403);
@@ -246,17 +246,17 @@ describe("company skill mutation permissions", () => {
   it("allows agents with canCreateAgents to mutate company skills", async () => {
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       permissions: { canCreateAgents: true },
     });
 
     const res = await request(await createApp({
       type: "agent",
       agentId: "agent-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       runId: "run-1",
     }))
-      .post("/api/companies/company-1/skills/import")
+      .post("/api/workspaces/company-1/skills/import")
       .send({ source: "https://github.com/vercel-labs/agent-browser" });
 
     expect(res.status, JSON.stringify(res.body)).toBe(201);
@@ -281,7 +281,7 @@ describe("company skill mutation permissions", () => {
       source: "local_implicit",
       isInstanceAdmin: false,
     }))
-      .delete("/api/companies/company-1/skills/skill-1");
+      .delete("/api/workspaces/company-1/skills/skill-1");
 
     expect(res.status, JSON.stringify(res.body)).toBe(422);
     expect(res.body).toEqual({

@@ -98,7 +98,7 @@ describeEmbeddedPostgres("inbox dismissals", () => {
     await db.insert(agents).values([
       {
         id: primaryAgentId,
-        companyId,
+        workspaceId: companyId,
         name: "Primary",
         role: "engineer",
         status: "active",
@@ -109,7 +109,7 @@ describeEmbeddedPostgres("inbox dismissals", () => {
       },
       {
         id: secondaryAgentId,
-        companyId,
+        workspaceId: companyId,
         name: "Secondary",
         role: "engineer",
         status: "active",
@@ -123,7 +123,7 @@ describeEmbeddedPostgres("inbox dismissals", () => {
     await db.insert(approvals).values([
       {
         id: hiddenApprovalId,
-        companyId,
+        workspaceId: companyId,
         type: "hire_agent",
         status: "pending",
         payload: {},
@@ -131,7 +131,7 @@ describeEmbeddedPostgres("inbox dismissals", () => {
       },
       {
         id: resurfacedApprovalId,
-        companyId,
+        workspaceId: companyId,
         type: "hire_agent",
         status: "revision_requested",
         payload: {},
@@ -141,7 +141,7 @@ describeEmbeddedPostgres("inbox dismissals", () => {
 
     await db.insert(invites).values({
       id: inviteId,
-      companyId,
+      workspaceId: companyId,
       inviteType: "company_join",
       tokenHash: "hash-1",
       allowedJoinTypes: "both",
@@ -151,7 +151,7 @@ describeEmbeddedPostgres("inbox dismissals", () => {
     await db.insert(joinRequests).values({
       id: hiddenJoinRequestId,
       inviteId,
-      companyId,
+      workspaceId: companyId,
       requestType: "human",
       status: "pending_approval",
       requestIp: "127.0.0.1",
@@ -162,7 +162,7 @@ describeEmbeddedPostgres("inbox dismissals", () => {
     await db.insert(heartbeatRuns).values([
       {
         id: hiddenRunId,
-        companyId,
+        workspaceId: companyId,
         agentId: primaryAgentId,
         invocationSource: "assignment",
         status: "failed",
@@ -171,7 +171,7 @@ describeEmbeddedPostgres("inbox dismissals", () => {
       },
       {
         id: visibleRunId,
-        companyId,
+        workspaceId: companyId,
         agentId: secondaryAgentId,
         invocationSource: "assignment",
         status: "timed_out",

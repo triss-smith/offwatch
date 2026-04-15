@@ -81,7 +81,7 @@ describe("codex execute", () => {
         runId: "run-default",
         agent: {
           id: "agent-1",
-          companyId: "company-1",
+          workspaceId: "workspace-1",
           name: "Codex Coder",
           adapterType: "codex_local",
           adapterConfig: {},
@@ -158,7 +158,7 @@ describe("codex execute", () => {
         runId: "run-notes",
         agent: {
           id: "agent-1",
-          companyId: "company-1",
+          workspaceId: "workspace-1",
           name: "Codex Coder",
           adapterType: "codex_local",
           adapterConfig: {},
@@ -219,7 +219,7 @@ describe("codex execute", () => {
         runId: "run-meta",
         agent: {
           id: "agent-1",
-          companyId: "company-1",
+          workspaceId: "workspace-1",
           name: "Codex Coder",
           adapterType: "codex_local",
           adapterConfig: {},
@@ -277,7 +277,7 @@ describe("codex execute", () => {
         runId: "run-wake",
         agent: {
           id: "agent-1",
-          companyId: "company-1",
+          workspaceId: "workspace-1",
           name: "Codex Coder",
           adapterType: "codex_local",
           adapterConfig: {},
@@ -385,7 +385,7 @@ describe("codex execute", () => {
         runId: "run-stage-wake",
         agent: {
           id: "agent-1",
-          companyId: "company-1",
+          workspaceId: "workspace-1",
           name: "Codex Coder",
           adapterType: "codex_local",
           adapterConfig: {},
@@ -454,7 +454,7 @@ describe("codex execute", () => {
         runId: "run-stage-wake-executor",
         agent: {
           id: "agent-1",
-          companyId: "company-1",
+          workspaceId: "workspace-1",
           name: "Codex Coder",
           adapterType: "codex_local",
           adapterConfig: {},
@@ -539,7 +539,7 @@ describe("codex execute", () => {
         runId: "run-issue-wake",
         agent: {
           id: "agent-1",
-          companyId: "company-1",
+          workspaceId: "workspace-1",
           name: "Codex Coder",
           adapterType: "codex_local",
           adapterConfig: {},
@@ -636,7 +636,7 @@ describe("codex execute", () => {
         runId: "run-resume-wake",
         agent: {
           id: "agent-1",
-          companyId: "company-1",
+          workspaceId: "workspace-1",
           name: "Codex Coder",
           adapterType: "codex_local",
           adapterConfig: {},
@@ -765,7 +765,7 @@ describe("codex execute", () => {
         runId: "run-1",
         agent: {
           id: "agent-1",
-          companyId: "company-1",
+          workspaceId: "workspace-1",
           name: "Codex Coder",
           adapterType: "codex_local",
           adapterConfig: {},
@@ -872,7 +872,7 @@ describe("codex execute", () => {
         runId: "run-2",
         agent: {
           id: "agent-1",
-          companyId: "company-1",
+          workspaceId: "workspace-1",
           name: "Codex Coder",
           adapterType: "codex_local",
           adapterConfig: {},

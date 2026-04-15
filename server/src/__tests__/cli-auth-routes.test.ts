@@ -154,7 +154,7 @@ describe("cli auth routes", () => {
     expect(mockLogActivity).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        companyId: "company-1",
+        workspaceId: "company-1",
         action: "board_api_key.created",
       }),
     );
@@ -218,7 +218,7 @@ describe("cli auth routes", () => {
     expect(mockLogActivity).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        companyId: "company-z",
+        workspaceId: "company-z",
         action: "board_api_key.revoked",
       }),
     );

@@ -12,6 +12,12 @@ const companySvc = {
   update: vi.fn(),
 };
 
+const workspaceSvc = {
+  getById: (...args: unknown[]) => companySvc.getById(...args),
+  create: vi.fn(),
+  update: vi.fn(),
+};
+
 const agentSvc = {
   list: vi.fn(),
   create: vi.fn(),
@@ -66,6 +72,10 @@ const agentInstructionsSvc = {
 
 vi.mock("../services/companies.js", () => ({
   companyService: () => companySvc,
+}));
+
+vi.mock("../services/workspaces.js", () => ({
+  workspaceService: () => workspaceSvc,
 }));
 
 vi.mock("../services/agents.js", () => ({
@@ -838,7 +848,7 @@ describe("company portability", () => {
     expect(extension).not.toContain("workspace-1");
     expect(exported.warnings).toContain("Project launch workspace Local Scratch was omitted from export because it does not have a portable repoUrl.");
 
-    companySvc.create.mockResolvedValue({
+    workspaceSvc.create.mockResolvedValue({
       id: "company-imported",
       name: "Imported Paperclip",
     });
@@ -895,8 +905,8 @@ describe("company portability", () => {
         issues: true,
       },
       target: {
-        mode: "new_company",
-        newCompanyName: "Imported Paperclip",
+        mode: "new_workspace",
+        newWorkspaceName: "Imported Paperclip",
       },
       collisionStrategy: "rename",
     }, "user-1");
@@ -1136,8 +1146,8 @@ describe("company portability", () => {
         issues: false,
       },
       target: {
-        mode: "new_company",
-        newCompanyName: "Imported Paperclip",
+        mode: "new_workspace",
+        newWorkspaceName: "Imported Paperclip",
       },
       agents: "all",
       collisionStrategy: "rename",
@@ -1270,8 +1280,8 @@ describe("company portability", () => {
         issues: false,
       },
       target: {
-        mode: "new_company",
-        newCompanyName: "Imported Paperclip",
+        mode: "new_workspace",
+        newWorkspaceName: "Imported Paperclip",
       },
       agents: "all",
       collisionStrategy: "rename",
@@ -1423,7 +1433,7 @@ describe("company portability", () => {
   it("imports recurring task packages as routines instead of one-time issues", async () => {
     const portability = workspacePortabilityService({} as any);
 
-    companySvc.create.mockResolvedValue({
+    workspaceSvc.create.mockResolvedValue({
       id: "company-imported",
       name: "Imported Paperclip",
     });
@@ -1496,7 +1506,7 @@ describe("company portability", () => {
     const preview = await portability.previewImport({
       source: { type: "inline", rootPath: "paperclip-demo", files },
       include: { company: true, agents: true, projects: true, issues: true, skills: false },
-      target: { mode: "new_company", newCompanyName: "Imported Paperclip" },
+      target: { mode: "new_workspace", newWorkspaceName: "Imported Paperclip" },
       agents: "all",
       collisionStrategy: "rename",
     });
@@ -1512,7 +1522,7 @@ describe("company portability", () => {
     await portability.importBundle({
       source: { type: "inline", rootPath: "paperclip-demo", files },
       include: { company: true, agents: true, projects: true, issues: true, skills: false },
-      target: { mode: "new_company", newCompanyName: "Imported Paperclip" },
+      target: { mode: "new_workspace", newWorkspaceName: "Imported Paperclip" },
       agents: "all",
       collisionStrategy: "rename",
     }, "user-1");
@@ -1544,7 +1554,7 @@ describe("company portability", () => {
   it("migrates legacy schedule.recurrence imports into routine triggers", async () => {
     const portability = workspacePortabilityService({} as any);
 
-    companySvc.create.mockResolvedValue({
+    workspaceSvc.create.mockResolvedValue({
       id: "company-imported",
       name: "Imported Paperclip",
     });
@@ -1588,7 +1598,7 @@ describe("company portability", () => {
     const preview = await portability.previewImport({
       source: { type: "inline", rootPath: "paperclip-demo", files },
       include: { company: true, agents: true, projects: true, issues: true, skills: false },
-      target: { mode: "new_company", newCompanyName: "Imported Paperclip" },
+      target: { mode: "new_workspace", newWorkspaceName: "Imported Paperclip" },
       agents: "all",
       collisionStrategy: "rename",
     });
@@ -1602,7 +1612,7 @@ describe("company portability", () => {
     await portability.importBundle({
       source: { type: "inline", rootPath: "paperclip-demo", files },
       include: { company: true, agents: true, projects: true, issues: true, skills: false },
-      target: { mode: "new_company", newCompanyName: "Imported Paperclip" },
+      target: { mode: "new_workspace", newWorkspaceName: "Imported Paperclip" },
       agents: "all",
       collisionStrategy: "rename",
     }, "user-1");
@@ -1636,7 +1646,7 @@ describe("company portability", () => {
         },
       },
       include: { company: true, agents: false, projects: false, issues: true, skills: false },
-      target: { mode: "new_company", newCompanyName: "Imported Paperclip" },
+      target: { mode: "new_workspace", newWorkspaceName: "Imported Paperclip" },
       collisionStrategy: "rename",
     });
 
@@ -1647,7 +1657,7 @@ describe("company portability", () => {
   it("imports a vendor-neutral package without .paperclip.yaml", async () => {
     const portability = workspacePortabilityService({} as any);
 
-    companySvc.create.mockResolvedValue({
+    workspaceSvc.create.mockResolvedValue({
       id: "company-imported",
       name: "Imported Paperclip",
     });
@@ -1692,8 +1702,8 @@ describe("company portability", () => {
         issues: false,
       },
       target: {
-        mode: "new_company",
-        newCompanyName: "Imported Paperclip",
+        mode: "new_workspace",
+        newWorkspaceName: "Imported Paperclip",
       },
       agents: "all",
       collisionStrategy: "rename",
@@ -1745,16 +1755,15 @@ describe("company portability", () => {
         issues: false,
       },
       target: {
-        mode: "new_company",
-        newCompanyName: "Imported Paperclip",
+        mode: "new_workspace",
+        newWorkspaceName: "Imported Paperclip",
       },
       agents: "all",
       collisionStrategy: "rename",
     }, "user-1");
 
-    expect(companySvc.create).toHaveBeenCalledWith(expect.objectContaining({
+    expect(workspaceSvc.create).toHaveBeenCalledWith(expect.objectContaining({
       name: "Imported Paperclip",
-      description: "Portable company package",
     }));
     expect(agentSvc.create).toHaveBeenCalledWith("company-imported", expect.objectContaining({
       name: "ClaudeCoder",
@@ -1791,7 +1800,7 @@ describe("company portability", () => {
         },
       },
       include: { company: true, agents: true, projects: false, issues: false },
-      target: { mode: "new_company", newCompanyName: "CEO Role Test" },
+      target: { mode: "new_workspace", newWorkspaceName: "CEO Role Test" },
       agents: "all",
       collisionStrategy: "rename",
     });
@@ -1866,7 +1875,7 @@ describe("company portability", () => {
   it("imports packaged skills and restores desired skill refs on agents", async () => {
     const portability = workspacePortabilityService({} as any);
 
-    companySvc.create.mockResolvedValue({
+    workspaceSvc.create.mockResolvedValue({
       id: "company-imported",
       name: "Imported Paperclip",
     });
@@ -1900,8 +1909,8 @@ describe("company portability", () => {
         issues: false,
       },
       target: {
-        mode: "new_company",
-        newCompanyName: "Imported Paperclip",
+        mode: "new_workspace",
+        newWorkspaceName: "Imported Paperclip",
       },
       agents: "all",
       collisionStrategy: "rename",
@@ -1931,12 +1940,12 @@ describe("company portability", () => {
         originalFilename: "company-logo.png",
       }),
     };
-    companySvc.create.mockResolvedValue({
+    workspaceSvc.create.mockResolvedValue({
       id: "company-imported",
       name: "Imported Paperclip",
       logoAssetId: null,
     });
-    companySvc.update.mockResolvedValue({
+    workspaceSvc.update.mockResolvedValue({
       id: "company-imported",
       name: "Imported Paperclip",
       logoAssetId: "asset-created",
@@ -1981,26 +1990,25 @@ describe("company portability", () => {
         issues: false,
       },
       target: {
-        mode: "new_company",
-        newCompanyName: "Imported Paperclip",
+        mode: "new_workspace",
+        newWorkspaceName: "Imported Paperclip",
       },
       agents: "all",
       collisionStrategy: "rename",
     }, "user-1");
 
     expect(storage.putFile).toHaveBeenCalledWith(expect.objectContaining({
-      companyId: "company-imported",
-      namespace: "assets/companies",
+      workspaceId: "company-imported",
+      namespace: "assets/workspaces",
       originalFilename: "company-logo.png",
       contentType: "image/png",
       body: Buffer.from("png-bytes"),
     }));
     expect(assetSvc.create).toHaveBeenCalledWith("company-imported", expect.objectContaining({
-      objectKey: "assets/companies/imported-logo",
       contentType: "image/png",
       createdByUserId: "user-1",
     }));
-    expect(companySvc.update).toHaveBeenCalledWith("company-imported", {
+    expect(workspaceSvc.update).toHaveBeenCalledWith("company-imported", {
       logoAssetId: "asset-created",
     });
   });
@@ -2008,7 +2016,7 @@ describe("company portability", () => {
   it("copies source company memberships for safe new-company imports", async () => {
     const portability = workspacePortabilityService({} as any);
 
-    companySvc.create.mockResolvedValue({
+    workspaceSvc.create.mockResolvedValue({
       id: "company-imported",
       name: "Imported Paperclip",
     });
@@ -2041,8 +2049,8 @@ describe("company portability", () => {
         issues: false,
       },
       target: {
-        mode: "new_company",
-        newCompanyName: "Imported Paperclip",
+        mode: "new_workspace",
+        newWorkspaceName: "Imported Paperclip",
       },
       agents: "all",
       collisionStrategy: "rename",
@@ -2063,7 +2071,7 @@ describe("company portability", () => {
   it("disables timer heartbeats on imported agents", async () => {
     const portability = workspacePortabilityService({} as any);
 
-    companySvc.create.mockResolvedValue({
+    workspaceSvc.create.mockResolvedValue({
       id: "company-imported",
       name: "Imported Paperclip",
     });
@@ -2098,8 +2106,8 @@ describe("company portability", () => {
         issues: false,
       },
       target: {
-        mode: "new_company",
-        newCompanyName: "Imported Paperclip",
+        mode: "new_workspace",
+        newWorkspaceName: "Imported Paperclip",
       },
       agents: "all",
       collisionStrategy: "rename",
@@ -2155,14 +2163,14 @@ describe("company portability", () => {
       },
       selectedFiles: ["agents/cmo/AGENTS.md"],
       target: {
-        mode: "existing_company",
+        mode: "existing_workspace",
         companyId: "company-1",
       },
       agents: "all",
       collisionStrategy: "rename",
     }, "user-1");
 
-    expect(companySvc.update).not.toHaveBeenCalled();
+    expect(workspaceSvc.update).not.toHaveBeenCalled();
     expect(workspaceSkillSvc.importPackageFiles).toHaveBeenCalledWith(
       "company-1",
       expect.objectContaining({
@@ -2191,7 +2199,7 @@ describe("company portability", () => {
         },
       },
     }));
-    expect(result.company.action).toBe("unchanged");
+    expect(result.workspace.action).toBe("unchanged");
     expect(result.agents).toEqual([
       {
         slug: "cmo",
@@ -2206,7 +2214,7 @@ describe("company portability", () => {
   it("applies adapter overrides while keeping imported AGENTS content implicit", async () => {
     const portability = workspacePortabilityService({} as any);
 
-    companySvc.create.mockResolvedValue({
+    workspaceSvc.create.mockResolvedValue({
       id: "company-imported",
       name: "Imported Paperclip",
     });
@@ -2240,8 +2248,8 @@ describe("company portability", () => {
         issues: false,
       },
       target: {
-        mode: "new_company",
-        newCompanyName: "Imported Paperclip",
+        mode: "new_workspace",
+        newWorkspaceName: "Imported Paperclip",
       },
       agents: "all",
       collisionStrategy: "rename",
@@ -2286,7 +2294,7 @@ describe("company portability", () => {
   it("strips root AGENTS frontmatter when importing a nested agent entry path", async () => {
     const portability = workspacePortabilityService({} as any);
 
-    companySvc.create.mockResolvedValue({
+    workspaceSvc.create.mockResolvedValue({
       id: "company-imported",
       name: "Imported Paperclip",
     });
@@ -2327,8 +2335,8 @@ describe("company portability", () => {
         issues: false,
       },
       target: {
-        mode: "new_company",
-        newCompanyName: "Imported Paperclip",
+        mode: "new_workspace",
+        newWorkspaceName: "Imported Paperclip",
       },
       agents: ["claudecoder"],
       collisionStrategy: "rename",

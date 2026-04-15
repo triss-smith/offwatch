@@ -26,7 +26,7 @@ describe("gemini local skill sync", () => {
 
     const ctx = {
       agentId: "agent-1",
-      companyId: "company-1",
+      workspaceId: "workspace-1",
       adapterType: "gemini_local",
       config: {
         env: {
@@ -55,7 +55,7 @@ describe("gemini local skill sync", () => {
 
     const configuredCtx = {
       agentId: "agent-2",
-      companyId: "company-1",
+      workspaceId: "workspace-1",
       adapterType: "gemini_local",
       config: {
         env: {

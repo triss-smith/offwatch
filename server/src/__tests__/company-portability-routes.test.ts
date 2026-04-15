@@ -45,14 +45,14 @@ function registerServiceMocks() {
     agentService: () => mockAgentService,
     budgetService: () => mockBudgetService,
     workspacePortabilityService: () => mockWorkspacePortabilityService,
-    companyService: () => mockCompanyService,
+    workspaceService: () => mockCompanyService,
     feedbackService: () => mockFeedbackService,
     logActivity: mockLogActivity,
   }));
 }
 
 async function createApp(actor: Record<string, unknown>) {
-  const { companyRoutes } = await import("../routes/companies.js");
+  const { workspaceRoutes } = await import("../routes/workspaces.js");
   const { errorHandler } = await import("../middleware/index.js");
   const app = express();
   app.use(express.json());
@@ -60,7 +60,7 @@ async function createApp(actor: Record<string, unknown>) {
     (req as any).actor = actor;
     next();
   });
-  app.use("/api/companies", companyRoutes({} as any));
+  app.use("/api/workspaces", workspaceRoutes({} as any));
   app.use(errorHandler);
   return app;
 }
@@ -75,19 +75,19 @@ describe("company portability routes", () => {
   it("rejects non-CEO agents from CEO-safe export preview routes", async () => {
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
-      companyId: "11111111-1111-4111-8111-111111111111",
+      workspaceId: "11111111-1111-4111-8111-111111111111",
       role: "engineer",
     });
     const app = await createApp({
       type: "agent",
       agentId: "agent-1",
-      companyId: "11111111-1111-4111-8111-111111111111",
+      workspaceId: "11111111-1111-4111-8111-111111111111",
       source: "agent_key",
       runId: "run-1",
     });
 
     const res = await request(app)
-      .post("/api/companies/11111111-1111-4111-8111-111111111111/exports/preview")
+      .post("/api/workspaces/11111111-1111-4111-8111-111111111111/exports/preview")
       .send({ include: { company: true, agents: true, projects: true } });
 
     expect(res.status).toBe(403);
@@ -98,7 +98,7 @@ describe("company portability routes", () => {
   it("allows CEO agents to use company-scoped export preview routes", async () => {
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
-      companyId: "11111111-1111-4111-8111-111111111111",
+      workspaceId: "11111111-1111-4111-8111-111111111111",
       role: "ceo",
     });
     mockWorkspacePortabilityService.previewExport.mockResolvedValue({
@@ -113,13 +113,13 @@ describe("company portability routes", () => {
     const app = await createApp({
       type: "agent",
       agentId: "agent-1",
-      companyId: "11111111-1111-4111-8111-111111111111",
+      workspaceId: "11111111-1111-4111-8111-111111111111",
       source: "agent_key",
       runId: "run-1",
     });
 
     const res = await request(app)
-      .post("/api/companies/11111111-1111-4111-8111-111111111111/exports/preview")
+      .post("/api/workspaces/11111111-1111-4111-8111-111111111111/exports/preview")
       .send({ include: { company: true, agents: true, projects: true } });
 
     expect(res.status).toBe(200);
@@ -129,23 +129,23 @@ describe("company portability routes", () => {
   it("rejects replace collision strategy on CEO-safe import routes", async () => {
     mockAgentService.getById.mockResolvedValue({
       id: "agent-1",
-      companyId: "11111111-1111-4111-8111-111111111111",
+      workspaceId: "11111111-1111-4111-8111-111111111111",
       role: "ceo",
     });
     const app = await createApp({
       type: "agent",
       agentId: "agent-1",
-      companyId: "11111111-1111-4111-8111-111111111111",
+      workspaceId: "11111111-1111-4111-8111-111111111111",
       source: "agent_key",
       runId: "run-1",
     });
 
     const res = await request(app)
-      .post("/api/companies/11111111-1111-4111-8111-111111111111/imports/preview")
+      .post("/api/workspaces/11111111-1111-4111-8111-111111111111/imports/preview")
       .send({
         source: { type: "inline", files: { "COMPANY.md": "---\nname: Test\n---\n" } },
         include: { company: true, agents: true, projects: false, issues: false },
-        target: { mode: "existing_company", companyId: "11111111-1111-4111-8111-111111111111" },
+        target: { mode: "existing_workspace", workspaceId: "11111111-1111-4111-8111-111111111111" },
         collisionStrategy: "replace",
       });
 
@@ -158,17 +158,17 @@ describe("company portability routes", () => {
     const app = await createApp({
       type: "agent",
       agentId: "agent-1",
-      companyId: "11111111-1111-4111-8111-111111111111",
+      workspaceId: "11111111-1111-4111-8111-111111111111",
       source: "agent_key",
       runId: "run-1",
     });
 
     const res = await request(app)
-      .post("/api/companies/import/preview")
+      .post("/api/workspaces/import/preview")
       .send({
         source: { type: "inline", files: { "COMPANY.md": "---\nname: Test\n---\n" } },
         include: { company: true, agents: true, projects: false, issues: false },
-        target: { mode: "existing_company", companyId: "11111111-1111-4111-8111-111111111111" },
+        target: { mode: "existing_workspace", workspaceId: "11111111-1111-4111-8111-111111111111" },
         collisionStrategy: "rename",
       });
 
@@ -186,11 +186,11 @@ describe("company portability routes", () => {
     });
 
     const res = await request(app)
-      .post("/api/companies/import/preview")
+      .post("/api/workspaces/import/preview")
       .send({
         source: { type: "inline", files: { "COMPANY.md": "---\nname: Test\n---\n" } },
         include: { company: true, agents: true, projects: false, issues: false },
-        target: { mode: "new_company", newCompanyName: "Imported Test" },
+        target: { mode: "new_workspace", newWorkspaceName: "Imported Test" },
         collisionStrategy: "rename",
       });
 
@@ -209,11 +209,11 @@ describe("company portability routes", () => {
     });
 
     const res = await request(app)
-      .post("/api/companies/import")
+      .post("/api/workspaces/import")
       .send({
         source: { type: "inline", files: { "COMPANY.md": "---\nname: Test\n---\n" } },
         include: { company: true, agents: true, projects: false, issues: false },
-        target: { mode: "new_company", newCompanyName: "Imported Test" },
+        target: { mode: "new_workspace", newWorkspaceName: "Imported Test" },
         collisionStrategy: "rename",
       });
 

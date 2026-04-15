@@ -105,7 +105,7 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
 
     await db.insert(agents).values({
       id: agentId,
-      companyId,
+      workspaceId: companyId,
       name: "CodexCoder",
       role: "engineer",
       status: "active",
@@ -117,7 +117,7 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
 
     await db.insert(projects).values({
       id: projectId,
-      companyId,
+      workspaceId: companyId,
       name: "Routines",
       status: "in_progress",
     });
@@ -135,7 +135,7 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
           const queuedRunId = randomUUID();
           await db.insert(heartbeatRuns).values({
             id: queuedRunId,
-            companyId,
+            workspaceId: companyId,
             agentId: wakeupAgentId,
             invocationSource: wakeupOpts.source ?? "assignment",
             triggerDetail: wakeupOpts.triggerDetail ?? null,
@@ -191,7 +191,7 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
 
     await db.insert(routineRuns).values({
       id: previousRunId,
-      companyId,
+      workspaceId: companyId,
       routineId: routine.id,
       triggerId: null,
       source: "manual",
@@ -303,7 +303,7 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
 
     await db.insert(routineRuns).values({
       id: previousRunId,
-      companyId,
+      workspaceId: companyId,
       routineId: routine.id,
       triggerId: null,
       source: "manual",
@@ -314,7 +314,7 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
 
     await db.insert(heartbeatRuns).values({
       id: liveHeartbeatRunId,
-      companyId,
+      workspaceId: companyId,
       agentId,
       invocationSource: "assignment",
       triggerDetail: "system",
@@ -417,7 +417,7 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
       .where(eq(projects.id, projectId));
     await db.insert(projectWorkspaces).values({
       id: projectWorkspaceId,
-      companyId,
+      workspaceId: companyId,
       projectId,
       name: "Primary workspace",
       isPrimary: true,
@@ -425,7 +425,7 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
     });
     await db.insert(executionWorkspaces).values({
       id: executionWorkspaceId,
-      companyId,
+      workspaceId: companyId,
       projectId,
       projectWorkspaceId,
       mode: "isolated_workspace",
@@ -620,7 +620,7 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
         const queuedRunId = randomUUID();
         await db.insert(heartbeatRuns).values({
           id: queuedRunId,
-          companyId: routine.companyId,
+          workspaceId: routine.workspaceId,
           agentId: wakeupAgentId,
           invocationSource: wakeupOpts.source ?? "assignment",
           triggerDetail: wakeupOpts.triggerDetail ?? null,

@@ -71,7 +71,7 @@ describe("cursor execute", () => {
         runId: "run-1",
         agent: {
           id: "agent-1",
-          companyId: "company-1",
+          workspaceId: "workspace-1",
           name: "Cursor Coder",
           adapterType: "cursor",
           adapterConfig: {},
@@ -145,7 +145,7 @@ describe("cursor execute", () => {
         runId: "run-2",
         agent: {
           id: "agent-1",
-          companyId: "company-1",
+          workspaceId: "workspace-1",
           name: "Cursor Coder",
           adapterType: "cursor",
           adapterConfig: {},
@@ -206,7 +206,7 @@ describe("cursor execute", () => {
         runId: "run-3",
         agent: {
           id: "agent-1",
-          companyId: "company-1",
+          workspaceId: "workspace-1",
           name: "Cursor Coder",
           adapterType: "cursor",
           adapterConfig: {},

@@ -111,7 +111,7 @@ function makeAttachment(contentType: string, originalFilename: string) {
   const now = new Date("2026-01-01T00:00:00.000Z");
   return {
     id: "attachment-1",
-    companyId: "company-1",
+    workspaceId: "company-1",
     issueId: "11111111-1111-4111-8111-111111111111",
     issueCommentId: null,
     assetId: "asset-1",
@@ -139,20 +139,20 @@ describe("issue attachment routes", () => {
     const storage = createStorageService();
     mockIssueService.getById.mockResolvedValue({
       id: "11111111-1111-4111-8111-111111111111",
-      companyId: "company-1",
+      workspaceId: "company-1",
       identifier: "PAP-1",
     });
     mockIssueService.createAttachment.mockResolvedValue(makeAttachment("application/zip", "bundle.zip"));
 
     const app = await createApp(storage);
     const res = await request(app)
-      .post("/api/companies/company-1/issues/11111111-1111-4111-8111-111111111111/attachments")
+      .post("/api/workspaces/company-1/issues/11111111-1111-4111-8111-111111111111/attachments")
       .attach("file", Buffer.from("zip"), { filename: "bundle.zip", contentType: "application/zip" });
 
     expect(res.status).toBe(201);
     const putFileCall = vi.mocked(storage.putFile).mock.calls[0]?.[0];
     expect(putFileCall).toMatchObject({
-      companyId: "company-1",
+      workspaceId: "company-1",
       namespace: "issues/11111111-1111-4111-8111-111111111111",
       originalFilename: "bundle.zip",
       contentType: "application/zip",

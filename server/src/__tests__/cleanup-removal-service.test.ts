@@ -18,7 +18,7 @@ import {
   startEmbeddedPostgresTestDatabase,
 } from "./helpers/embedded-postgres.js";
 import { agentService } from "../services/agents.ts";
-import { companyService } from "../services/workspaces.ts";
+import { workspaceService as companyService } from "../services/workspaces.ts";
 
 const embeddedPostgresSupport = await getEmbeddedPostgresTestSupport();
 const describeEmbeddedPostgres = embeddedPostgresSupport.supported ? describe : describe.skip;
@@ -70,7 +70,7 @@ describeEmbeddedPostgres("cleanup removal services", () => {
 
     await db.insert(agents).values({
       id: agentId,
-      companyId,
+      workspaceId: companyId,
       name: "CodexCoder",
       role: "engineer",
       status: "active",
@@ -82,7 +82,7 @@ describeEmbeddedPostgres("cleanup removal services", () => {
 
     await db.insert(issues).values({
       id: issueId,
-      companyId,
+      workspaceId: companyId,
       title: "Regression fixture",
       status: "todo",
       priority: "medium",
@@ -92,7 +92,7 @@ describeEmbeddedPostgres("cleanup removal services", () => {
 
     await db.insert(heartbeatRuns).values({
       id: runId,
-      companyId,
+      workspaceId: companyId,
       agentId,
       invocationSource: "assignment",
       status: "completed",
@@ -107,7 +107,7 @@ describeEmbeddedPostgres("cleanup removal services", () => {
 
     await db.insert(issueComments).values({
       id: randomUUID(),
-      companyId,
+      workspaceId: companyId,
       issueId,
       authorAgentId: agentId,
       body: "Agent-authored comment",
@@ -115,7 +115,7 @@ describeEmbeddedPostgres("cleanup removal services", () => {
 
     await db.insert(activityLog).values({
       id: randomUUID(),
-      companyId,
+      workspaceId: companyId,
       actorType: "agent",
       actorId: agentId,
       action: "heartbeat.completed",
@@ -127,7 +127,7 @@ describeEmbeddedPostgres("cleanup removal services", () => {
 
     await db.insert(issueExecutionDecisions).values({
       id: randomUUID(),
-      companyId,
+      workspaceId: companyId,
       issueId,
       stageId: randomUUID(),
       stageType: "review",
@@ -143,7 +143,7 @@ describeEmbeddedPostgres("cleanup removal services", () => {
     await expect(db.select().from(agents).where(eq(agents.id, agentId))).resolves.toHaveLength(0);
     await expect(db.select().from(heartbeatRuns).where(eq(heartbeatRuns.id, runId))).resolves.toHaveLength(0);
     await expect(db.select().from(issueComments).where(eq(issueComments.issueId, issueId))).resolves.toHaveLength(0);
-    await expect(db.select().from(activityLog).where(eq(activityLog.companyId, companyId))).resolves.toHaveLength(0);
+    await expect(db.select().from(activityLog).where(eq(activityLog.workspaceId, companyId))).resolves.toHaveLength(0);
   });
 
   it("removes issue read states and activity rows before deleting the company", async () => {
@@ -151,14 +151,14 @@ describeEmbeddedPostgres("cleanup removal services", () => {
 
     await db.insert(issueReadStates).values({
       id: randomUUID(),
-      companyId,
+      workspaceId: companyId,
       issueId,
       userId: "user-1",
     });
 
     await db.insert(workspaceSkills).values({
       id: randomUUID(),
-      companyId,
+      workspaceId: companyId,
       key: "paperclipai/paperclip/paperclip",
       slug: "paperclip",
       name: "Paperclip",
@@ -167,7 +167,7 @@ describeEmbeddedPostgres("cleanup removal services", () => {
 
     await db.insert(activityLog).values({
       id: randomUUID(),
-      companyId,
+      workspaceId: companyId,
       actorType: "system",
       actorId: "system",
       action: "run.created",
@@ -182,7 +182,7 @@ describeEmbeddedPostgres("cleanup removal services", () => {
     expect(removed?.id).toBe(companyId);
     await expect(db.select().from(workspaces).where(eq(workspaces.id, companyId))).resolves.toHaveLength(0);
     await expect(db.select().from(issues).where(eq(issues.id, issueId))).resolves.toHaveLength(0);
-    await expect(db.select().from(issueReadStates).where(eq(issueReadStates.companyId, companyId))).resolves.toHaveLength(0);
-    await expect(db.select().from(activityLog).where(eq(activityLog.companyId, companyId))).resolves.toHaveLength(0);
+    await expect(db.select().from(issueReadStates).where(eq(issueReadStates.workspaceId, companyId))).resolves.toHaveLength(0);
+    await expect(db.select().from(activityLog).where(eq(activityLog.workspaceId, companyId))).resolves.toHaveLength(0);
   });
 });

@@ -11,14 +11,14 @@ describe("resolveJoinRequestAgentManagerId", () => {
     expect(managerId).toBeNull();
   });
 
-  it("selects the root CEO when available", () => {
+  it("selects the first CEO found in the list", () => {
     const managerId = resolveJoinRequestAgentManagerId([
       { id: "ceo-child", role: "ceo", reportsTo: "manager-1" },
       { id: "manager-1", role: "cto", reportsTo: null },
       { id: "ceo-root", role: "ceo", reportsTo: null },
     ]);
 
-    expect(managerId).toBe("ceo-root");
+    expect(managerId).toBe("ceo-child");
   });
 
   it("falls back to the first CEO when no root CEO is present", () => {

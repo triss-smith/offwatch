@@ -48,7 +48,7 @@ async function createApp(actorOverrides: Record<string, unknown> = {}) {
     (req as any).actor = {
       type: "board",
       userId: "user-1",
-      companyIds: ["company-1"],
+      workspaceIds: ["company-1"],
       source: "session",
       isInstanceAdmin: false,
       ...actorOverrides,
@@ -71,7 +71,7 @@ async function createAgentApp() {
     (req as any).actor = {
       type: "agent",
       agentId: "agent-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       source: "api_key",
       isInstanceAdmin: false,
     };
@@ -94,7 +94,7 @@ describe("approval routes idempotent retries", () => {
   it("does not emit duplicate approval side effects when approve is already resolved", async () => {
     mockApprovalService.getById.mockResolvedValue({
       id: "approval-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       type: "hire_agent",
       status: "approved",
       payload: {},
@@ -103,7 +103,7 @@ describe("approval routes idempotent retries", () => {
     mockApprovalService.approve.mockResolvedValue({
       approval: {
         id: "approval-1",
-        companyId: "company-1",
+        workspaceId: "company-1",
         type: "hire_agent",
         status: "approved",
         payload: {},
@@ -125,7 +125,7 @@ describe("approval routes idempotent retries", () => {
   it("does not emit duplicate rejection logs when reject is already resolved", async () => {
     mockApprovalService.getById.mockResolvedValue({
       id: "approval-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       type: "hire_agent",
       status: "rejected",
       payload: {},
@@ -133,7 +133,7 @@ describe("approval routes idempotent retries", () => {
     mockApprovalService.reject.mockResolvedValue({
       approval: {
         id: "approval-1",
-        companyId: "company-1",
+        workspaceId: "company-1",
         type: "hire_agent",
         status: "rejected",
         payload: {},
@@ -152,7 +152,7 @@ describe("approval routes idempotent retries", () => {
   it("rejects approval decisions for companies outside the caller scope", async () => {
     mockApprovalService.getById.mockResolvedValue({
       id: "approval-2",
-      companyId: "company-2",
+      workspaceId: "company-2",
       type: "hire_agent",
       status: "pending",
       payload: {},
@@ -169,7 +169,7 @@ describe("approval routes idempotent retries", () => {
   it("rejects approval revision requests for companies outside the caller scope", async () => {
     mockApprovalService.getById.mockResolvedValue({
       id: "approval-3",
-      companyId: "company-2",
+      workspaceId: "company-2",
       type: "hire_agent",
       status: "pending",
       payload: {},
@@ -186,8 +186,8 @@ describe("approval routes idempotent retries", () => {
   it("lets agents create generic issue-linked board approval requests", async () => {
     mockApprovalService.create.mockResolvedValue({
       id: "approval-1",
-      companyId: "company-1",
-      type: "request_board_approval",
+      workspaceId: "company-1",
+      type: "tracker_issue_proposal",
       requestedByAgentId: "agent-1",
       requestedByUserId: null,
       status: "pending",
@@ -200,9 +200,9 @@ describe("approval routes idempotent retries", () => {
     });
 
     const res = await request(await createAgentApp())
-      .post("/api/companies/company-1/approvals")
+      .post("/api/workspaces/company-1/approvals")
       .send({
-        type: "request_board_approval",
+        type: "tracker_issue_proposal",
         issueIds: ["00000000-0000-0000-0000-000000000001"],
         payload: { title: "Approve hosting spend" },
       });
@@ -211,7 +211,7 @@ describe("approval routes idempotent retries", () => {
     expect(mockApprovalService.create).toHaveBeenCalledWith(
       "company-1",
       expect.objectContaining({
-        type: "request_board_approval",
+        type: "tracker_issue_proposal",
         requestedByAgentId: "agent-1",
         requestedByUserId: null,
         status: "pending",
@@ -227,7 +227,7 @@ describe("approval routes idempotent retries", () => {
     expect(mockLogActivity).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        companyId: "company-1",
+        workspaceId: "company-1",
         actorType: "agent",
         actorId: "agent-1",
         action: "approval.created",

@@ -71,7 +71,7 @@ function buildObjectKey(workspaceId: string, namespace: string, originalFilename
 
 function assertPutFileInput(input: PutFileInput): void {
   if (!input.workspaceId || input.workspaceId.trim().length === 0) {
-    throw unprocessable("companyId is required");
+    throw unprocessable("workspaceId is required");
   }
   if (!input.namespace || input.namespace.trim().length === 0) {
     throw unprocessable("namespace is required");

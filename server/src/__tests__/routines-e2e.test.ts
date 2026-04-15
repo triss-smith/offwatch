@@ -44,16 +44,16 @@ vi.mock("../services/index.js", async () => {
             if (!issueId) return null;
 
             const issue = await db
-              .select({ companyId: issues.companyId })
+              .select({ workspaceId: issues.workspaceId })
               .from(issues)
               .where(eq(issues.id, issueId))
-              .then((rows: Array<{ companyId: string }>) => rows[0] ?? null);
+              .then((rows: Array<{ workspaceId: string }>) => rows[0] ?? null);
             if (!issue) return null;
 
             const queuedRunId = randomUUID();
             await db.insert(heartbeatRuns).values({
               id: queuedRunId,
-              companyId: issue.companyId,
+              workspaceId: issue.workspaceId,
               agentId,
               invocationSource: wakeupOpts?.source ?? "assignment",
               triggerDetail: wakeupOpts?.triggerDetail ?? null,
@@ -151,7 +151,7 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
 
     await db.insert(agents).values({
       id: agentId,
-      companyId,
+      workspaceId: companyId,
       name: "CodexCoder",
       role: "engineer",
       status: "active",
@@ -163,7 +163,7 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
 
     await db.insert(projects).values({
       id: projectId,
-      companyId,
+      workspaceId: companyId,
       name: "Routine Project",
       status: "in_progress",
     });
@@ -187,7 +187,7 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
       userId,
       source: "session",
       isInstanceAdmin: false,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const createRes = await request(app)
@@ -269,7 +269,7 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
         action: activityLog.action,
       })
       .from(activityLog)
-      .where(eq(activityLog.companyId, companyId));
+      .where(eq(activityLog.workspaceId, companyId));
 
     expect(actions.map((entry) => entry.action)).toEqual(
       expect.arrayContaining([
@@ -287,7 +287,7 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
       userId,
       source: "session",
       isInstanceAdmin: false,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const createRes = await request(app)
@@ -335,7 +335,7 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
       userId,
       source: "session",
       isInstanceAdmin: false,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const createRes = await request(app)
@@ -384,12 +384,12 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
       userId,
       source: "session",
       isInstanceAdmin: false,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     await db.insert(projectWorkspaces).values({
       id: projectWorkspaceId,
-      companyId,
+      workspaceId: companyId,
       projectId,
       name: "Primary workspace",
       isPrimary: true,
@@ -397,7 +397,7 @@ describeEmbeddedPostgres("routine routes end-to-end", () => {
     });
     await db.insert(executionWorkspaces).values({
       id: executionWorkspaceId,
-      companyId,
+      workspaceId: companyId,
       projectId,
       projectWorkspaceId,
       mode: "isolated_workspace",

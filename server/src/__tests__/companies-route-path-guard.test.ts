@@ -1,10 +1,10 @@
 import express from "express";
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
-import { companyRoutes } from "../routes/companies.js";
+import { workspaceRoutes } from "../routes/workspaces.js";
 
 vi.mock("../services/index.js", () => ({
-  companyService: () => ({
+  workspaceService: () => ({
     list: vi.fn(),
     stats: vi.fn(),
     getById: vi.fn(),
@@ -38,25 +38,25 @@ vi.mock("../services/index.js", () => ({
   logActivity: vi.fn(),
 }));
 
-describe("company routes malformed issue path guard", () => {
-  it("returns a clear error when companyId is missing for issues list path", async () => {
+describe("workspace routes malformed issue path guard", () => {
+  it("returns a clear error when workspaceId is missing for issues list path", async () => {
     const app = express();
     app.use((req, _res, next) => {
       (req as any).actor = {
         type: "agent",
         agentId: "agent-1",
-        companyId: "company-1",
+        workspaceId: "company-1",
         source: "agent_key",
       };
       next();
     });
-    app.use("/api/companies", companyRoutes({} as any));
+    app.use("/api/workspaces", workspaceRoutes({} as any));
 
-    const res = await request(app).get("/api/companies/issues");
+    const res = await request(app).get("/api/workspaces/issues");
 
     expect(res.status).toBe(400);
     expect(res.body).toEqual({
-      error: "Missing companyId in path. Use /api/companies/{companyId}/issues.",
+      error: "Missing workspaceId in path. Use /api/workspaces/{workspaceId}/issues.",
     });
   });
 });

@@ -164,7 +164,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     });
     await db.insert(projects).values({
       id: projectId,
-      companyId,
+      workspaceId: companyId,
       name: "Workspaces",
       status: "in_progress",
       executionWorkspacePolicy: {
@@ -173,7 +173,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     });
     await db.insert(projectWorkspaces).values({
       id: projectWorkspaceId,
-      companyId,
+      workspaceId: companyId,
       projectId,
       name: "Primary",
       sourceType: "local_path",
@@ -182,7 +182,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     });
     await db.insert(executionWorkspaces).values({
       id: executionWorkspaceId,
-      companyId,
+      workspaceId: companyId,
       projectId,
       projectWorkspaceId,
       mode: "shared_workspace",
@@ -199,7 +199,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     });
     await db.insert(issues).values({
       id: randomUUID(),
-      companyId,
+      workspaceId: companyId,
       projectId,
       title: "Still working",
       status: "todo",
@@ -249,7 +249,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     });
     await db.insert(projects).values({
       id: projectId,
-      companyId,
+      workspaceId: companyId,
       name: "Workspaces",
       status: "in_progress",
       executionWorkspacePolicy: {
@@ -262,7 +262,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     });
     await db.insert(projectWorkspaces).values({
       id: projectWorkspaceId,
-      companyId,
+      workspaceId: companyId,
       projectId,
       name: "Primary",
       sourceType: "git_repo",
@@ -272,7 +272,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     });
     await db.insert(executionWorkspaces).values({
       id: executionWorkspaceId,
-      companyId,
+      workspaceId: companyId,
       projectId,
       projectWorkspaceId,
       mode: "isolated_workspace",
@@ -345,7 +345,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     });
     await db.insert(projects).values({
       id: projectId,
-      companyId,
+      workspaceId: companyId,
       name: "Workspaces",
       status: "in_progress",
       executionWorkspacePolicy: {
@@ -354,7 +354,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     });
     await db.insert(projectWorkspaces).values({
       id: projectWorkspaceId,
-      companyId,
+      workspaceId: companyId,
       projectId,
       name: "Primary",
       sourceType: "local_path",
@@ -371,7 +371,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     });
     await db.insert(executionWorkspaces).values({
       id: executionWorkspaceId,
-      companyId,
+      workspaceId: companyId,
       projectId,
       projectWorkspaceId,
       mode: "shared_workspace",
@@ -384,7 +384,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
     await db.insert(workspaceRuntimeServices).values([
       {
         id: olderServiceId,
-        companyId,
+        workspaceId: companyId,
         projectId,
         projectWorkspaceId,
         executionWorkspaceId: null,
@@ -413,7 +413,7 @@ describeEmbeddedPostgres("executionWorkspaceService.getCloseReadiness", () => {
       },
       {
         id: currentServiceId,
-        companyId,
+        workspaceId: companyId,
         projectId,
         projectWorkspaceId,
         executionWorkspaceId: null,

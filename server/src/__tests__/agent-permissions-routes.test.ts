@@ -9,7 +9,7 @@ const companyId = "22222222-2222-4222-8222-222222222222";
 
 const baseAgent = {
   id: agentId,
-  companyId,
+  workspaceId: companyId,
   name: "Builder",
   urlKey: "builder",
   role: "engineer",
@@ -154,7 +154,7 @@ describe("agent permission routes", () => {
     mockAgentService.updatePermissions.mockResolvedValue(baseAgent);
     mockAccessService.getMembership.mockResolvedValue({
       id: "membership-1",
-      companyId,
+      workspaceId: companyId,
       principalType: "agent",
       principalId: agentId,
       status: "active",
@@ -196,11 +196,11 @@ describe("agent permission routes", () => {
       userId: "board-user",
       source: "local_implicit",
       isInstanceAdmin: true,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const res = await request(app)
-      .post(`/api/companies/${companyId}/agents`)
+      .post(`/api/workspaces/${companyId}/agents`)
       .send({
         name: "Builder",
         role: "engineer",
@@ -232,11 +232,11 @@ describe("agent permission routes", () => {
       userId: "board-user",
       source: "local_implicit",
       isInstanceAdmin: true,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const res = await request(app)
-      .post(`/api/companies/${companyId}/agents`)
+      .post(`/api/workspaces/${companyId}/agents`)
       .send({
         name: "Builder",
         role: "engineer",
@@ -269,11 +269,11 @@ describe("agent permission routes", () => {
       userId: "board-user",
       source: "local_implicit",
       isInstanceAdmin: true,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const res = await request(app)
-      .post(`/api/companies/${companyId}/agent-hires`)
+      .post(`/api/workspaces/${companyId}/agent-hires`)
       .send({
         name: "Builder",
         role: "engineer",
@@ -304,7 +304,7 @@ describe("agent permission routes", () => {
     mockAccessService.listPrincipalGrants.mockResolvedValue([
       {
         id: "grant-1",
-        companyId,
+        workspaceId: companyId,
         principalType: "agent",
         principalId: agentId,
         permissionKey: "tasks:assign",
@@ -320,7 +320,7 @@ describe("agent permission routes", () => {
       userId: "board-user",
       source: "local_implicit",
       isInstanceAdmin: true,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const res = await request(app).get(`/api/agents/${agentId}`);
@@ -341,7 +341,7 @@ describe("agent permission routes", () => {
       userId: "board-user",
       source: "local_implicit",
       isInstanceAdmin: true,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const res = await request(app)
@@ -374,7 +374,7 @@ describe("agent permission routes", () => {
     const app = createApp({
       type: "agent",
       agentId,
-      companyId,
+      workspaceId: companyId,
       runId: "run-1",
       source: "agent_key",
     });
@@ -397,7 +397,7 @@ describe("agent permission routes", () => {
   it("rejects heartbeat cancellation outside the caller company scope", async () => {
     mockHeartbeatService.getRun.mockResolvedValue({
       id: "run-1",
-      companyId: "33333333-3333-4333-8333-333333333333",
+      workspaceId: "33333333-3333-4333-8333-333333333333",
       agentId,
       status: "running",
     });
@@ -407,7 +407,7 @@ describe("agent permission routes", () => {
       userId: "board-user",
       source: "session",
       isInstanceAdmin: false,
-      companyIds: [companyId],
+      workspaceIds: [companyId],
     });
 
     const res = await request(app).post("/api/heartbeat-runs/run-1/cancel").send({});

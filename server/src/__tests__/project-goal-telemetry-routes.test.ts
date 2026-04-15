@@ -102,7 +102,7 @@ describe("project and goal telemetry routes", () => {
 
   it("emits telemetry when a project is created", async () => {
     const res = await request(createApp(projectRoutes({} as any)))
-      .post("/api/companies/company-1/projects")
+      .post("/api/workspaces/company-1/projects")
       .send({ name: "Telemetry project" });
 
     expect([200, 201]).toContain(res.status);
@@ -111,7 +111,7 @@ describe("project and goal telemetry routes", () => {
 
   it("emits telemetry when a goal is created", async () => {
     const res = await request(createApp(goalRoutes({} as any)))
-      .post("/api/companies/company-1/goals")
+      .post("/api/workspaces/company-1/goals")
       .send({ title: "Telemetry goal", level: "team" });
 
     expect(res.status, JSON.stringify(res.body)).toBe(201);

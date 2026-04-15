@@ -122,7 +122,7 @@ describe("issue feedback trace routes", () => {
     const targetId = "11111111-1111-4111-8111-111111111111";
     mockIssueService.getById.mockResolvedValue({
       id: "issue-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
       identifier: "PAP-1",
     });
     mockFeedbackService.saveIssueVote.mockResolvedValue({
@@ -156,7 +156,7 @@ describe("issue feedback trace routes", () => {
 
     expect([200, 201]).toContain(res.status);
     expect(mockFeedbackExportService.flushPendingFeedbackTraces).toHaveBeenCalledWith({
-      companyId: "company-1",
+      workspaceId: "company-1",
       traceId: "trace-1",
       limit: 1,
     });

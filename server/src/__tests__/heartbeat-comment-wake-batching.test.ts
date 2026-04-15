@@ -249,7 +249,7 @@ describe("heartbeat comment wake batching", () => {
 
       await db.insert(agents).values({
         id: agentId,
-        companyId,
+        workspaceId: companyId,
         name: "Gateway Agent",
         role: "engineer",
         status: "idle",
@@ -270,7 +270,7 @@ describe("heartbeat comment wake batching", () => {
 
       await db.insert(issues).values({
         id: issueId,
-        companyId,
+        workspaceId: companyId,
         title: "Batch wake comments",
         status: "todo",
         priority: "medium",
@@ -282,7 +282,7 @@ describe("heartbeat comment wake batching", () => {
       const comment1 = await db
         .insert(issueComments)
         .values({
-          companyId,
+          workspaceId: companyId,
           issueId,
           authorUserId: "user-1",
           body: "First comment",
@@ -308,7 +308,7 @@ describe("heartbeat comment wake batching", () => {
       await waitFor(() => gateway.getAgentPayloads().length === 1);
 
       await db.insert(issueComments).values({
-        companyId,
+        workspaceId: companyId,
         issueId,
         authorAgentId: agentId,
         createdByRunId: firstRun?.id ?? null,
@@ -318,7 +318,7 @@ describe("heartbeat comment wake batching", () => {
       const comment2 = await db
         .insert(issueComments)
         .values({
-          companyId,
+          workspaceId: companyId,
           issueId,
           authorUserId: "user-1",
           body: "Second comment",
@@ -328,7 +328,7 @@ describe("heartbeat comment wake batching", () => {
       const comment3 = await db
         .insert(issueComments)
         .values({
-          companyId,
+          workspaceId: companyId,
           issueId,
           authorUserId: "user-1",
           body: "Third comment",
@@ -374,7 +374,7 @@ describe("heartbeat comment wake batching", () => {
           .from(agentWakeupRequests)
           .where(
             and(
-              eq(agentWakeupRequests.companyId, companyId),
+              eq(agentWakeupRequests.workspaceId, companyId),
               eq(agentWakeupRequests.agentId, agentId),
               eq(agentWakeupRequests.status, "deferred_issue_execution"),
             ),
@@ -388,7 +388,7 @@ describe("heartbeat comment wake batching", () => {
           .from(agentWakeupRequests)
           .where(
             and(
-              eq(agentWakeupRequests.companyId, companyId),
+              eq(agentWakeupRequests.workspaceId, companyId),
               eq(agentWakeupRequests.agentId, agentId),
               eq(agentWakeupRequests.status, "deferred_issue_execution"),
             ),
@@ -442,7 +442,7 @@ describe("heartbeat comment wake batching", () => {
 
       await db.insert(agents).values({
         id: agentId,
-        companyId,
+        workspaceId: companyId,
         name: "Gateway Agent",
         role: "engineer",
         status: "idle",
@@ -463,7 +463,7 @@ describe("heartbeat comment wake batching", () => {
 
       await db.insert(issues).values({
         id: issueId,
-        companyId,
+        workspaceId: companyId,
         title: "Require a comment",
         status: "todo",
         priority: "medium",
@@ -541,7 +541,7 @@ describe("heartbeat comment wake batching", () => {
         const wakeups = await db
           .select()
           .from(agentWakeupRequests)
-          .where(and(eq(agentWakeupRequests.companyId, companyId), eq(agentWakeupRequests.agentId, agentId)));
+          .where(and(eq(agentWakeupRequests.workspaceId, companyId), eq(agentWakeupRequests.agentId, agentId)));
         return wakeups.length >= 2;
       });
 

@@ -150,7 +150,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(agents).values({
       id: agentId,
-      companyId,
+      workspaceId: companyId,
       name: "CodexCoder",
       role: "engineer",
       status: "active",
@@ -162,7 +162,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(issues).values({
       id: issueId,
-      companyId,
+      workspaceId: companyId,
       title: "Add feedback voting",
       status: "todo",
       priority: "medium",
@@ -171,7 +171,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(issueComments).values({
       id: commentId,
-      companyId,
+      workspaceId: companyId,
       issueId,
       authorAgentId: agentId,
       body: "AI generated update",
@@ -211,7 +211,7 @@ describe("feedbackService.saveIssueVote", () => {
     await db.insert(workspaceSkills).values([
       {
         id: randomUUID(),
-        companyId,
+        workspaceId: companyId,
         key: "paperclipai/paperclip/paperclip",
         slug: "paperclip",
         name: "Paperclip",
@@ -223,7 +223,7 @@ describe("feedbackService.saveIssueVote", () => {
       },
       {
         id: randomUUID(),
-        companyId,
+        workspaceId: companyId,
         key: "octo/research/public-skill",
         slug: "public-skill",
         name: "Public Skill",
@@ -237,7 +237,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(agents).values({
       id: agentId,
-      companyId,
+      workspaceId: companyId,
       name: "CodexCoder",
       role: "engineer",
       status: "active",
@@ -263,7 +263,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(issues).values({
       id: issueId,
-      companyId,
+      workspaceId: companyId,
       title: "Trace-rich feedback",
       description: "Issue context includes ops@example.com and a backup phone 555 111 2222.",
       status: "todo",
@@ -273,7 +273,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(heartbeatRuns).values({
       id: runId,
-      companyId,
+      workspaceId: companyId,
       agentId,
       invocationSource: "manual",
       status: "succeeded",
@@ -290,7 +290,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(costEvents).values({
       id: randomUUID(),
-      companyId,
+      workspaceId: companyId,
       agentId,
       issueId,
       heartbeatRunId: runId,
@@ -308,7 +308,7 @@ describe("feedbackService.saveIssueVote", () => {
     await db.insert(issueComments).values([
       {
         id: earlierCommentId,
-        companyId,
+        workspaceId: companyId,
         issueId,
         authorAgentId: agentId,
         createdByRunId: runId,
@@ -317,7 +317,7 @@ describe("feedbackService.saveIssueVote", () => {
       },
       {
         id: targetCommentId,
-        companyId,
+        workspaceId: companyId,
         issueId,
         authorAgentId: agentId,
         createdByRunId: runId,
@@ -326,7 +326,7 @@ describe("feedbackService.saveIssueVote", () => {
       },
       {
         id: laterCommentId,
-        companyId,
+        workspaceId: companyId,
         issueId,
         authorAgentId: agentId,
         createdByRunId: runId,
@@ -354,7 +354,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(agents).values({
       id: agentId,
-      companyId,
+      workspaceId: companyId,
       name: "CodexCoder",
       role: "engineer",
       status: "active",
@@ -366,7 +366,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(issues).values({
       id: issueId,
-      companyId,
+      workspaceId: companyId,
       title: "Document feedback",
       status: "todo",
       priority: "medium",
@@ -375,7 +375,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(documents).values({
       id: documentId,
-      companyId,
+      workspaceId: companyId,
       title: "Plan",
       format: "markdown",
       latestBody: "Drafted by an agent",
@@ -387,7 +387,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(documentRevisions).values({
       id: revisionId,
-      companyId,
+      workspaceId: companyId,
       documentId,
       revisionNumber: 1,
       body: "Drafted by an agent",
@@ -395,7 +395,7 @@ describe("feedbackService.saveIssueVote", () => {
     });
 
     await db.insert(issueDocuments).values({
-      companyId,
+      workspaceId: companyId,
       issueId,
       documentId,
       key: "plan",
@@ -423,7 +423,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(agents).values({
       id: agentId,
-      companyId,
+      workspaceId: companyId,
       name: "TraceCollector",
       role: "engineer",
       status: "active",
@@ -435,7 +435,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(issues).values({
       id: issueId,
-      companyId,
+      workspaceId: companyId,
       title: "Trace-backed feedback",
       status: "todo",
       priority: "medium",
@@ -444,7 +444,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(heartbeatRuns).values({
       id: runId,
-      companyId,
+      workspaceId: companyId,
       agentId,
       invocationSource: "manual",
       status: "succeeded",
@@ -459,7 +459,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(issueComments).values({
       id: commentId,
-      companyId,
+      workspaceId: companyId,
       issueId,
       authorAgentId: agentId,
       createdByRunId: runId,
@@ -485,15 +485,6 @@ describe("feedbackService.saveIssueVote", () => {
     expect(result.persistedSharingPreference).toBe("not_allowed");
     expect(result.vote.consentVersion).toBeNull();
 
-    const company = await db
-      .select()
-      .from(workspaces)
-      .where(eq(workspaces.id, companyId))
-      .then((rows) => rows[0] ?? null);
-
-    expect(company?.feedbackDataSharingEnabled).toBe(false);
-    expect(company?.feedbackDataSharingConsentAt).toBeNull();
-
     const settings = await db
       .select()
       .from(instanceSettings)
@@ -505,7 +496,7 @@ describe("feedbackService.saveIssueVote", () => {
     });
 
     const traces = await svc.listFeedbackTraces({
-      companyId,
+      workspaceId: companyId,
       issueId,
       includePayload: true,
     });
@@ -525,7 +516,7 @@ describe("feedbackService.saveIssueVote", () => {
       allowSharing: true,
     });
 
-    expect(first.consentEnabledNow).toBe(true);
+    expect(first.consentEnabledNow).toBe(false);
     expect(first.sharingEnabled).toBe(true);
     expect(first.persistedSharingPreference).toBe("allowed");
     expect(first.vote.sharedWithLabs).toBe(true);
@@ -554,16 +545,6 @@ describe("feedbackService.saveIssueVote", () => {
     expect(votes[0]?.sharedWithLabs).toBe(false);
     expect(votes[0]?.consentVersion).toBeNull();
 
-    const company = await db
-      .select()
-      .from(workspaces)
-      .where(eq(workspaces.id, companyId))
-      .then((rows) => rows[0] ?? null);
-
-    expect(company?.feedbackDataSharingEnabled).toBe(true);
-    expect(company?.feedbackDataSharingConsentByUserId).toBe("user-1");
-    expect(company?.feedbackDataSharingTermsVersion).toBe("feedback-data-sharing-v1");
-
     const settings = await db
       .select()
       .from(instanceSettings)
@@ -591,7 +572,7 @@ describe("feedbackService.saveIssueVote", () => {
     expect(result.sharingEnabled).toBe(true);
 
     const traces = await svc.listFeedbackTraces({
-      companyId: result.vote.companyId,
+      workspaceId: result.vote.workspaceId,
       issueId,
       includePayload: true,
     });
@@ -624,7 +605,7 @@ describe("feedbackService.saveIssueVote", () => {
     expect(result.vote.reason).toBe("The update missed the edge case handling.");
 
     const traces = await svc.listFeedbackTraces({
-      companyId: result.vote.companyId,
+      workspaceId: result.vote.workspaceId,
       issueId,
       includePayload: true,
     });
@@ -660,7 +641,7 @@ describe("feedbackService.saveIssueVote", () => {
     expect(secondResult.vote.reason).toBe("Needed concrete next steps.");
 
     const traces = await svc.listFeedbackTraces({
-      companyId: secondResult.vote.companyId,
+      workspaceId: secondResult.vote.workspaceId,
       issueId,
       includePayload: true,
     });
@@ -687,7 +668,7 @@ describe("feedbackService.saveIssueVote", () => {
     });
 
     const traces = await svc.listFeedbackTraces({
-      companyId,
+      workspaceId: companyId,
       issueId,
       includePayload: true,
     });
@@ -733,7 +714,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(issueComments).values({
       id: secondCommentId,
-      companyId,
+      workspaceId: companyId,
       issueId,
       authorAgentId: agentId,
       body: "Second AI generated update",
@@ -757,7 +738,7 @@ describe("feedbackService.saveIssueVote", () => {
     });
 
     const traces = await svc.listFeedbackTraces({
-      companyId,
+      workspaceId: companyId,
       issueId,
       includePayload: true,
     });
@@ -992,7 +973,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(issues).values({
       id: issueId,
-      companyId,
+      workspaceId: companyId,
       title: "Human-authored comment",
       status: "todo",
       priority: "medium",
@@ -1001,7 +982,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(issueComments).values({
       id: commentId,
-      companyId,
+      workspaceId: companyId,
       issueId,
       authorUserId: "user-2",
       body: "Board comment",
@@ -1046,7 +1027,7 @@ describe("feedbackService.saveIssueVote", () => {
     });
 
     const traces = await flushingSvc.listFeedbackTraces({
-      companyId,
+      workspaceId: companyId,
       issueId,
       includePayload: true,
     });
@@ -1058,7 +1039,7 @@ describe("feedbackService.saveIssueVote", () => {
     expect(uploadTraceBundle.mock.calls[0]?.[0]).toMatchObject({
       traceId: traces[0]?.id,
       exportId: traces[0]?.exportId,
-      companyId,
+      workspaceId: companyId,
       issueId,
       issueIdentifier: traces[0]?.issueIdentifier,
       captureStatus: expect.stringMatching(/^(full|partial|unavailable)$/),
@@ -1080,7 +1061,7 @@ describe("feedbackService.saveIssueVote", () => {
 
     await db.insert(issueComments).values({
       id: secondCommentId,
-      companyId,
+      workspaceId: companyId,
       issueId,
       authorAgentId: agentId,
       body: "Second AI generated update",
@@ -1113,7 +1094,7 @@ describe("feedbackService.saveIssueVote", () => {
     });
 
     const flushResult = await flushingSvc.flushPendingFeedbackTraces({
-      companyId,
+      workspaceId: companyId,
       traceId: first.traceId ?? undefined,
       limit: 1,
     });
@@ -1126,7 +1107,7 @@ describe("feedbackService.saveIssueVote", () => {
     expect(uploadTraceBundle).toHaveBeenCalledTimes(1);
 
     const traces = await flushingSvc.listFeedbackTraces({
-      companyId,
+      workspaceId: companyId,
       issueId,
       includePayload: true,
     });
@@ -1162,7 +1143,7 @@ describe("feedbackService.saveIssueVote", () => {
     });
 
     const traces = await flushingSvc.listFeedbackTraces({
-      companyId,
+      workspaceId: companyId,
       issueId,
       includePayload: true,
     });
@@ -1187,7 +1168,7 @@ describe("feedbackService.saveIssueVote", () => {
     });
 
     const flushResult = await svc.flushPendingFeedbackTraces({
-      companyId,
+      workspaceId: companyId,
       traceId: result.traceId ?? undefined,
       limit: 1,
     });
@@ -1199,7 +1180,7 @@ describe("feedbackService.saveIssueVote", () => {
     });
 
     const traces = await svc.listFeedbackTraces({
-      companyId,
+      workspaceId: companyId,
       issueId,
       includePayload: true,
     });

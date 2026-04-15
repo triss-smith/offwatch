@@ -122,7 +122,7 @@ describe("project env routes", () => {
 
     const app = await createApp();
     const res = await request(app)
-      .post("/api/companies/company-1/projects")
+      .post("/api/workspaces/company-1/projects")
       .send({
         name: "Project",
         env: normalizedEnv,

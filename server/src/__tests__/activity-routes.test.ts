@@ -41,7 +41,7 @@ async function createApp() {
     (req as any).actor = {
       type: "board",
       userId: "user-1",
-      companyIds: ["company-1"],
+      workspaceIds: ["company-1"],
       source: "session",
       isInstanceAdmin: false,
     };
@@ -62,7 +62,7 @@ describe("activity routes", () => {
   it("resolves issue identifiers before loading runs", async () => {
     mockIssueService.getByIdentifier.mockResolvedValue({
       id: "issue-uuid-1",
-      companyId: "company-1",
+      workspaceId: "company-1",
     });
     mockActivityService.runsForIssue.mockResolvedValue([
       {
@@ -84,7 +84,7 @@ describe("activity routes", () => {
   it("requires company access before creating activity events", async () => {
     const app = await createApp();
     const res = await request(app)
-      .post("/api/companies/company-2/activity")
+      .post("/api/workspaces/company-2/activity")
       .send({
         actorId: "user-1",
         action: "test.event",
@@ -99,7 +99,7 @@ describe("activity routes", () => {
   it("requires company access before listing issues for another company's run", async () => {
     mockHeartbeatService.getRun.mockResolvedValue({
       id: "run-2",
-      companyId: "company-2",
+      workspaceId: "company-2",
     });
 
     const app = await createApp();
