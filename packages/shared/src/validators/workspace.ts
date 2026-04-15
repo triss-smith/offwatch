@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const brandColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable().optional();
+const logoAssetIdSchema = z.string().uuid().nullable().optional();
 
 export const createWorkspaceSchema = z.object({
   name: z.string().min(1),
@@ -24,10 +25,11 @@ export const updateWorkspaceBrandingSchema = z
   .object({
     name: z.string().min(1).optional(),
     brandColor: brandColorSchema,
+    logoAssetId: logoAssetIdSchema,
   })
   .strict()
   .refine(
-    (value) => value.name !== undefined || value.brandColor !== undefined,
+    (value) => value.name !== undefined || value.brandColor !== undefined || value.logoAssetId !== undefined,
     "At least one branding field must be provided",
   );
 

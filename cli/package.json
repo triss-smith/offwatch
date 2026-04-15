@@ -1,13 +1,13 @@
 {
-  "name": "paperclip-lite",
-  "version": "0.3.1",
-  "description": "Paperclip Lite — orchestrate AI agent teams to run a business... on a budget",
+  "name": "offwatch",
+  "version": "0.4.1",
+  "description": "Offwatch — orchestrate AI agent teams to automate dev work",
   "type": "module",
   "bin": {
-    "paperclipai": "dist/index.js"
+    "offwatch": "dist/index.js"
   },
   "keywords": [
-    "paperclip",
+    "offwatch",
     "ai",
     "agents",
     "orchestration",
@@ -16,12 +16,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/triss-smith/paperclip-lite.git",
+    "url": "git+https://github.com/triss-smith/offwatch.git",
     "directory": "cli"
   },
-  "homepage": "https://github.com/triss-smith/paperclip-lite",
+  "homepage": "https://github.com/triss-smith/offwatch",
   "bugs": {
-    "url": "https://github.com/triss-smith/paperclip-lite/issues"
+    "url": "https://github.com/triss-smith/offwatch/issues"
   },
   "files": [
     "dist"
@@ -31,7 +31,8 @@
   },
   "scripts": {
     "dev": "tsx src/index.ts",
-    "build": "node --input-type=module -e \"import esbuild from 'esbuild'; import config from './esbuild.config.mjs'; await esbuild.build(config);\" && chmod +x dist/index.js",
+    "build": "node --input-type=module -e \"import esbuild from 'esbuild'; import config from './esbuild.config.mjs'; await esbuild.build(config);\"",
+
     "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit"
   },
