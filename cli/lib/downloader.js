@@ -2,7 +2,7 @@ import got from "got";
 import fs from "fs";
 import fsa from "fs-extra";
 import * as os from "node:os";
-import tar from "tar";
+import { spawn } from "child_process";
 import stream from "node:stream";
 import { promisify } from "node:util";
 import path from "node:path";
@@ -83,13 +83,29 @@ const downloadRelease = async (versionDir) => {
     // For .js files, rename to expected name
     fs.renameSync(tempPath, filePath);
   } else {
-    // For compressed files, decompress
-    await tar.extract({
-      cwd: versionDir,
-      strip: 1,
-      file: tempPath,
+    // For compressed files, decompress using tar via spawn
+    // The tar archive contains just offwatch.js without a directory prefix
+    const toGitPath = (p) => p.replace(/\\/g, "/").replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`);
+    const tarPath = toGitPath(tempPath);
+    const tarCwd = toGitPath(versionDir);
+
+    await new Promise((resolve, reject) => {
+      // Archive contains offwatch.js directly, so don't use --strip=1
+      const args = ["-xzf", tarPath, "-C", tarCwd];
+      logDebug(`Running: tar ${args.join(" ")}`);
+      const proc = spawn("tar", args);
+      let stderr = "";
+      proc.stderr.on("data", (data) => { stderr += data.toString(); });
+      proc.on("close", (code) => {
+        if (code === 0) {
+          fs.unlinkSync(tempPath);
+          resolve();
+        } else {
+          reject(new Error(`tar exited with code ${code}: ${stderr}`));
+        }
+      });
+      proc.on("error", reject);
     });
-    fs.unlinkSync(tempPath);
   }
 
   // Copy package.json to bin directory so bundled code can find it
