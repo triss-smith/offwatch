@@ -1,4 +1,4 @@
-import { loadCLIBinPath } from "@offwatch/releases";
+import { loadCLIBinPath } from "offwatch-releases";
 
 // Dumb check to see if dep. Want to skip this script if in workspace
 if (process.cwd().includes("node_modules")) {

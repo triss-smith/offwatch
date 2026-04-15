@@ -1,7 +1,7 @@
 {
-  "name": "@offwatch/cli",
-  "version": "0.5.0",
-  "description": "Offwatch CLI — orchestrate AI agent teams to automate dev work",
+  "name": "offwatch",
+  "version": "0.5.2",
+  "description": "Offwatch — orchestrate AI agent teams to automate dev work",
   "type": "module",
   "bin": {
     "offwatch": "bin/offwatch.js"
@@ -35,6 +35,6 @@
     "postinstall": "node postinstall.js"
   },
   "dependencies": {
-    "@offwatch/releases": "0.5.0"
+    "offwatch-releases": "0.5.1"
   }
 }

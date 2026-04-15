@@ -1,6 +1,6 @@
 {
-  "name": "@offwatch/releases",
-  "version": "0.5.0",
+  "name": "offwatch-releases",
+  "version": "0.5.2",
   "description": "Offwatch releases — downloads pre-built binaries",
   "type": "module",
   "main": "lib/index.js",
