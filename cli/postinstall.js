@@ -4,11 +4,8 @@ import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Skip download in monorepo development
-if (process.cwd().includes("node_modules")) {
-  if (process.env.DEBUG) {
-    console.debug(`[DEBUG] downloading CLI binary`);
-  }
+// Skip download in monorepo development (workspace packages are used directly)
+if (!process.cwd().includes("node_modules")) {
   loadCLIBinPath(__dirname).then(
     () => {
       process.exit(0);
