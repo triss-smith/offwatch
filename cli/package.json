@@ -1,6 +1,6 @@
 {
   "name": "offwatch",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Offwatch — orchestrate AI agent teams to automate dev work",
   "type": "module",
   "bin": {
