@@ -9,4 +9,4 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const binPath = await loadCLIBinPath(__dirname);
 
 // Run the downloaded CLI binary
-spawn("node", [binPath], { stdio: "inherit" });
+spawn("node", [binPath, ...process.argv.slice(2)], { stdio: "inherit" });
