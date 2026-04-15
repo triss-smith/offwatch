@@ -1,10 +1,10 @@
 {
-  "name": "offwatch",
+  "name": "@offwatch/cli",
   "version": "0.5.0",
-  "description": "Offwatch — orchestrate AI agent teams to automate dev work",
+  "description": "Offwatch CLI — orchestrate AI agent teams to automate dev work",
   "type": "module",
   "bin": {
-    "offwatch": "dist/index.js"
+    "offwatch": "bin/offwatch.js"
   },
   "keywords": [
     "offwatch",
@@ -24,40 +24,17 @@
     "url": "https://github.com/triss-smith/offwatch/issues"
   },
   "files": [
-    "dist"
+    "bin",
+    "lib",
+    "postinstall.js"
   ],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "dev": "tsx src/index.ts",
-    "build": "node --input-type=module -e \"import esbuild from 'esbuild'; import config from './esbuild.config.mjs'; await esbuild.build(config);\"",
-
-    "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit"
+    "postinstall": "node postinstall.js"
   },
   "dependencies": {
-    "@clack/prompts": "^0.10.0",
-    "@paperclipai/adapter-claude-local": "workspace:*",
-    "@paperclipai/adapter-codex-local": "workspace:*",
-    "@paperclipai/adapter-cursor-local": "workspace:*",
-    "@paperclipai/adapter-gemini-local": "workspace:*",
-    "@paperclipai/adapter-opencode-local": "workspace:*",
-    "@paperclipai/adapter-pi-local": "workspace:*",
-    "@paperclipai/adapter-openclaw-gateway": "workspace:*",
-    "@paperclipai/adapter-utils": "workspace:*",
-    "@paperclipai/db": "workspace:*",
-    "@paperclipai/server": "workspace:*",
-    "@paperclipai/shared": "workspace:*",
-    "drizzle-orm": "0.38.4",
-    "dotenv": "^17.0.1",
-    "commander": "^13.1.0",
-    "embedded-postgres": "^18.1.0-beta.16",
-    "picocolors": "^1.1.1"
-  },
-  "devDependencies": {
-    "@types/node": "^22.12.0",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.3"
+    "@offwatch/releases": "0.5.0"
   }
 }
