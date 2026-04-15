@@ -84,10 +84,11 @@ const downloadRelease = async (versionDir) => {
     fs.renameSync(tempPath, filePath);
   } else {
     // For compressed files, decompress
-    await pipeline(fs.createReadStream(tempPath), tar.x({
-      C: versionDir,
+    await tar.extract({
+      cwd: versionDir,
       strip: 1,
-    }));
+      file: tempPath,
+    });
     fs.unlinkSync(tempPath);
   }
 
