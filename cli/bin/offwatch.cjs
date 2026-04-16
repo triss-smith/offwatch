@@ -30,7 +30,7 @@ const downloadFile = (url, dest) => {
     const file = fs.createWriteStream(dest);
     https.get(url, { headers: { "User-Agent": "offwatch-cli" } }, (response) => {
       if (response.statusCode === 301 || response.statusCode === 302) {
-        https.get(response.headers.location, (resp) => {
+        https.get(response.headers.location, { headers: { "User-Agent": "offwatch-cli" } }, (resp) => {
           resp.pipe(file);
           file.on("finish", () => { file.close(); resolve(); });
         }).on("error", reject);
