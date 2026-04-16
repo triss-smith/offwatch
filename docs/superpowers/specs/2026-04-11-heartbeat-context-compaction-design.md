@@ -26,7 +26,7 @@ Reduce per-wake token cost by ~88% across a session without losing any informati
 **Description truncation:**
 - Truncate `issue.description` at **8,192 chars**.
 - When truncated, include `descriptionTruncated: true` and `descriptionLength: N` alongside the truncated text.
-- Agents fetch the full description via `paperclipGetIssue` only when they need it (typically once per task).
+- Agents fetch the full description via `offwatchGetIssue` only when they need it (typically once per task).
 
 **Response shape (additions):**
 ```ts
@@ -44,25 +44,25 @@ Reduce per-wake token cost by ~88% across a session without losing any informati
 }
 ```
 
-### 2. MCP Tool: `paperclipGetHeartbeatContext`
+### 2. MCP Tool: `offwatchGetHeartbeatContext`
 
 Add optional `afterCommentId: string` param, passed through to the endpoint as-is.
 
-### 3. MCP Tool: `paperclipListComments`
+### 3. MCP Tool: `offwatchListComments`
 
 - Add default limit of **50** when none is specified (server already enforces max 500).
 - Add `hasMore: boolean` to the response.
 - Used only for paging back through older history; not needed on typical wakes.
 
-### 4. `skills/paperclip/SKILL.md` — Step 6
+### 4. `skills/offwatch/SKILL.md` — Step 6
 
 Replace the "use comments incrementally" block:
 
-- On first wake (no prior session state): call `paperclipGetHeartbeatContext` without `afterCommentId`. Use the embedded comments from the response.
-- On subsequent wakes: call `paperclipGetHeartbeatContext` with `afterCommentId` set to the `latestCommentId` stored from the previous wake. The response contains only new comments.
+- On first wake (no prior session state): call `offwatchGetHeartbeatContext` without `afterCommentId`. Use the embedded comments from the response.
+- On subsequent wakes: call `offwatchGetHeartbeatContext` with `afterCommentId` set to the `latestCommentId` stored from the previous wake. The response contains only new comments.
 - Store `latestCommentId` from `commentCursor` in session memory at the end of each wake.
-- Only call `paperclipListComments` explicitly when `hasMoreComments: true` and older history is required.
-- Fetch full description via `paperclipGetIssue` only when `descriptionTruncated: true` and the full text is needed.
+- Only call `offwatchListComments` explicitly when `hasMoreComments: true` and older history is required.
+- Fetch full description via `offwatchGetIssue` only when `descriptionTruncated: true` and the full text is needed.
 
 ## Files Changed
 
@@ -71,7 +71,7 @@ Replace the "use comments incrementally" block:
 | `server/src/routes/issues.ts` | Add `afterCommentId` param, embed comments, truncate description |
 | `server/src/services/issues.ts` | Add `listRecentComments(issueId, limit)` helper |
 | `packages/mcp-server/src/tools.ts` | Add `afterCommentId` to heartbeat tool; default limit + `hasMore` to listComments |
-| `skills/paperclip/SKILL.md` | Update Step 6 to use embedded comments and `afterCommentId` pattern |
+| `skills/offwatch/SKILL.md` | Update Step 6 to use embedded comments and `afterCommentId` pattern |
 
 ## Token Savings
 

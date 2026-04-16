@@ -40,7 +40,7 @@ import type { Db } from "@offwatch/db";
 import type {
   PluginStatus,
   PluginRecord,
-  PaperclipPluginManifestV1,
+  OffwatchPluginManifestV1,
 } from "@offwatch/shared";
 import { pluginRegistryService } from "./plugin-registry.js";
 import { pluginLoader, type PluginLoader } from "./plugin-loader.js";

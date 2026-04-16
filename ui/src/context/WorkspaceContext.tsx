@@ -27,7 +27,7 @@ interface WorkspaceContextValue {
   createCompany: (data: { name: string }) => Promise<Workspace>;
 }
 
-const STORAGE_KEY = "paperclip.selectedCompanyId";
+const STORAGE_KEY = "offwatch.selectedCompanyId";
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 

@@ -208,7 +208,7 @@ describe("IssuesList", () => {
         issues={[localIssue]}
         agents={[]}
         projects={[]}
-        viewStateKey="paperclip:test-issues"
+        viewStateKey="offwatch:test-issues"
         initialSearch="server"
         onUpdateIssue={() => undefined}
       />,
@@ -237,7 +237,7 @@ describe("IssuesList", () => {
         issues={[localIssue]}
         agents={[]}
         projects={[]}
-        viewStateKey="paperclip:test-issues"
+        viewStateKey="offwatch:test-issues"
         onSearchChange={onSearchChange}
         onUpdateIssue={() => undefined}
       />,
@@ -279,7 +279,7 @@ describe("IssuesList", () => {
   });
 
   it("reuses the inbox issue column controls and persisted column visibility", async () => {
-    localStorage.setItem("paperclip:inbox:issue-columns", JSON.stringify(["id", "assignee"]));
+    localStorage.setItem("offwatch:inbox:issue-columns", JSON.stringify(["id", "assignee"]));
 
     const assignedIssue = createIssue({
       id: "issue-assigned",
@@ -293,7 +293,7 @@ describe("IssuesList", () => {
         issues={[assignedIssue]}
         agents={[{ id: "agent-1", name: "Agent One" }]}
         projects={[]}
-        viewStateKey="paperclip:test-issues"
+        viewStateKey="offwatch:test-issues"
         onUpdateIssue={() => undefined}
       />,
       container,
@@ -315,7 +315,7 @@ describe("IssuesList", () => {
   });
 
   it("filters the list to a single workspace when a workspace name is clicked", async () => {
-    localStorage.setItem("paperclip:inbox:issue-columns", JSON.stringify(["id", "workspace"]));
+    localStorage.setItem("offwatch:inbox:issue-columns", JSON.stringify(["id", "workspace"]));
     mockInstanceSettingsApi.getExperimental.mockResolvedValue({ enableIsolatedWorkspaces: true });
     mockExecutionWorkspacesApi.list.mockResolvedValue([
       {
@@ -352,7 +352,7 @@ describe("IssuesList", () => {
         issues={[alphaIssue, betaIssue]}
         agents={[]}
         projects={[]}
-        viewStateKey="paperclip:test-issues"
+        viewStateKey="offwatch:test-issues"
         onUpdateIssue={() => undefined}
       />,
       container,
@@ -404,7 +404,7 @@ describe("IssuesList", () => {
         issues={[manualIssue, routineIssue]}
         agents={[]}
         projects={[]}
-        viewStateKey="paperclip:test-issues"
+        viewStateKey="offwatch:test-issues"
         enableRoutineVisibilityFilter
         onUpdateIssue={() => undefined}
       />,
@@ -454,7 +454,7 @@ describe("IssuesList", () => {
         issues={[createIssue()]}
         agents={[]}
         projects={[]}
-        viewStateKey="paperclip:test-issues"
+        viewStateKey="offwatch:test-issues"
         initialSearch="bug"
         onUpdateIssue={() => undefined}
       />,
@@ -490,7 +490,7 @@ describe("IssuesList", () => {
         issues={[createIssue()]}
         agents={[]}
         projects={[]}
-        viewStateKey="paperclip:test-issues"
+        viewStateKey="offwatch:test-issues"
         initialSearch=""
         onUpdateIssue={() => undefined}
       />,
