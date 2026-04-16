@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import type { PluginEvent } from "@paperclipai/plugin-sdk";
+import type { PluginEvent } from "@offwatch/plugin-sdk";
 import type { PluginEventBus } from "./plugin-event-bus.js";
 
 let _pluginEventBus: PluginEventBus | null = null;

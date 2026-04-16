@@ -1,5 +1,5 @@
 import type { ServerAdapterModule } from "./types.js";
-import { getAdapterSessionManagement } from "@paperclipai/adapter-utils";
+import { getAdapterSessionManagement } from "@offwatch/adapter-utils";
 import {
   execute as claudeExecute,
   listClaudeSkills,
@@ -8,8 +8,8 @@ import {
   testEnvironment as claudeTestEnvironment,
   sessionCodec as claudeSessionCodec,
   getQuotaWindows as claudeGetQuotaWindows,
-} from "@paperclipai/adapter-claude-local/server";
-import { agentConfigurationDoc as claudeAgentConfigurationDoc, models as claudeModels } from "@paperclipai/adapter-claude-local";
+} from "@offwatch/adapter-claude-local/server";
+import { agentConfigurationDoc as claudeAgentConfigurationDoc, models as claudeModels } from "@offwatch/adapter-claude-local";
 import {
   execute as codexExecute,
   listCodexSkills,
@@ -17,24 +17,24 @@ import {
   testEnvironment as codexTestEnvironment,
   sessionCodec as codexSessionCodec,
   getQuotaWindows as codexGetQuotaWindows,
-} from "@paperclipai/adapter-codex-local/server";
-import { agentConfigurationDoc as codexAgentConfigurationDoc, models as codexModels } from "@paperclipai/adapter-codex-local";
+} from "@offwatch/adapter-codex-local/server";
+import { agentConfigurationDoc as codexAgentConfigurationDoc, models as codexModels } from "@offwatch/adapter-codex-local";
 import {
   execute as cursorExecute,
   listCursorSkills,
   syncCursorSkills,
   testEnvironment as cursorTestEnvironment,
   sessionCodec as cursorSessionCodec,
-} from "@paperclipai/adapter-cursor-local/server";
-import { agentConfigurationDoc as cursorAgentConfigurationDoc, models as cursorModels } from "@paperclipai/adapter-cursor-local";
+} from "@offwatch/adapter-cursor-local/server";
+import { agentConfigurationDoc as cursorAgentConfigurationDoc, models as cursorModels } from "@offwatch/adapter-cursor-local";
 import {
   execute as geminiExecute,
   listGeminiSkills,
   syncGeminiSkills,
   testEnvironment as geminiTestEnvironment,
   sessionCodec as geminiSessionCodec,
-} from "@paperclipai/adapter-gemini-local/server";
-import { agentConfigurationDoc as geminiAgentConfigurationDoc, models as geminiModels } from "@paperclipai/adapter-gemini-local";
+} from "@offwatch/adapter-gemini-local/server";
+import { agentConfigurationDoc as geminiAgentConfigurationDoc, models as geminiModels } from "@offwatch/adapter-gemini-local";
 import {
   execute as openCodeExecute,
   listOpenCodeSkills,
@@ -42,19 +42,19 @@ import {
   testEnvironment as openCodeTestEnvironment,
   sessionCodec as openCodeSessionCodec,
   listOpenCodeModels,
-} from "@paperclipai/adapter-opencode-local/server";
+} from "@offwatch/adapter-opencode-local/server";
 import {
   agentConfigurationDoc as openCodeAgentConfigurationDoc,
   models as openCodeModels,
-} from "@paperclipai/adapter-opencode-local";
+} from "@offwatch/adapter-opencode-local";
 import {
   execute as openclawGatewayExecute,
   testEnvironment as openclawGatewayTestEnvironment,
-} from "@paperclipai/adapter-openclaw-gateway/server";
+} from "@offwatch/adapter-openclaw-gateway/server";
 import {
   agentConfigurationDoc as openclawGatewayAgentConfigurationDoc,
   models as openclawGatewayModels,
-} from "@paperclipai/adapter-openclaw-gateway";
+} from "@offwatch/adapter-openclaw-gateway";
 import { listCodexModels } from "./codex-models.js";
 import { listCursorModels } from "./cursor-models.js";
 import {
@@ -64,10 +64,10 @@ import {
   testEnvironment as piTestEnvironment,
   sessionCodec as piSessionCodec,
   listPiModels,
-} from "@paperclipai/adapter-pi-local/server";
+} from "@offwatch/adapter-pi-local/server";
 import {
   agentConfigurationDoc as piAgentConfigurationDoc,
-} from "@paperclipai/adapter-pi-local";
+} from "@offwatch/adapter-pi-local";
 import {
   execute as hermesExecute,
   testEnvironment as hermesTestEnvironment,
@@ -181,7 +181,7 @@ const piLocalAdapter: ServerAdapterModule = {
 };
 
 // hermes-paperclip-adapter is an external npm package built against an older
-// version of @paperclipai/adapter-utils — cast to suppress the type mismatch.
+// version of @offwatch/adapter-utils — cast to suppress the type mismatch.
 const hermesLocalAdapter: ServerAdapterModule = {
   type: "hermes_local",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

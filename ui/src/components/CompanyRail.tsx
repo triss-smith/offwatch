@@ -28,7 +28,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { Workspace as Company } from "@paperclipai/shared";
+import type { Workspace as Company } from "@offwatch/shared";
 import { CompanyPatternIcon } from "./CompanyPatternIcon";
 
 const ORDER_STORAGE_KEY = "paperclip.companyOrder";

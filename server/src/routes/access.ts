@@ -10,14 +10,14 @@ import { fileURLToPath } from "node:url";
 import { Router } from "express";
 import type { Request } from "express";
 import { and, eq, isNull, desc } from "drizzle-orm";
-import type { Db } from "@paperclipai/db";
+import type { Db } from "@offwatch/db";
 import {
   agentApiKeys,
   authUsers,
   workspaces,
   invites,
   joinRequests
-} from "@paperclipai/db";
+} from "@offwatch/db";
 import {
   acceptInviteSchema,
   createCliAuthChallengeSchema,
@@ -29,8 +29,8 @@ import {
   updateMemberPermissionsSchema,
   updateUserCompanyAccessSchema,
   PERMISSION_KEYS
-} from "@paperclipai/shared";
-import type { DeploymentExposure, DeploymentMode } from "@paperclipai/shared";
+} from "@offwatch/shared";
+import type { DeploymentExposure, DeploymentMode } from "@offwatch/shared";
 import {
   forbidden,
   conflict,

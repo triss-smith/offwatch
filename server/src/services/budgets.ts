@@ -1,5 +1,5 @@
 import { and, desc, eq, gte, inArray, lt, ne, sql } from "drizzle-orm";
-import type { Db } from "@paperclipai/db";
+import type { Db } from "@offwatch/db";
 import {
   agents,
   approvals,
@@ -8,7 +8,7 @@ import {
   workspaces,
   costEvents,
   projects,
-} from "@paperclipai/db";
+} from "@offwatch/db";
 import type {
   BudgetIncident,
   BudgetIncidentResolutionInput,
@@ -20,7 +20,7 @@ import type {
   BudgetScopeType,
   BudgetThresholdType,
   BudgetWindowKind,
-} from "@paperclipai/shared";
+} from "@offwatch/shared";
 import { notFound, unprocessable } from "../errors.js";
 import { logActivity } from "./activity-log.js";
 

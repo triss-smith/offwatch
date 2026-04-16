@@ -12,7 +12,7 @@ import {
   issueExecutionDecisions,
   issueReadStates,
   issues,
-} from "@paperclipai/db";
+} from "@offwatch/db";
 import {
   getEmbeddedPostgresTestSupport,
   startEmbeddedPostgresTestDatabase,

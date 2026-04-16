@@ -3,10 +3,10 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { and, asc, eq } from "drizzle-orm";
-import type { Db } from "@paperclipai/db";
-import { workspaceSkills } from "@paperclipai/db";
-import { readPaperclipSkillSyncPreference } from "@paperclipai/adapter-utils/server-utils";
-import type { PaperclipSkillEntry } from "@paperclipai/adapter-utils/server-utils";
+import type { Db } from "@offwatch/db";
+import { workspaceSkills } from "@offwatch/db";
+import { readPaperclipSkillSyncPreference } from "@offwatch/adapter-utils/server-utils";
+import type { PaperclipSkillEntry } from "@offwatch/adapter-utils/server-utils";
 import type {
   WorkspaceSkill,
   WorkspaceSkillCreateRequest,
@@ -25,8 +25,8 @@ import type {
   WorkspaceSkillTrustLevel,
   WorkspaceSkillUpdateStatus,
   WorkspaceSkillUsageAgent,
-} from "@paperclipai/shared";
-import { normalizeAgentUrlKey } from "@paperclipai/shared";
+} from "@offwatch/shared";
+import { normalizeAgentUrlKey } from "@offwatch/shared";
 import { findActiveServerAdapter } from "../adapters/index.js";
 import { resolvePaperclipInstanceRoot } from "../home-paths.js";
 import { notFound, unprocessable } from "../errors.js";

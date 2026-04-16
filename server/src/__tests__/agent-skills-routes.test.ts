@@ -58,7 +58,7 @@ const mockAdapter = vi.hoisted(() => ({
 }));
 
 function registerModuleMocks() {
-  vi.doMock("@paperclipai/shared/telemetry", () => ({
+  vi.doMock("@offwatch/shared/telemetry", () => ({
     trackAgentCreated: mockTrackAgentCreated,
     trackErrorHandlerCrash: vi.fn(),
   }));

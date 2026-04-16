@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
-import type { Db } from "@paperclipai/db";
-import { approvalComments, approvals } from "@paperclipai/db";
+import type { Db } from "@offwatch/db";
+import { approvalComments, approvals } from "@offwatch/db";
 import { notFound, unprocessable } from "../errors.js";
 import { redactCurrentUserText } from "../log-redaction.js";
 import { instanceSettingsService } from "./instance-settings.js";

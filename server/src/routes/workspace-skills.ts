@@ -1,12 +1,12 @@
 import { Router, type Request } from "express";
-import type { Db } from "@paperclipai/db";
+import type { Db } from "@offwatch/db";
 import {
   workspaceSkillCreateSchema,
   workspaceSkillFileUpdateSchema,
   workspaceSkillImportSchema,
   workspaceSkillProjectScanRequestSchema,
-} from "@paperclipai/shared";
-import { trackSkillImported } from "@paperclipai/shared/telemetry";
+} from "@offwatch/shared";
+import { trackSkillImported } from "@offwatch/shared/telemetry";
 import { validate } from "../middleware/validate.js";
 import { accessService, agentService, workspaceSkillService, logActivity } from "../services/index.js";
 import { forbidden } from "../errors.js";

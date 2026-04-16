@@ -1,5 +1,5 @@
 import { asc, eq, ne, sql, and } from "drizzle-orm";
-import type { Db } from "@paperclipai/db";
+import type { Db } from "@offwatch/db";
 import {
   plugins,
   pluginConfig,
@@ -7,7 +7,7 @@ import {
   pluginJobs,
   pluginJobRuns,
   pluginWebhookDeliveries,
-} from "@paperclipai/db";
+} from "@offwatch/db";
 import type {
   PaperclipPluginManifestV1,
   PluginStatus,
@@ -24,7 +24,7 @@ import type {
   PluginJobRunStatus,
   PluginJobRunTrigger,
   PluginWebhookDeliveryStatus,
-} from "@paperclipai/shared";
+} from "@offwatch/shared";
 import { conflict, notFound } from "../errors.js";
 
 // ---------------------------------------------------------------------------

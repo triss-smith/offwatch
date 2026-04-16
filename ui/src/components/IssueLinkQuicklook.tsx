@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useMemo, useState } from "react";
 import * as RouterDom from "react-router-dom";
-import type { Issue } from "@paperclipai/shared";
+import type { Issue } from "@offwatch/shared";
 import { useQuery } from "@tanstack/react-query";
 import { issuesApi } from "@/api/issues";
 import { queryKeys } from "@/lib/queryKeys";

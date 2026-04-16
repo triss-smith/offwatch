@@ -1,5 +1,5 @@
-import type { Db } from "@paperclipai/db";
-import { workspaces, instanceSettings } from "@paperclipai/db";
+import type { Db } from "@offwatch/db";
+import { workspaces, instanceSettings } from "@offwatch/db";
 import {
   DEFAULT_FEEDBACK_DATA_SHARING_PREFERENCE,
   DEFAULT_BACKUP_RETENTION,
@@ -10,7 +10,7 @@ import {
   type PatchInstanceGeneralSettings,
   type InstanceSettings,
   type PatchInstanceExperimentalSettings,
-} from "@paperclipai/shared";
+} from "@offwatch/shared";
 import { eq } from "drizzle-orm";
 
 const DEFAULT_SINGLETON_KEY = "default";

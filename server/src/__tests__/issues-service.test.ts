@@ -15,7 +15,7 @@ import {
   issues,
   projectWorkspaces,
   projects,
-} from "@paperclipai/db";
+} from "@offwatch/db";
 import {
   getEmbeddedPostgresTestSupport,
   startEmbeddedPostgresTestDatabase,

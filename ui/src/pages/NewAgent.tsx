@@ -6,7 +6,7 @@ import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { agentsApi } from "../api/agents";
 import { companySkillsApi } from "../api/companySkills";
 import { queryKeys } from "../lib/queryKeys";
-import { AGENT_ROLES } from "@paperclipai/shared";
+import { AGENT_ROLES } from "@offwatch/shared";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -26,9 +26,9 @@ import { buildNewAgentRuntimeConfig } from "../lib/new-agent-runtime-config";
 import {
   DEFAULT_CODEX_LOCAL_BYPASS_APPROVALS_AND_SANDBOX,
   DEFAULT_CODEX_LOCAL_MODEL,
-} from "@paperclipai/adapter-codex-local";
-import { DEFAULT_CURSOR_LOCAL_MODEL } from "@paperclipai/adapter-cursor-local";
-import { DEFAULT_GEMINI_LOCAL_MODEL } from "@paperclipai/adapter-gemini-local";
+} from "@offwatch/adapter-codex-local";
+import { DEFAULT_CURSOR_LOCAL_MODEL } from "@offwatch/adapter-cursor-local";
+import { DEFAULT_GEMINI_LOCAL_MODEL } from "@offwatch/adapter-gemini-local";
 
 function createValuesForAdapterType(
   adapterType: CreateConfigValues["adapterType"],

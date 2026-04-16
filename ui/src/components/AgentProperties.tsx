@@ -1,4 +1,4 @@
-import { AGENT_ROLE_LABELS, type Agent, type AgentRuntimeState } from "@paperclipai/shared";
+import { AGENT_ROLE_LABELS, type Agent, type AgentRuntimeState } from "@offwatch/shared";
 import { useCompany } from "../context/WorkspaceContext";
 import { getAdapterLabel } from "../adapters/adapter-display-registry";
 import { StatusBadge } from "./StatusBadge";

@@ -18,7 +18,7 @@ const mockAgentService = vi.hoisted(() => ({
 const mockTrackAgentTaskCompleted = vi.hoisted(() => vi.fn());
 const mockGetTelemetryClient = vi.hoisted(() => vi.fn());
 
-vi.mock("@paperclipai/shared/telemetry", () => ({
+vi.mock("@offwatch/shared/telemetry", () => ({
   trackAgentTaskCompleted: mockTrackAgentTaskCompleted,
   trackErrorHandlerCrash: vi.fn(),
 }));

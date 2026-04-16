@@ -1,5 +1,5 @@
 import { and, count, eq, inArray } from "drizzle-orm";
-import type { Db } from "@paperclipai/db";
+import type { Db } from "@offwatch/db";
 import {
   workspaces,
   companyLogos,
@@ -27,7 +27,7 @@ import {
   principalPermissionGrants,
   companyMemberships,
   workspaceSkills,
-} from "@paperclipai/db";
+} from "@offwatch/db";
 import { notFound, unprocessable } from "../errors.js";
 
 export function workspaceService(db: Db) {

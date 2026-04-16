@@ -21,7 +21,7 @@ import {
   routineRuns,
   routines,
   routineTriggers,
-} from "@paperclipai/db";
+} from "@offwatch/db";
 import {
   getEmbeddedPostgresTestSupport,
   startEmbeddedPostgresTestDatabase,

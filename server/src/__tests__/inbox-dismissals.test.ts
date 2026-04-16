@@ -9,7 +9,7 @@ import {
   inboxDismissals,
   invites,
   joinRequests,
-} from "@paperclipai/db";
+} from "@offwatch/db";
 import {
   getEmbeddedPostgresTestSupport,
   startEmbeddedPostgresTestDatabase,

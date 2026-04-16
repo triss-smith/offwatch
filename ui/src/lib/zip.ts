@@ -1,4 +1,4 @@
-import type { WorkspacePortabilityFileEntry } from "@paperclipai/shared";
+import type { WorkspacePortabilityFileEntry } from "@offwatch/shared";
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();

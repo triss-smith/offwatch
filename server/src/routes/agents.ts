@@ -1,8 +1,8 @@
 import { Router, type Request } from "express";
 import { generateKeyPairSync, randomUUID } from "node:crypto";
 import path from "node:path";
-import type { Db } from "@paperclipai/db";
-import { agents as agentsTable, workspaces, heartbeatRuns, issues as issuesTable } from "@paperclipai/db";
+import type { Db } from "@offwatch/db";
+import { agents as agentsTable, workspaces, heartbeatRuns, issues as issuesTable } from "@offwatch/db";
 import { and, desc, eq, inArray, not, sql } from "drizzle-orm";
 import {
   agentSkillSyncSchema,
@@ -22,12 +22,12 @@ import {
   updateAgentInstructionsPathSchema,
   wakeAgentSchema,
   updateAgentSchema,
-} from "@paperclipai/shared";
+} from "@offwatch/shared";
 import {
   readPaperclipSkillSyncPreference,
   writePaperclipSkillSyncPreference,
-} from "@paperclipai/adapter-utils/server-utils";
-import { trackAgentCreated } from "@paperclipai/shared/telemetry";
+} from "@offwatch/adapter-utils/server-utils";
+import { trackAgentCreated } from "@offwatch/shared/telemetry";
 import { validate } from "../middleware/validate.js";
 import {
   agentService,
@@ -55,14 +55,14 @@ import {
 import { redactEventPayload } from "../redaction.js";
 import { redactCurrentUserValue } from "../log-redaction.js";
 import { instanceSettingsService } from "../services/instance-settings.js";
-import { runClaudeLogin } from "@paperclipai/adapter-claude-local/server";
+import { runClaudeLogin } from "@offwatch/adapter-claude-local/server";
 import {
   DEFAULT_CODEX_LOCAL_BYPASS_APPROVALS_AND_SANDBOX,
   DEFAULT_CODEX_LOCAL_MODEL,
-} from "@paperclipai/adapter-codex-local";
-import { DEFAULT_CURSOR_LOCAL_MODEL } from "@paperclipai/adapter-cursor-local";
-import { DEFAULT_GEMINI_LOCAL_MODEL } from "@paperclipai/adapter-gemini-local";
-import { ensureOpenCodeModelConfiguredAndAvailable } from "@paperclipai/adapter-opencode-local/server";
+} from "@offwatch/adapter-codex-local";
+import { DEFAULT_CURSOR_LOCAL_MODEL } from "@offwatch/adapter-cursor-local";
+import { DEFAULT_GEMINI_LOCAL_MODEL } from "@offwatch/adapter-gemini-local";
+import { ensureOpenCodeModelConfiguredAndAvailable } from "@offwatch/adapter-opencode-local/server";
 import {
   loadDefaultAgentInstructionsBundle,
   resolveDefaultAgentInstructionsBundleRole,

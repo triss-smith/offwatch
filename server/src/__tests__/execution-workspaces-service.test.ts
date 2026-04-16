@@ -13,7 +13,7 @@ import {
   projectWorkspaces,
   projects,
   workspaceRuntimeServices,
-} from "@paperclipai/db";
+} from "@offwatch/db";
 import {
   getEmbeddedPostgresTestSupport,
   startEmbeddedPostgresTestDatabase,

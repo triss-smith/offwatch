@@ -34,9 +34,9 @@
  */
 
 import { eq, and, desc } from "drizzle-orm";
-import type { Db } from "@paperclipai/db";
-import { companySecrets, companySecretVersions, pluginConfig } from "@paperclipai/db";
-import type { SecretProvider } from "@paperclipai/shared";
+import type { Db } from "@offwatch/db";
+import { companySecrets, companySecretVersions, pluginConfig } from "@offwatch/db";
+import type { SecretProvider } from "@offwatch/shared";
 import { getSecretProvider } from "../secrets/provider-registry.js";
 import { pluginRegistryService } from "./plugin-registry.js";
 

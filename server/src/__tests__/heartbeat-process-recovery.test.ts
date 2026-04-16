@@ -10,7 +10,7 @@ import {
   heartbeatRunEvents,
   heartbeatRuns,
   issues,
-} from "@paperclipai/db";
+} from "@offwatch/db";
 import {
   getEmbeddedPostgresTestSupport,
   startEmbeddedPostgresTestDatabase,
@@ -23,9 +23,9 @@ vi.mock("../telemetry.ts", () => ({
   getTelemetryClient: () => mockTelemetryClient,
 }));
 
-vi.mock("@paperclipai/shared/telemetry", async () => {
-  const actual = await vi.importActual<typeof import("@paperclipai/shared/telemetry")>(
-    "@paperclipai/shared/telemetry",
+vi.mock("@offwatch/shared/telemetry", async () => {
+  const actual = await vi.importActual<typeof import("@offwatch/shared/telemetry")>(
+    "@offwatch/shared/telemetry",
   );
   return {
     ...actual,

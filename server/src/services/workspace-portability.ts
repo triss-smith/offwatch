@@ -3,7 +3,7 @@ import { promises as fs } from "node:fs";
 import { execFile } from "node:child_process";
 import path from "node:path";
 import { promisify } from "node:util";
-import type { Db } from "@paperclipai/db";
+import type { Db } from "@offwatch/db";
 import type {
   WorkspacePortabilityAgentManifestEntry,
   WorkspacePortabilityCollisionStrategy,
@@ -29,7 +29,7 @@ import type {
   WorkspaceSkill,
   AgentEnvConfig,
   RoutineVariable,
-} from "@paperclipai/shared";
+} from "@offwatch/shared";
 import {
   ISSUE_PRIORITIES,
   ISSUE_STATUSES,
@@ -42,11 +42,11 @@ import {
   deriveProjectUrlKey,
   envConfigSchema,
   normalizeAgentUrlKey,
-} from "@paperclipai/shared";
+} from "@offwatch/shared";
 import {
   readPaperclipSkillSyncPreference,
   writePaperclipSkillSyncPreference,
-} from "@paperclipai/adapter-utils/server-utils";
+} from "@offwatch/adapter-utils/server-utils";
 import { notFound, unprocessable } from "../errors.js";
 import { ghFetch, gitHubApiBase, resolveRawGitHubUrl } from "./github-fetch.js";
 import type { StorageService } from "../storage/types.js";

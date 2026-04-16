@@ -1,5 +1,5 @@
 import { Router, type Request } from "express";
-import type { Db } from "@paperclipai/db";
+import type { Db } from "@offwatch/db";
 import {
   workspacePortabilityExportSchema,
   workspacePortabilityImportSchema,
@@ -10,7 +10,7 @@ import {
   feedbackVoteValueSchema,
   updateWorkspaceBrandingSchema,
   updateWorkspaceSchema,
-} from "@paperclipai/shared";
+} from "@offwatch/shared";
 import { badRequest, forbidden } from "../errors.js";
 import { validate } from "../middleware/validate.js";
 import {

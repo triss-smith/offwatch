@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { buildSkillMentionHref } from "@paperclipai/shared";
+import { buildSkillMentionHref } from "@offwatch/shared";
 import { companySkillsApi } from "../api/companySkills";
 import { useWorkspace } from "./WorkspaceContext";
 import { queryKeys } from "../lib/queryKeys";

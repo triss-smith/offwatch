@@ -30,9 +30,9 @@ const mockTrackProjectCreated = vi.hoisted(() => vi.fn());
 const mockTrackGoalCreated = vi.hoisted(() => vi.fn());
 const mockGetTelemetryClient = vi.hoisted(() => vi.fn());
 
-vi.mock("@paperclipai/shared/telemetry", async () => {
-  const actual = await vi.importActual<typeof import("@paperclipai/shared/telemetry")>(
-    "@paperclipai/shared/telemetry",
+vi.mock("@offwatch/shared/telemetry", async () => {
+  const actual = await vi.importActual<typeof import("@offwatch/shared/telemetry")>(
+    "@offwatch/shared/telemetry",
   );
   return {
     ...actual,

@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, isNotNull, lt, lte, sql } from "drizzle-orm";
-import type { Db } from "@paperclipai/db";
-import { activityLog, agents, workspaces, costEvents, issues, projects } from "@paperclipai/db";
+import type { Db } from "@offwatch/db";
+import { activityLog, agents, workspaces, costEvents, issues, projects } from "@offwatch/db";
 import { notFound, unprocessable } from "../errors.js";
 import { budgetService, type BudgetServiceHooks } from "./budgets.js";
 

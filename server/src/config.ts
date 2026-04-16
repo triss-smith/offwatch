@@ -21,7 +21,7 @@ import {
   inferBindModeFromHost,
   resolveRuntimeBind,
   validateConfiguredBindMode,
-} from "@paperclipai/shared";
+} from "@offwatch/shared";
 import {
   resolveDefaultBackupDir,
   resolveDefaultEmbeddedPostgresDir,

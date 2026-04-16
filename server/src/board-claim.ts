@@ -1,8 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import type { Db } from "@paperclipai/db";
-import { workspaces, companyMemberships, instanceUserRoles } from "@paperclipai/db";
-import type { DeploymentMode } from "@paperclipai/shared";
+import type { Db } from "@offwatch/db";
+import { workspaces, companyMemberships, instanceUserRoles } from "@offwatch/db";
+import type { DeploymentMode } from "@offwatch/shared";
 
 const LOCAL_BOARD_USER_ID = "local-board";
 const CLAIM_TTL_MS = 1000 * 60 * 60 * 24;

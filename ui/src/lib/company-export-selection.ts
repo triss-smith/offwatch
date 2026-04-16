@@ -1,4 +1,4 @@
-import type { WorkspacePortabilityIssueManifestEntry } from "@paperclipai/shared";
+import type { WorkspacePortabilityIssueManifestEntry } from "@offwatch/shared";
 
 function isTaskPath(filePath: string): boolean {
   return /(?:^|\/)tasks\//.test(filePath);
