@@ -30,7 +30,7 @@ const workspacePaths = [
 
 // Collect all external (non-workspace) npm package names
 const externals = new Set();
-const monorepoScopes = ["@paperclipai/", "@offwatch/"];
+const monorepoScopes = ["@offwatch/"];
 
 for (const p of workspacePaths) {
   try {
