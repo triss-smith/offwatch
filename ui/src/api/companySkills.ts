@@ -8,7 +8,7 @@ import type {
   WorkspaceSkillProjectScanRequest,
   WorkspaceSkillProjectScanResult,
   WorkspaceSkillUpdateStatus,
-} from "@paperclipai/shared";
+} from "@offwatch/shared";
 import { api } from "./client";
 
 export const companySkillsApi = {

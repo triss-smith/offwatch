@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { BudgetPolicySummary } from "@paperclipai/shared";
+import type { BudgetPolicySummary } from "@offwatch/shared";
 import { AlertTriangle, PauseCircle, ShieldAlert, Wallet } from "lucide-react";
 import { cn, formatCents, formatTokens } from "../lib/utils";
 import { Button } from "@/components/ui/button";

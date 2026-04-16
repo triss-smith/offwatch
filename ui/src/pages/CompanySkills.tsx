@@ -10,7 +10,7 @@ import type {
   WorkspaceSkillProjectScanResult,
   WorkspaceSkillSourceBadge,
   WorkspaceSkillUpdateStatus,
-} from "@paperclipai/shared";
+} from "@offwatch/shared";
 import { companySkillsApi } from "../api/companySkills";
 import { useWorkspace } from "../context/WorkspaceContext";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";

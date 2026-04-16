@@ -7,8 +7,8 @@ import type {
   WorkspacePortabilityImportResult,
   WorkspacePortabilityPreviewRequest,
   WorkspacePortabilityPreviewResult,
-} from "@paperclipai/shared";
-import type { UpdateWorkspaceBranding } from "@paperclipai/shared";
+} from "@offwatch/shared";
+import type { UpdateWorkspaceBranding } from "@offwatch/shared";
 import { api } from "./client";
 
 export type CompanyStats = Record<string, { agentCount: number; issueCount: number }>;
