@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, timestamp, date, index, jsonb } from "drizzle-orm/pg-core";
-import type { AgentEnvConfig } from "@paperclipai/shared";
+import type { AgentEnvConfig } from "@offwatch/shared";
 import { workspaces } from "./workspaces.js";
 import { goals } from "./goals.js";
 import { agents } from "./agents.js";
