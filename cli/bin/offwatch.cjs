@@ -1,23 +1,16 @@
-// CommonJS downloader for paperclip-style CLI distribution
-// Downloads the bundled CLI binary from GitHub releases
-
+#!/usr/bin/env node
+// Inlined downloader using native https module to avoid dependency issues
 const { spawn } = require("child_process");
 const fs = require("fs");
 const fsa = require("fs-extra");
 const os = require("os");
 const path = require("path");
-const { createWriteStream } = require("fs");
-const { pipeline } = require("stream");
-const { promisify } = require("util");
-const { default: got } = require("got");
+const https = require("https");
 
-const execAsync = promisify(require("child_process").exec);
-
-const __dirname = path.dirname(__filename);
 const debugMode = process.env.DEBUG != null;
+const CLI_FILENAME = "offwatch";
 
 const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, "../package.json"), "utf8"));
-const CLI_FILENAME = "offwatch";
 
 const logDebug = (message) => {
   if (debugMode) {
@@ -32,17 +25,41 @@ const getPlatform = () => {
   return "linux-x64";
 };
 
+const downloadFile = (url, dest) => {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(dest);
+    https.get(url, { headers: { "User-Agent": "offwatch-cli" } }, (response) => {
+      if (response.statusCode === 301 || response.statusCode === 302) {
+        https.get(response.headers.location, (resp) => {
+          resp.pipe(file);
+          file.on("finish", () => { file.close(); resolve(); });
+        }).on("error", reject);
+      } else {
+        response.pipe(file);
+        file.on("finish", () => { file.close(); resolve(); });
+      }
+    }).on("error", reject);
+  });
+};
+
 const downloadRelease = async (versionDir) => {
   logDebug(`downloadRelease(${versionDir})`);
   const version = pkg.version;
 
-  const releases = await got
-    .get(`https://api.github.com/repos/triss-smith/offwatch/releases`)
-    .json();
+  const releasesJson = await new Promise((resolve, reject) => {
+    https.get(
+      `https://api.github.com/repos/triss-smith/offwatch/releases`,
+      { headers: { "User-Agent": "offwatch-cli" } },
+      (res) => {
+        let data = "";
+        res.on("data", (chunk) => { data += chunk; });
+        res.on("end", () => { resolve(JSON.parse(data)); });
+      }
+    ).on("error", reject);
+  });
 
-  // Find the latest release that matches our major.minor
   const currentParts = extractVersionParts(version);
-  const matchingRelease = releases
+  const matchingRelease = releasesJson
     .filter((release) => {
       const releaseVersion = extractVersionParts(release.tag_name);
       return (
@@ -57,7 +74,7 @@ const downloadRelease = async (versionDir) => {
           ? 1
           : -1
       );
-    })[0] || releases[0];
+    })[0] || releasesJson[0];
 
   if (!matchingRelease) {
     throw new Error(
@@ -90,14 +107,11 @@ const downloadRelease = async (versionDir) => {
 
   logDebug(`Downloading ${asset.browser_download_url}`);
 
-  await pipeline(got.stream(asset.browser_download_url), createWriteStream(tempPath));
+  await downloadFile(asset.browser_download_url, tempPath);
 
   if (ext) {
-    // For .js files, rename to expected name
     fs.renameSync(tempPath, filePath);
   } else {
-    // For compressed files, decompress using tar via spawn
-    // Convert Windows paths to Git Bash format for tar
     const toGitPath = (p) =>
       p
         .replace(/\\/g, "/")
@@ -106,7 +120,6 @@ const downloadRelease = async (versionDir) => {
     const tarCwd = toGitPath(versionDir);
 
     await new Promise((resolve, reject) => {
-      // Archive contains offwatch.js directly, so don't use --strip=1
       const args = ["-xzf", tarPath, "-C", tarCwd];
       logDebug(`Running: tar ${args.join(" ")}`);
       const proc = spawn("tar", args);
@@ -126,7 +139,6 @@ const downloadRelease = async (versionDir) => {
     });
   }
 
-  // Copy package.json to bin directory so bundled code can find it
   const binDir = path.join(versionDir, "..");
   fs.copyFileSync(
     path.join(__dirname, "../package.json"),
@@ -153,4 +165,10 @@ const extractVersionParts = (version) => {
   return { major, minor, patch };
 };
 
-module.exports = { loadCLIBinPath };
+// Run the downloaded CLI binary
+loadCLIBinPath(__dirname).then((binPath) => {
+  spawn("node", [binPath, ...process.argv.slice(2)], { stdio: "inherit" });
+}).catch((err) => {
+  console.error(err.message);
+  process.exit(1);
+});
