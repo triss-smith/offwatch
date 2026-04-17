@@ -40,7 +40,7 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
   let tempDb: Awaited<ReturnType<typeof startEmbeddedPostgresTestDatabase>> | null = null;
 
   beforeAll(async () => {
-    tempDb = await startEmbeddedPostgresTestDatabase("paperclip-routines-service-");
+    tempDb = await startEmbeddedPostgresTestDatabase("offwatch-routines-service-");
     db = createDb(tempDb.connectionString);
   }, 20_000);
 
@@ -98,7 +98,7 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
 
     await db.insert(workspaces).values({
       id: companyId,
-      name: "Paperclip",
+      name: "Offwatch",
       issuePrefix,
       requireBoardApprovalForNewAgents: false,
     });
@@ -375,7 +375,7 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
 
     const run = await svc.runRoutine(variableRoutine.id, {
       source: "manual",
-      variables: { repo: "paperclip" },
+      variables: { repo: "offwatch" },
     });
 
     const storedIssue = await db
@@ -389,11 +389,11 @@ describeEmbeddedPostgres("routine service live-execution coalescing", () => {
       .where(eq(routineRuns.id, run.id))
       .then((rows) => rows[0] ?? null);
 
-    expect(storedIssue?.title).toBe("repo triage for paperclip");
-    expect(storedIssue?.description).toBe("Review paperclip for high bugs");
+    expect(storedIssue?.title).toBe("repo triage for offwatch");
+    expect(storedIssue?.description).toBe("Review offwatch for high bugs");
     expect(storedRun?.triggerPayload).toEqual({
       variables: {
-        repo: "paperclip",
+        repo: "offwatch",
         priority: "high",
       },
     });

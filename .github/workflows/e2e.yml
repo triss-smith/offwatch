@@ -27,7 +27,10 @@ jobs:
           node-version: 20
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+      - name: Update lockfile
+        run: pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile
+
+      - run: pnpm install --no-frozen-lockfile
       - run: pnpm build
       - run: npx playwright install --with-deps chromium
 

@@ -175,7 +175,7 @@ describe("budgetService", () => {
       }],
       [{
         status: "active",
-        name: "Paperclip",
+        name: "Offwatch",
       }],
       [],
       [agentPolicy],
@@ -204,7 +204,7 @@ describe("budgetService", () => {
       [{
         status: "paused",
         pauseReason: "budget",
-        name: "Paperclip",
+        name: "Offwatch",
       }],
     ]);
 
@@ -214,7 +214,7 @@ describe("budgetService", () => {
     expect(block).toEqual({
       scopeType: "company",
       scopeId: "company-1",
-      scopeName: "Paperclip",
+      scopeName: "Offwatch",
       reason: "Company is paused and cannot start new work.",
     });
   });
@@ -286,7 +286,7 @@ describe("budgetService", () => {
       [{ id: "approval-1", status: "approved" }],
       [{
         workspaceId: "company-1",
-        name: "Paperclip",
+        name: "Offwatch",
         status: "paused",
         pauseReason: "budget",
         pausedAt: now,

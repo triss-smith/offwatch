@@ -223,6 +223,11 @@ export interface PaperclipPluginManifestV1 {
    * Kept for backwards compatibility with existing manifests and docs.
    */
   minimumPaperclipVersion?: PluginMinimumHostVersion;
+  /**
+   * Legacy alias for `minimumHostVersion`.
+   * Kept for backwards compatibility with existing plugin manifests.
+   */
+  minimumOffwatchVersion?: PluginMinimumHostVersion;
   /** Capabilities this plugin requires from the host. Enforced at runtime. */
   capabilities: PluginCapability[];
   /** Entrypoint paths relative to the package root. */

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Offwatch uses a paperclip-style distribution where:
+Offwatch uses a offwatch-style distribution where:
 1. `npm install offwatch` installs a tiny CLI package
 2. A `postinstall` script downloads a pre-built binary from GitHub releases
 3. The binary contains the full application (server + CLI)

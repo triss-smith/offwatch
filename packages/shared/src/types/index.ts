@@ -218,6 +218,7 @@ export type {
   PluginMinimumHostVersion,
   PluginUiDeclaration,
   PaperclipPluginManifestV1,
+  PaperclipPluginManifestV1 as OffwatchPluginManifestV1,
   PluginRecord,
   PluginStateRecord,
   PluginConfig,

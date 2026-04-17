@@ -102,13 +102,13 @@ describe("company portability routes", () => {
       role: "ceo",
     });
     mockWorkspacePortabilityService.previewExport.mockResolvedValue({
-      rootPath: "paperclip",
+      rootPath: "offwatch",
       manifest: { agents: [], skills: [], projects: [], issues: [], envInputs: [], includes: { company: true, agents: true, projects: true, issues: false, skills: false }, company: null, schemaVersion: 1, generatedAt: new Date().toISOString(), source: null },
       files: {},
       fileInventory: [],
       counts: { files: 0, agents: 0, skills: 0, projects: 0, issues: 0 },
       warnings: [],
-      paperclipExtensionPath: ".paperclip.yaml",
+      offwatchExtensionPath: ".offwatch.yaml",
     });
     const app = await createApp({
       type: "agent",
@@ -123,7 +123,7 @@ describe("company portability routes", () => {
       .send({ include: { company: true, agents: true, projects: true } });
 
     expect(res.status).toBe(200);
-    expect(res.body.rootPath).toBe("paperclip");
+    expect(res.body.rootPath).toBe("offwatch");
   });
 
   it("rejects replace collision strategy on CEO-safe import routes", async () => {

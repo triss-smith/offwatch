@@ -1,19 +1,19 @@
 [Unit]
 Description=Paperclip AI Agent Orchestrator
-Requires=paperclip-db.service
-After=paperclip-db.service
+Requires=offwatch-db.service
+After=offwatch-db.service
 
 [Container]
-Image=paperclip-local
-ContainerName=paperclip
-Pod=paperclip.pod
-Volume=%h/.local/share/paperclip:/paperclip:Z
+Image=offwatch-local
+ContainerName=offwatch
+Pod=offwatch.pod
+Volume=%h/.local/share/offwatch:/offwatch:Z
 Environment=HOST=0.0.0.0
-Environment=PAPERCLIP_HOME=/paperclip
+Environment=PAPERCLIP_HOME=/offwatch
 Environment=PAPERCLIP_DEPLOYMENT_MODE=authenticated
 Environment=PAPERCLIP_DEPLOYMENT_EXPOSURE=private
 Environment=PAPERCLIP_PUBLIC_URL=http://localhost:3100
-EnvironmentFile=%h/.config/containers/systemd/paperclip.env
+EnvironmentFile=%h/.config/containers/systemd/offwatch.env
 
 [Service]
 Restart=on-failure
