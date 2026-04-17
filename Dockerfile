@@ -22,6 +22,7 @@ RUN usermod -u $USER_UID --non-unique node \
 FROM base AS deps
 WORKDIR /app
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
+COPY cli/package.json cli/
 COPY cli/bin/package.json cli/bin/
 COPY server/package.json server/
 COPY ui/package.json ui/
