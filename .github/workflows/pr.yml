@@ -110,7 +110,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          if git diff --name-only HEAD | grep -qE '(^|/)package\.json$|^pnpm-workspace\.yaml$|^\.npmrc$'; then
+          changed=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD | grep -cE '(^|/)package\.json$|^pnpm-workspace\.yaml$|^\.npmrc$' || true)
+          if [ "$changed" -gt 0 ]; then
             pnpm install --no-frozen-lockfile
           else
             pnpm install --frozen-lockfile
@@ -153,7 +154,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          if git diff --name-only HEAD | grep -qE '(^|/)package\.json$|^pnpm-workspace\.yaml$|^\.npmrc$'; then
+          changed=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD | grep -cE '(^|/)package\.json$|^pnpm-workspace\.yaml$|^\.npmrc$' || true)
+          if [ "$changed" -gt 0 ]; then
             pnpm install --no-frozen-lockfile
           else
             pnpm install --frozen-lockfile
