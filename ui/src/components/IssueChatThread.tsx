@@ -32,7 +32,7 @@ import type {
 } from "@offwatch/shared";
 import type { ActiveRunForIssue, LiveRunForIssue } from "../api/heartbeats";
 import { useLiveRunTranscripts } from "./transcript/useLiveRunTranscripts";
-import { useOffwatchIssueRuntime, type OffwatchIssueRuntimeReassignment } from "../hooks/useOffwatchIssueRuntime";
+import { useOffwatchIssueRuntime, type OffwatchIssueRuntimeReassignment } from "../hooks/usePaperclipIssueRuntime";
 import {
   buildIssueChatMessages,
   formatDurationWords,
@@ -80,7 +80,8 @@ import { cn, formatDateTime, formatShortDate } from "../lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, ArrowRight, Brain, Check, ChevronDown, Copy, Hammer, Loader2, MoreHorizontal, Offwatch, Search, ThumbsDown, ThumbsUp } from "lucide-react";
+import { AlertTriangle, ArrowRight, Brain, Check, ChevronDown, Copy, Hammer, Loader2, MoreHorizontal, Search, ThumbsDown, ThumbsUp } from "lucide-react";
+import { OffwatchIcon } from "./OffwatchIcon";
 
 interface IssueChatMessageContext {
   feedbackVoteByTargetId: Map<string, FeedbackVoteValue>;
@@ -1702,7 +1703,7 @@ const IssueChatComposer = forwardRef<IssueChatComposerHandle, IssueChatComposerP
               disabled={attaching}
               title="Attach image"
             >
-              <Offwatch className="h-4 w-4" />
+              <OffwatchIcon className="h-4 w-4" />
             </Button>
           </div>
         ) : null}

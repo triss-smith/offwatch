@@ -46,7 +46,6 @@ import {
   Github,
   Link2,
   ExternalLink,
-  Offwatch,
   Pencil,
   Plus,
   RefreshCw,
@@ -54,6 +53,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
+import { OffwatchIcon } from "@/components/OffwatchIcon";
 
 type SkillTreeNode = {
   name: string;
@@ -160,7 +160,7 @@ function sourceMeta(sourceBadge: WorkspaceSkillSourceBadge, sourceLabel: string 
     case "local":
       return { icon: Folder, label: sourceLabel ?? "Folder", managedLabel: "Folder managed" };
     case "offwatch":
-      return { icon: Offwatch, label: sourceLabel ?? "Offwatch", managedLabel: "Offwatch managed" };
+      return { icon: OffwatchIcon, label: sourceLabel ?? "Offwatch", managedLabel: "Offwatch managed" };
     default:
       return { icon: Boxes, label: sourceLabel ?? "Catalog", managedLabel: "Catalog managed" };
   }

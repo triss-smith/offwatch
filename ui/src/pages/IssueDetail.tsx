@@ -82,11 +82,11 @@ import {
   ListTree,
   MessageSquare,
   MoreHorizontal,
-  Offwatch,
   Repeat,
   SlidersHorizontal,
   Trash2,
 } from "lucide-react";
+import { OffwatchIcon } from "@/components/OffwatchIcon";
 import {
   getClosedIsolatedExecutionWorkspaceMessage,
   isClosedIsolatedExecutionWorkspace,
@@ -1614,7 +1614,7 @@ export function IssueDetail() {
           attachmentDragActive && "border-primary bg-primary/5",
         )}
       >
-        <Offwatch className="h-3.5 w-3.5 mr-1.5" />
+        <OffwatchIcon className="h-3.5 w-3.5 mr-1.5" />
         {uploadAttachment.isPending || importMarkdownDocument.isPending ? "Uploading..." : (
           <>
             <span className="hidden sm:inline">Upload attachment</span>
