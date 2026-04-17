@@ -1175,3 +1175,12 @@ export async function runChildProcess(
       .catch(reject);
   });
 }
+
+// Aliases for offwatch rename (original functions remain for compatibility)
+export const buildOffwatchEnv = buildPaperclipEnv;
+export const readOffwatchSkillSyncPreference = readPaperclipSkillSyncPreference;
+export const writeOffwatchSkillSyncPreference = writePaperclipSkillSyncPreference;
+
+// Alias for the skill entry type
+export type { PaperclipSkillEntry as OffwatchSkillEntry };
+

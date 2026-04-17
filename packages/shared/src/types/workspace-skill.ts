@@ -4,7 +4,7 @@ export type WorkspaceSkillTrustLevel = "markdown_only" | "assets" | "scripts_exe
 
 export type WorkspaceSkillCompatibility = "compatible" | "unknown" | "invalid";
 
-export type WorkspaceSkillSourceBadge = "paperclip" | "github" | "local" | "url" | "catalog" | "skills_sh";
+export type WorkspaceSkillSourceBadge = "paperclip" | "offwatch" | "github" | "local" | "url" | "catalog" | "skills_sh";
 
 export interface WorkspaceSkillFileInventoryEntry {
   path: string;

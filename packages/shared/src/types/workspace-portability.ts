@@ -168,7 +168,7 @@ export interface WorkspacePortabilityExportResult {
   manifest: WorkspacePortabilityManifest;
   files: Record<string, WorkspacePortabilityFileEntry>;
   warnings: string[];
-  paperclipExtensionPath: string;
+  offwatchExtensionPath: string;
 }
 
 export interface WorkspacePortabilityExportPreviewFile {
@@ -189,7 +189,7 @@ export interface WorkspacePortabilityExportPreviewResult {
     issues: number;
   };
   warnings: string[];
-  paperclipExtensionPath: string;
+  offwatchExtensionPath: string;
 }
 
 export type WorkspacePortabilitySource =
