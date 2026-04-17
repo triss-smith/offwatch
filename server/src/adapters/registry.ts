@@ -75,11 +75,11 @@ import {
   listSkills as hermesListSkills,
   syncSkills as hermesSyncSkills,
   detectModel as detectModelFromHermes,
-} from "hermes-offwatch-adapter/server";
+} from "hermes-paperclip-adapter/server";
 import {
   agentConfigurationDoc as hermesAgentConfigurationDoc,
   models as hermesModels,
-} from "hermes-offwatch-adapter";
+} from "hermes-paperclip-adapter";
 import { BUILTIN_ADAPTER_TYPES } from "./builtin-adapter-types.js";
 import { buildExternalAdapters } from "./plugin-loader.js";
 import { getDisabledAdapterTypes } from "../services/adapter-plugin-store.js";
@@ -180,7 +180,7 @@ const piLocalAdapter: ServerAdapterModule = {
   agentConfigurationDoc: piAgentConfigurationDoc,
 };
 
-// hermes-offwatch-adapter is an external npm package built against an older
+// hermes-paperclip-adapter is an external npm package built against an older
 // version of @offwatch/adapter-utils — cast to suppress the type mismatch.
 const hermesLocalAdapter: ServerAdapterModule = {
   type: "hermes_local",
