@@ -36,6 +36,7 @@ const mockInstanceSettingsApi = vi.hoisted(() => ({
 
 vi.mock("../context/WorkspaceContext", () => ({
   useCompany: () => companyState,
+  useWorkspace: () => companyState,
 }));
 
 vi.mock("../context/DialogContext", () => ({

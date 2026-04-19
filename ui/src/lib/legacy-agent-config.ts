@@ -8,9 +8,9 @@ export function hasLegacyWorkingDirectory(value: unknown): boolean {
   return asNonEmptyString(value) !== null;
 }
 
-export function shouldShowLegacyWorkingDirectoryField(_input: {
+export function shouldShowLegacyWorkingDirectoryField(input: {
   isCreate: boolean;
   adapterConfig: Record<string, unknown> | null | undefined;
 }): boolean {
-  return true;
+  return !input.isCreate && hasLegacyWorkingDirectory(input.adapterConfig?.cwd);
 }

@@ -24,6 +24,7 @@ vi.mock("@/lib/router", () => ({
 
 vi.mock("../context/WorkspaceContext", () => ({
   useCompany: () => ({ selectedCompanyId: "company-1" }),
+  useWorkspace: () => ({ selectedCompanyId: "company-1" }),
 }));
 
 vi.mock("../context/BreadcrumbContext", () => ({
