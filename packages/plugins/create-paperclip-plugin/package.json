@@ -1,6 +1,6 @@
 {
   "name": "@offwatch/create-offwatch-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "homepage": "https://github.com/paperclipai/paperclip",
   "bugs": {
@@ -9,11 +9,11 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/paperclipai/paperclip",
-    "directory": "packages/plugins/create-paperclip-plugin"
+    "directory": "packages/plugins/create-offwatch-plugin"
   },
   "type": "module",
   "bin": {
-    "create-paperclip-plugin": "./dist/index.js"
+    "create-offwatch-plugin": "./dist/index.js"
   },
   "exports": {
     ".": "./src/index.ts"
@@ -21,7 +21,7 @@
   "publishConfig": {
     "access": "public",
     "bin": {
-      "create-paperclip-plugin": "./dist/index.js"
+      "create-offwatch-plugin": "./dist/index.js"
     },
     "exports": {
       ".": {

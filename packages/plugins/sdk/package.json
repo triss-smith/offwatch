@@ -1,6 +1,6 @@
 {
   "name": "@offwatch/plugin-sdk",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Stable public API for Paperclip plugins — worker-side context and UI bridge hooks",
   "license": "MIT",
   "homepage": "https://github.com/paperclipai/paperclip",
@@ -52,7 +52,7 @@
     }
   },
   "bin": {
-    "paperclip-plugin-dev-server": "./dist/dev-cli.js"
+    "offwatch-plugin-dev-server": "./dist/dev-cli.js"
   },
   "publishConfig": {
     "access": "public",
