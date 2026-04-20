@@ -17,7 +17,7 @@
 | `server/src/routes/issues.ts` | Add constants; modify heartbeat-context route |
 | `server/src/__tests__/issues-goal-context-routes.test.ts` | Add `listComments` mock; add 5 new test cases |
 | `packages/mcp-server/src/tools.ts` | Add `afterCommentId` to heartbeat tool; default limit in listComments |
-| `skills/paperclip/SKILL.md` | Replace Step 6 "Use comments incrementally" block |
+| `skills/offwatch/SKILL.md` | Replace Step 6 "Use comments incrementally" block |
 
 ---
 
@@ -286,13 +286,13 @@ git commit -m "feat(api): embed comments and truncate description in heartbeat-c
 **Files:**
 - Modify: `packages/mcp-server/src/tools.ts:177-198`
 
-- [ ] **Step 1: Add `afterCommentId` to `paperclipGetHeartbeatContext`**
+- [ ] **Step 1: Add `afterCommentId` to `offwatchGetHeartbeatContext`**
 
-Replace the `paperclipGetHeartbeatContext` tool definition (lines 177–185) in `packages/mcp-server/src/tools.ts`:
+Replace the `offwatchGetHeartbeatContext` tool definition (lines 177–185) in `packages/mcp-server/src/tools.ts`:
 
 ```typescript
     makeTool(
-      "paperclipGetHeartbeatContext",
+      "offwatchGetHeartbeatContext",
       "Get compact heartbeat context for an issue. On the first wake omit afterCommentId to receive the 20 most recent comments embedded. On subsequent wakes pass afterCommentId=latestCommentId from the previous commentCursor to receive only new comments (zero tokens when nothing changed).",
       z.object({
         issueId: issueIdSchema,
@@ -309,13 +309,13 @@ Replace the `paperclipGetHeartbeatContext` tool definition (lines 177–185) in 
     ),
 ```
 
-- [ ] **Step 2: Default `paperclipListComments` limit to 50**
+- [ ] **Step 2: Default `offwatchListComments` limit to 50**
 
-Replace the `paperclipListComments` tool definition (lines 186–198) in `packages/mcp-server/src/tools.ts`:
+Replace the `offwatchListComments` tool definition (lines 186–198) in `packages/mcp-server/src/tools.ts`:
 
 ```typescript
     makeTool(
-      "paperclipListComments",
+      "offwatchListComments",
       "List issue comments with incremental options. Defaults to 50 most recent when no limit specified. Use after+order=asc to page forward through older history.",
       listCommentsSchema,
       async ({ issueId, after, order, limit }) => {
@@ -349,21 +349,21 @@ git commit -m "feat(mcp): add afterCommentId to heartbeat context tool; default 
 ## Task 3: Update SKILL.md Step 6
 
 **Files:**
-- Modify: `skills/paperclip/SKILL.md:69-75`
+- Modify: `skills/offwatch/SKILL.md:69-75`
 
 - [ ] **Step 1: Replace the "Use comments incrementally" block**
 
-In `skills/paperclip/SKILL.md`, replace lines 69–75 (the block starting with `Use comments incrementally:` through `Do not reflexively reload the whole thread on every heartbeat.`) with:
+In `skills/offwatch/SKILL.md`, replace lines 69–75 (the block starting with `Use comments incrementally:` through `Do not reflexively reload the whole thread on every heartbeat.`) with:
 
 ```markdown
 Use comments incrementally:
 
-- Call `paperclipGetHeartbeatContext` with `afterCommentId` set to the `latestCommentId` stored from your previous wake (saved in session memory). On the very first wake for a task, omit `afterCommentId`.
-- The response includes a `comments` array with embedded comments and `hasMoreComments: boolean`. Use these directly — no separate `paperclipListComments` call needed for the normal case.
+- Call `offwatchGetHeartbeatContext` with `afterCommentId` set to the `latestCommentId` stored from your previous wake (saved in session memory). On the very first wake for a task, omit `afterCommentId`.
+- The response includes a `comments` array with embedded comments and `hasMoreComments: boolean`. Use these directly — no separate `offwatchListComments` call needed for the normal case.
 - Save `commentCursor.latestCommentId` to session memory at the end of each wake so you can pass it as `afterCommentId` next time.
-- If `hasMoreComments: true` and you need older history, call `paperclipListComments` with `after=<oldest-embedded-comment-id>&order=asc` to page back.
+- If `hasMoreComments: true` and you need older history, call `offwatchListComments` with `after=<oldest-embedded-comment-id>&order=asc` to page back.
 - If `PAPERCLIP_WAKE_COMMENT_ID` is set and the wake comment is not already in the embedded `comments`, fetch it directly with `GET /api/issues/{issueId}/comments/{commentId}`.
-- If `issue.descriptionTruncated` is true and you need the full description, fetch it with `paperclipGetIssue`. This is typically a one-time read per task — cache it in session memory.
+- If `issue.descriptionTruncated` is true and you need the full description, fetch it with `offwatchGetIssue`. This is typically a one-time read per task — cache it in session memory.
 
 Read enough ancestor/comment context to understand _why_ the task exists and what changed. Do not reflexively reload the whole thread on every heartbeat.
 ```
@@ -371,6 +371,6 @@ Read enough ancestor/comment context to understand _why_ the task exists and wha
 - [ ] **Step 2: Commit**
 
 ```bash
-git add skills/paperclip/SKILL.md
+git add skills/offwatch/SKILL.md
 git commit -m "feat(skill): use embedded heartbeat-context comments and afterCommentId for incremental wakes"
 ```

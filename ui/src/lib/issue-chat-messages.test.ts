@@ -138,7 +138,7 @@ describe("buildAssistantPartsFromTranscript", () => {
         ts: "2026-04-06T12:00:01.000Z",
         name: "search",
         toolUseId: "tool-1",
-        input: { query: "paperclip" },
+        input: { query: "offwatch" },
       },
       {
         kind: "tool_result",

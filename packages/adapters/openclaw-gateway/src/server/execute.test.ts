@@ -11,7 +11,7 @@ describe("resolveSessionKey", () => {
         runId: "run-123",
         issueId: null,
       }),
-    ).toBe("agent:meridian:paperclip:run:run-123");
+    ).toBe("agent:meridian:offwatch:run:run-123");
   });
 
   it("prefixes issue-scoped session keys with the configured agent", () => {
@@ -23,7 +23,7 @@ describe("resolveSessionKey", () => {
         runId: "run-123",
         issueId: "issue-456",
       }),
-    ).toBe("agent:meridian:paperclip:issue:issue-456");
+    ).toBe("agent:meridian:offwatch:issue:issue-456");
   });
 
   it("prefixes fixed session keys with the configured agent", () => {

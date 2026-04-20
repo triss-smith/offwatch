@@ -17,46 +17,46 @@ describe("resolveCompanyImportApiPath", () => {
     expect(
       resolveCompanyImportApiPath({
         dryRun: true,
-        targetMode: "existing_company",
-        companyId: "company-123",
+        targetMode: "existing_workspace",
+        workspaceId: "company-123",
       }),
-    ).toBe("/api/companies/company-123/imports/preview");
+    ).toBe("/api/workspaces/company-123/imports/preview");
   });
 
   it("uses company-scoped apply route for existing-company imports", () => {
     expect(
       resolveCompanyImportApiPath({
         dryRun: false,
-        targetMode: "existing_company",
-        companyId: "company-123",
+        targetMode: "existing_workspace",
+        workspaceId: "company-123",
       }),
-    ).toBe("/api/companies/company-123/imports/apply");
+    ).toBe("/api/workspaces/company-123/imports/apply");
   });
 
   it("keeps global routes for new-company imports", () => {
     expect(
       resolveCompanyImportApiPath({
         dryRun: true,
-        targetMode: "new_company",
+        targetMode: "new_workspace",
       }),
-    ).toBe("/api/companies/import/preview");
+    ).toBe("/api/workspaces/import/preview");
 
     expect(
       resolveCompanyImportApiPath({
         dryRun: false,
-        targetMode: "new_company",
+        targetMode: "new_workspace",
       }),
-    ).toBe("/api/companies/import");
+    ).toBe("/api/workspaces/import");
   });
 
   it("throws when an existing-company import is missing a company id", () => {
     expect(() =>
       resolveCompanyImportApiPath({
         dryRun: true,
-        targetMode: "existing_company",
-        companyId: " ",
+        targetMode: "existing_workspace",
+        workspaceId: " ",
       })
-    ).toThrow(/require a companyId/i);
+    ).toThrow(/require a workspaceId/i);
   });
 });
 
@@ -104,8 +104,8 @@ describe("resolveCompanyImportApplyConfirmationMode", () => {
 
 describe("buildCompanyDashboardUrl", () => {
   it("preserves the configured base path when building a dashboard URL", () => {
-    expect(buildCompanyDashboardUrl("https://paperclip.example/app/", "PAP")).toBe(
-      "https://paperclip.example/app/PAP/dashboard",
+    expect(buildCompanyDashboardUrl("https://offwatch.example/app/", "PAP")).toBe(
+      "https://offwatch.example/app/PAP/dashboard",
     );
   });
 });
@@ -279,7 +279,7 @@ describe("renderCompanyImportPreview", () => {
     };
 
     const rendered = renderCompanyImportPreview(preview, {
-      sourceLabel: "GitHub: https://github.com/paperclipai/companies/demo",
+      sourceLabel: "GitHub: https://github.com/offwatchai/companies/demo",
       targetLabel: "Imported Co (company-123)",
       infoMessages: ["Using claude-local adapter"],
     });
@@ -321,13 +321,13 @@ describe("renderCompanyImportResult", () => {
       },
       {
         targetLabel: "Imported Co (company-123)",
-        companyUrl: "https://paperclip.example/PAP/dashboard",
+        companyUrl: "https://offwatch.example/PAP/dashboard",
         infoMessages: ["Using claude-local adapter"],
       },
     );
 
     expect(rendered).toContain("Company");
-    expect(rendered).toContain("https://paperclip.example/PAP/dashboard");
+    expect(rendered).toContain("https://offwatch.example/PAP/dashboard");
     expect(rendered).toContain("3 agents total (1 created, 1 updated, 1 skipped)");
     expect(rendered).toContain("3 projects total (1 created, 1 updated, 1 skipped)");
     expect(rendered).toContain("Agent results");
@@ -466,7 +466,7 @@ describe("import selection catalog", () => {
       files: {
         "COMPANY.md": "# Source Co",
         "README.md": "# Readme",
-        ".paperclip.yaml": "schema: paperclip/v1\n",
+        ".offwatch.yaml": "schema: offwatch/v1\n",
         "images/company-logo.png": {
           encoding: "base64",
           data: "",
@@ -502,7 +502,7 @@ describe("import selection catalog", () => {
 
     const selectedFiles = buildSelectedFilesFromImportSelection(catalog, state);
 
-    expect(selectedFiles).toContain(".paperclip.yaml");
+    expect(selectedFiles).toContain(".offwatch.yaml");
     expect(selectedFiles).toContain("projects/alpha/PROJECT.md");
     expect(selectedFiles).toContain("projects/alpha/notes.md");
     expect(selectedFiles).not.toContain("projects/alpha/issues/kickoff/TASK.md");

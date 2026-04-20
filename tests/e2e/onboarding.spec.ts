@@ -10,11 +10,11 @@ import { test, expect } from "@playwright/test";
  *   Step 4 — Ready to launch (summary + open issue)
  *
  * By default this runs in skip_llm mode: we do NOT assert that an LLM
- * heartbeat fires. Set PAPERCLIP_E2E_SKIP_LLM=false to enable LLM-dependent
+ * heartbeat fires. Set OFFWATCH_E2E_SKIP_LLM=false to enable LLM-dependent
  * assertions (requires a valid ANTHROPIC_API_KEY).
  */
 
-const SKIP_LLM = process.env.PAPERCLIP_E2E_SKIP_LLM !== "false";
+const SKIP_LLM = process.env.OFFWATCH_E2E_SKIP_LLM !== "false";
 
 const COMPANY_NAME = `E2E-Test-${Date.now()}`;
 const AGENT_NAME = "CEO";
@@ -76,7 +76,7 @@ test.describe("Onboarding wizard", () => {
 
     const baseUrl = page.url().split("/").slice(0, 3).join("/");
 
-    const companiesRes = await page.request.get(`${baseUrl}/api/companies`);
+    const companiesRes = await page.request.get(`${baseUrl}/api/workspaces`);
     expect(companiesRes.ok()).toBe(true);
     const companies = await companiesRes.json();
     const company = companies.find(
@@ -85,7 +85,7 @@ test.describe("Onboarding wizard", () => {
     expect(company).toBeTruthy();
 
     const agentsRes = await page.request.get(
-      `${baseUrl}/api/companies/${company.id}/agents`
+      `${baseUrl}/api/workspaces/${company.id}/agents`
     );
     expect(agentsRes.ok()).toBe(true);
     const agents = await agentsRes.json();
@@ -106,7 +106,7 @@ test.describe("Onboarding wizard", () => {
     ).toEqual(["AGENTS.md", "HEARTBEAT.md", "SOUL.md", "TOOLS.md"]);
 
     const issuesRes = await page.request.get(
-      `${baseUrl}/api/companies/${company.id}/issues`
+      `${baseUrl}/api/workspaces/${company.id}/issues`
     );
     expect(issuesRes.ok()).toBe(true);
     const issues = await issuesRes.json();

@@ -1,13 +1,13 @@
 ---
-title: Paperclip Lite — Personal Orchestration Tool Retool + Issue Tracker Integration
-summary: Retool Paperclip Lite from a multi-company AI workforce platform to a personal development orchestration tool, with a tracker-agnostic issue sync layer and Linear as the first adapter.
+title: Offwatch Lite — Personal Orchestration Tool Retool + Issue Tracker Integration
+summary: Retool Offwatch Lite from a multi-company AI workforce platform to a personal development orchestration tool, with a tracker-agnostic issue sync layer and Linear as the first adapter.
 date: 2026-04-12
 status: approved
 ---
 
 ## Overview
 
-Paperclip Lite is being retooled from a multi-company AI workforce platform into a **personal development orchestration tool**. The operator (a single human) manages multiple workspaces, each containing specialized AI agents that autonomously work on issues synced from an external issue tracker. The operator is the sole decision-maker; there is no CEO, org chart, or hiring flow.
+Offwatch Lite is being retooled from a multi-company AI workforce platform into a **personal development orchestration tool**. The operator (a single human) manages multiple workspaces, each containing specialized AI agents that autonomously work on issues synced from an external issue tracker. The operator is the sole decision-maker; there is no CEO, org chart, or hiring flow.
 
 Two primary automation goals drive this retool:
 
@@ -16,7 +16,7 @@ Two primary automation goals drive this retool:
 
 ---
 
-## What Changes vs. Current Paperclip
+## What Changes vs. Current Offwatch
 
 ### Removed
 - Company hierarchy (CEO, org chart, reporting structure)
@@ -127,8 +127,8 @@ Config is stored encrypted in `workspaces.issueTrackerConfig`. API key / token v
 ### Sync job (`sync-issues`)
 - Runs every 15 minutes per workspace that has a Linear config
 - Queries Linear GraphQL API: open issues where `assignee.id = userId`
-- For each issue not yet in Paperclip: creates a Paperclip issue with `linkedExternalId`, `linkedExternalUrl`, and writes a `plan` document containing the full Linear description and the pre-computed branch name
-- For issues that have been cancelled or completed in Linear: transitions the mirrored Paperclip issue to `cancelled` or `done`
+- For each issue not yet in Offwatch: creates a Offwatch issue with `linkedExternalId`, `linkedExternalUrl`, and writes a `plan` document containing the full Linear description and the pre-computed branch name
+- For issues that have been cancelled or completed in Linear: transitions the mirrored Offwatch issue to `cancelled` or `done`
 
 ### Branch naming
 Linear's convention: `{username}/{identifier}-{title-slug}`  
@@ -148,10 +148,10 @@ The agent creates the branch using the value from `linkedBranchName` — no deri
 
 ### Webhook endpoint
 `POST /api/workspaces/:workspaceId/tracker/webhook`  
-Receives Linear webhooks. Handles: issue reassigned (remove from Paperclip if no longer assigned to user), issue cancelled, issue updated (sync title/description changes).
+Receives Linear webhooks. Handles: issue reassigned (remove from Offwatch if no longer assigned to user), issue cancelled, issue updated (sync title/description changes).
 
 ### Issue proposal (from audit agent)
-Agent calls the `tracker:propose-issue` tool with title, description, and severity. The adapter creates a `tracker_issue_proposal` approval request. On operator approval, the adapter calls Linear to create the issue. The next sync run picks it up as a new Paperclip issue.
+Agent calls the `tracker:propose-issue` tool with title, description, and severity. The adapter creates a `tracker_issue_proposal` approval request. On operator approval, the adapter calls Linear to create the issue. The next sync run picks it up as a new Offwatch issue.
 
 ---
 
@@ -159,7 +159,7 @@ Agent calls the `tracker:propose-issue` tool with title, description, and severi
 
 Agents do not use explicit routing rules. When an agent wakes up:
 
-1. It checks for directly assigned Paperclip issues first and works on those
+1. It checks for directly assigned Offwatch issues first and works on those
 2. If no assigned issues, it queries available unassigned synced issues
 3. It reads its own capabilities description against the available issue list and decides whether any issue falls within its domain
 4. If it claims one, it checks it out atomically; if another agent claims it first (409), it moves on
@@ -172,7 +172,7 @@ The operator creates agents directly — no hiring flow, no approval needed for 
 
 ## Security Audit System
 
-The audit agent is a standard Paperclip agent with:
+The audit agent is a standard Offwatch agent with:
 - A capabilities description that names the files/directories to audit and the type of issues to look for
 - A heartbeat schedule (e.g. every 24 hours, or every Monday at 09:00)
 - Access to the `tracker:propose-issue` tool
@@ -202,7 +202,7 @@ Each workspace gains two new settings (configured in workspace settings alongsid
 ### Worktree lifecycle
 
 **On issue checkout (agent picks up an issue):**
-1. Paperclip creates the branch and worktree before invoking the agent:
+1. Offwatch creates the branch and worktree before invoking the agent:
    ```
    git -C {repoPath} worktree add {worktreesPath}/{linkedBranchName} -b {linkedBranchName}
    ```
@@ -224,7 +224,7 @@ Each workspace gains two new settings (configured in workspace settings alongsid
 
 ### Concurrency guarantee
 
-Combined with Paperclip's existing atomic checkout (one agent per issue at a time), worktree isolation means:
+Combined with Offwatch's existing atomic checkout (one agent per issue at a time), worktree isolation means:
 - No two agents share a working directory
 - No two agents are on the same branch simultaneously
 - The main repository clone is never modified by agents — it stays clean as the reference
@@ -233,7 +233,7 @@ Combined with Paperclip's existing atomic checkout (one agent per issue at a tim
 
 ## Audit Log
 
-The Audit Log is a dedicated first-class UI surface, accessible as a sidebar menu item in the workspace navigation. It is not modelled as a Paperclip issue — it is its own view backed by audit run records.
+The Audit Log is a dedicated first-class UI surface, accessible as a sidebar menu item in the workspace navigation. It is not modelled as a Offwatch issue — it is its own view backed by audit run records.
 
 **What it shows:**
 - Chronological list of audit runs (agent, timestamp, files scanned, duration)
@@ -264,7 +264,7 @@ Tools are namespaced `tracker:` and resolved at runtime to the workspace's confi
 
 ## Approval Queue
 
-The approval queue is simplified to two types. All approvals are visible in the existing Paperclip approvals UI — no new UI surfaces needed.
+The approval queue is simplified to two types. All approvals are visible in the existing Offwatch approvals UI — no new UI surfaces needed.
 
 ### `tracker_issue_proposal`
 Payload: `{ title, description, severity, sourceFile?, finding? }`  
@@ -327,7 +327,7 @@ Toggled in workspace settings under "Agent Permissions". When enabled, an agent 
 
 **Phase 3 — Linear adapter**
 - Implement `LinearAdapter` conforming to the interface
-- Sync job: GraphQL query + Paperclip issue creation with plan document
+- Sync job: GraphQL query + Offwatch issue creation with plan document
 - Branch name computation
 - Event hooks: mark in progress, send inbox notification
 - `tracker:propose-issue` tool + `linear_issue_proposal` approval type

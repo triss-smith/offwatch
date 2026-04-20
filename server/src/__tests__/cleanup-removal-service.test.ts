@@ -34,7 +34,7 @@ describeEmbeddedPostgres("cleanup removal services", () => {
   let tempDb: Awaited<ReturnType<typeof startEmbeddedPostgresTestDatabase>> | null = null;
 
   beforeAll(async () => {
-    tempDb = await startEmbeddedPostgresTestDatabase("paperclip-cleanup-removal-");
+    tempDb = await startEmbeddedPostgresTestDatabase("offwatch-cleanup-removal-");
     db = createDb(tempDb.connectionString);
   }, 20_000);
 
@@ -63,7 +63,7 @@ describeEmbeddedPostgres("cleanup removal services", () => {
 
     await db.insert(workspaces).values({
       id: companyId,
-      name: "Paperclip",
+      name: "Offwatch",
       issuePrefix,
       requireBoardApprovalForNewAgents: false,
     });
@@ -159,10 +159,10 @@ describeEmbeddedPostgres("cleanup removal services", () => {
     await db.insert(workspaceSkills).values({
       id: randomUUID(),
       workspaceId: companyId,
-      key: "paperclipai/paperclip/paperclip",
-      slug: "paperclip",
-      name: "Paperclip",
-      markdown: "# Paperclip",
+      key: "offwatchai/offwatch/offwatch",
+      slug: "offwatch",
+      name: "Offwatch",
+      markdown: "# Offwatch",
     });
 
     await db.insert(activityLog).values({

@@ -85,7 +85,7 @@ function writeTestConfig(configPath: string, tempRoot: string, port: number, con
         baseDir: path.join(tempRoot, "storage"),
       },
       s3: {
-        bucket: "paperclip",
+        bucket: "offwatch",
         region: "us-east-1",
         prefix: "",
         forcePathStyle: false,
@@ -187,7 +187,7 @@ async function runCliJson<T>(args: string[], opts: { apiBase: string; configPath
   const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
   const result = await execFileAsync(
     "pnpm",
-    ["--silent", "paperclipai", ...args, "--api-base", opts.apiBase, "--config", opts.configPath, "--json"],
+    ["--silent", "offwatch", ...args, "--api-base", opts.apiBase, "--config", opts.configPath, "--json"],
     {
       cwd: repoRoot,
       env: createCliEnv(),
@@ -211,7 +211,7 @@ async function waitForServer(
   while (Date.now() - startedAt < 30_000) {
     if (child.exitCode !== null) {
       throw new Error(
-        `paperclipai run exited before healthcheck succeeded.\nstdout:\n${output.stdout.join("")}\nstderr:\n${output.stderr.join("")}`,
+        `offwatch run exited before healthcheck succeeded.\nstdout:\n${output.stdout.join("")}\nstderr:\n${output.stderr.join("")}`,
       );
     }
 
@@ -230,7 +230,7 @@ async function waitForServer(
   );
 }
 
-describeEmbeddedPostgres("paperclipai company import/export e2e", () => {
+describeEmbeddedPostgres("offwatch company import/export e2e", () => {
   let tempRoot = "";
   let configPath = "";
   let exportDir = "";
@@ -239,11 +239,11 @@ describeEmbeddedPostgres("paperclipai company import/export e2e", () => {
   let tempDb: Awaited<ReturnType<typeof startEmbeddedPostgresTestDatabase>> | null = null;
 
   beforeAll(async () => {
-    tempRoot = mkdtempSync(path.join(os.tmpdir(), "paperclip-company-cli-e2e-"));
+    tempRoot = mkdtempSync(path.join(os.tmpdir(), "offwatch-company-cli-e2e-"));
     configPath = path.join(tempRoot, "config", "config.json");
     exportDir = path.join(tempRoot, "exported-company");
 
-    tempDb = await startEmbeddedPostgresTestDatabase("paperclip-company-cli-db-");
+    tempDb = await startEmbeddedPostgresTestDatabase("offwatch-company-cli-db-");
 
     const port = await getAvailablePort();
     writeTestConfig(configPath, tempRoot, port, tempDb.connectionString);
@@ -253,7 +253,7 @@ describeEmbeddedPostgres("paperclipai company import/export e2e", () => {
     const output = { stdout: [] as string[], stderr: [] as string[] };
     const child = spawn(
       "pnpm",
-      ["paperclipai", "run", "--config", configPath],
+      ["offwatch", "run", "--config", configPath],
       {
         cwd: repoRoot,
         env: createServerEnv(configPath, port, tempDb.connectionString),
@@ -282,7 +282,7 @@ describeEmbeddedPostgres("paperclipai company import/export e2e", () => {
   it("exports a company package and imports it into new and existing companies", async () => {
     expect(serverProcess).not.toBeNull();
 
-    const sourceCompany = await api<{ id: string; name: string; issuePrefix: string }>(apiBase, "/api/companies", {
+    const sourceCompany = await api<{ id: string; name: string; issuePrefix: string }>(apiBase, "/api/workspaces", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ name: `CLI Export Source ${Date.now()}` }),
@@ -290,7 +290,7 @@ describeEmbeddedPostgres("paperclipai company import/export e2e", () => {
 
     const sourceAgent = await api<{ id: string; name: string }>(
       apiBase,
-      `/api/companies/${sourceCompany.id}/agents`,
+      `/api/workspaces/${sourceCompany.id}/agents`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -307,7 +307,7 @@ describeEmbeddedPostgres("paperclipai company import/export e2e", () => {
 
     const sourceProject = await api<{ id: string; name: string }>(
       apiBase,
-      `/api/companies/${sourceCompany.id}/projects`,
+      `/api/workspaces/${sourceCompany.id}/projects`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -322,7 +322,7 @@ describeEmbeddedPostgres("paperclipai company import/export e2e", () => {
 
     const sourceIssue = await api<{ id: string; title: string; identifier: string }>(
       apiBase,
-      `/api/companies/${sourceCompany.id}/issues`,
+      `/api/workspaces/${sourceCompany.id}/issues`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -356,7 +356,7 @@ describeEmbeddedPostgres("paperclipai company import/export e2e", () => {
     expect(exportResult.ok).toBe(true);
     expect(exportResult.filesWritten).toBeGreaterThan(0);
     expect(readFileSync(path.join(exportDir, "COMPANY.md"), "utf8")).toContain(sourceCompany.name);
-    expect(readFileSync(path.join(exportDir, ".paperclip.yaml"), "utf8")).toContain('schema: "paperclip/v1"');
+    expect(readFileSync(path.join(exportDir, ".offwatch.yaml"), "utf8")).toContain('schema: "offwatch/v1"');
 
     const importedNew = await runCliJson<{
       company: { id: string; name: string; action: string };
@@ -383,15 +383,15 @@ describeEmbeddedPostgres("paperclipai company import/export e2e", () => {
 
     const importedAgents = await api<Array<{ id: string; name: string }>>(
       apiBase,
-      `/api/companies/${importedNew.company.id}/agents`,
+      `/api/workspaces/${importedNew.company.id}/agents`,
     );
     const importedProjects = await api<Array<{ id: string; name: string }>>(
       apiBase,
-      `/api/companies/${importedNew.company.id}/projects`,
+      `/api/workspaces/${importedNew.company.id}/projects`,
     );
     const importedIssues = await api<Array<{ id: string; title: string; identifier: string }>>(
       apiBase,
-      `/api/companies/${importedNew.company.id}/issues`,
+      `/api/workspaces/${importedNew.company.id}/issues`,
     );
 
     expect(importedAgents.map((agent) => agent.name)).toContain(sourceAgent.name);
@@ -456,15 +456,15 @@ describeEmbeddedPostgres("paperclipai company import/export e2e", () => {
 
     const twiceImportedAgents = await api<Array<{ id: string; name: string }>>(
       apiBase,
-      `/api/companies/${importedNew.company.id}/agents`,
+      `/api/workspaces/${importedNew.company.id}/agents`,
     );
     const twiceImportedProjects = await api<Array<{ id: string; name: string }>>(
       apiBase,
-      `/api/companies/${importedNew.company.id}/projects`,
+      `/api/workspaces/${importedNew.company.id}/projects`,
     );
     const twiceImportedIssues = await api<Array<{ id: string; title: string; identifier: string }>>(
       apiBase,
-      `/api/companies/${importedNew.company.id}/issues`,
+      `/api/workspaces/${importedNew.company.id}/issues`,
     );
 
     expect(twiceImportedAgents).toHaveLength(2);
@@ -475,7 +475,7 @@ describeEmbeddedPostgres("paperclipai company import/export e2e", () => {
     const zipPath = path.join(tempRoot, "exported-company.zip");
     const portableFiles: Record<string, string> = {};
     collectTextFiles(exportDir, exportDir, portableFiles);
-    writeFileSync(zipPath, createStoredZipArchive(portableFiles, "paperclip-demo"));
+    writeFileSync(zipPath, createStoredZipArchive(portableFiles, "offwatch-demo"));
 
     const importedFromZip = await runCliJson<{
       company: { id: string; name: string; action: string };

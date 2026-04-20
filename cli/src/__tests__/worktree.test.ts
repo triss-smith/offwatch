@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   agents,
-  companies,
+  workspaces,
   createDb,
   projects,
   routines,
@@ -37,7 +37,7 @@ import {
   rewriteLocalUrlPort,
   sanitizeWorktreeInstanceId,
 } from "../commands/worktree-lib.js";
-import type { PaperclipConfig } from "../config/schema.js";
+import type { OffwatchConfig } from "../config/schema.js";
 import {
   getEmbeddedPostgresTestSupport,
   startEmbeddedPostgresTestDatabase,
@@ -65,7 +65,7 @@ afterEach(() => {
   }
 });
 
-function buildSourceConfig(): PaperclipConfig {
+function buildSourceConfig(): OffwatchConfig {
   return {
     $meta: {
       version: 1,
@@ -109,7 +109,7 @@ function buildSourceConfig(): PaperclipConfig {
         baseDir: "/tmp/main/storage",
       },
       s3: {
-        bucket: "paperclip",
+        bucket: "offwatch",
         region: "us-east-1",
         prefix: "",
         forcePathStyle: false,
@@ -132,13 +132,13 @@ describe("worktree helpers", () => {
   });
 
   it("resolves worktree:make target paths under the user home directory", () => {
-    expect(resolveWorktreeMakeTargetPath("paperclip-pr-432")).toBe(
-      path.resolve(os.homedir(), "paperclip-pr-432"),
+    expect(resolveWorktreeMakeTargetPath("offwatch-pr-432")).toBe(
+      path.resolve(os.homedir(), "offwatch-pr-432"),
     );
   });
 
   it("rejects worktree:make names that are not safe directory/branch names", () => {
-    expect(() => resolveWorktreeMakeTargetPath("paperclip/pr-432")).toThrow(
+    expect(() => resolveWorktreeMakeTargetPath("offwatch/pr-432")).toThrow(
       "Worktree name must contain only letters, numbers, dots, underscores, or dashes.",
     );
   });
@@ -185,13 +185,13 @@ describe("worktree helpers", () => {
 
   it("rewrites loopback auth URLs to the new port only", () => {
     expect(rewriteLocalUrlPort("http://127.0.0.1:3100", 3110)).toBe("http://127.0.0.1:3110/");
-    expect(rewriteLocalUrlPort("https://paperclip.example", 3110)).toBe("https://paperclip.example");
+    expect(rewriteLocalUrlPort("https://offwatch.example", 3110)).toBe("https://offwatch.example");
   });
 
   it("builds isolated config and env paths for a worktree", () => {
     const paths = resolveWorktreeLocalPaths({
-      cwd: "/tmp/paperclip-feature",
-      homeDir: "/tmp/paperclip-worktrees",
+      cwd: "/tmp/offwatch-feature",
+      homeDir: "/tmp/offwatch-worktrees",
       instanceId: "feature-worktree-support",
     });
     const config = buildWorktreeConfig({
@@ -203,20 +203,20 @@ describe("worktree helpers", () => {
     });
 
     expect(config.database.embeddedPostgresDataDir).toBe(
-      path.resolve("/tmp/paperclip-worktrees", "instances", "feature-worktree-support", "db"),
+      path.resolve("/tmp/offwatch-worktrees", "instances", "feature-worktree-support", "db"),
     );
     expect(config.database.embeddedPostgresPort).toBe(54339);
     expect(config.server.port).toBe(3110);
     expect(config.auth.publicBaseUrl).toBe("http://127.0.0.1:3110/");
     expect(config.storage.localDisk.baseDir).toBe(
-      path.resolve("/tmp/paperclip-worktrees", "instances", "feature-worktree-support", "data", "storage"),
+      path.resolve("/tmp/offwatch-worktrees", "instances", "feature-worktree-support", "data", "storage"),
     );
 
     const env = buildWorktreeEnvEntries(paths, {
       name: "feature-worktree-support",
       color: "#3abf7a",
     });
-    expect(env.PAPERCLIP_HOME).toBe(path.resolve("/tmp/paperclip-worktrees"));
+    expect(env.PAPERCLIP_HOME).toBe(path.resolve("/tmp/offwatch-worktrees"));
     expect(env.PAPERCLIP_INSTANCE_ID).toBe("feature-worktree-support");
     expect(env.PAPERCLIP_IN_WORKTREE).toBe("true");
     expect(env.PAPERCLIP_WORKTREE_NAME).toBe("feature-worktree-support");
@@ -280,7 +280,7 @@ describe("worktree helpers", () => {
   });
 
   it("copies the source local_encrypted secrets key into the seeded worktree instance", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-worktree-secrets-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "offwatch-worktree-secrets-"));
     const originalInlineMasterKey = process.env.PAPERCLIP_SECRETS_MASTER_KEY;
     const originalKeyFile = process.env.PAPERCLIP_SECRETS_MASTER_KEY_FILE;
     try {
@@ -319,7 +319,7 @@ describe("worktree helpers", () => {
   });
 
   it("writes the source inline secrets master key into the seeded worktree instance", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-worktree-secrets-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "offwatch-worktree-secrets-"));
     try {
       const sourceConfigPath = path.join(tempRoot, "source", "config.json");
       const targetKeyPath = path.join(tempRoot, "target", "secrets", "master.key");
@@ -340,7 +340,7 @@ describe("worktree helpers", () => {
   });
 
   it("persists the current agent jwt secret into the worktree env file", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-worktree-jwt-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "offwatch-worktree-jwt-"));
     const repoRoot = path.join(tempRoot, "repo");
     const originalCwd = process.cwd();
     const originalJwtSecret = process.env.PAPERCLIP_AGENT_JWT_SECRET;
@@ -353,10 +353,10 @@ describe("worktree helpers", () => {
       await worktreeInitCommand({
         seed: false,
         fromConfig: path.join(tempRoot, "missing", "config.json"),
-        home: path.join(tempRoot, ".paperclip-worktrees"),
+        home: path.join(tempRoot, ".offwatch-worktrees"),
       });
 
-      const envPath = path.join(repoRoot, ".paperclip", ".env");
+      const envPath = path.join(repoRoot, ".offwatch", ".env");
       const envContents = fs.readFileSync(envPath, "utf8");
       expect(envContents).toContain("PAPERCLIP_AGENT_JWT_SECRET=worktree-shared-secret");
       expect(envContents).toContain("PAPERCLIP_WORKTREE_NAME=repo");
@@ -373,9 +373,9 @@ describe("worktree helpers", () => {
   });
 
   it("avoids ports already claimed by sibling worktree instance configs", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-worktree-claimed-ports-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "offwatch-worktree-claimed-ports-"));
     const repoRoot = path.join(tempRoot, "repo");
-    const homeDir = path.join(tempRoot, ".paperclip-worktrees");
+    const homeDir = path.join(tempRoot, ".offwatch-worktrees");
     const siblingInstanceRoot = path.join(homeDir, "instances", "existing-worktree");
     const originalCwd = process.cwd();
 
@@ -416,7 +416,7 @@ describe("worktree helpers", () => {
                 baseDir: path.join(siblingInstanceRoot, "storage"),
               },
               s3: {
-                bucket: "paperclip",
+                bucket: "offwatch",
                 region: "us-east-1",
                 prefix: "",
                 forcePathStyle: false,
@@ -442,7 +442,7 @@ describe("worktree helpers", () => {
         home: homeDir,
       });
 
-      const config = JSON.parse(fs.readFileSync(path.join(repoRoot, ".paperclip", "config.json"), "utf8"));
+      const config = JSON.parse(fs.readFileSync(path.join(repoRoot, ".offwatch", "config.json"), "utf8"));
       expect(config.server.port).toBeGreaterThan(3101);
       expect(config.database.embeddedPostgresPort).not.toBe(54330);
       expect(config.database.embeddedPostgresPort).not.toBe(config.server.port);
@@ -453,12 +453,12 @@ describe("worktree helpers", () => {
     }
   });
 
-  it("defaults the seed source config to the current repo-local Paperclip config", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-worktree-source-config-"));
+  it("defaults the seed source config to the current repo-local Offwatch config", () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "offwatch-worktree-source-config-"));
     const repoRoot = path.join(tempRoot, "repo");
-    const localConfigPath = path.join(repoRoot, ".paperclip", "config.json");
+    const localConfigPath = path.join(repoRoot, ".offwatch", "config.json");
     const originalCwd = process.cwd();
-    const originalPaperclipConfig = process.env.PAPERCLIP_CONFIG;
+    const originalOffwatchConfig = process.env.PAPERCLIP_CONFIG;
 
     try {
       fs.mkdirSync(path.dirname(localConfigPath), { recursive: true });
@@ -469,21 +469,21 @@ describe("worktree helpers", () => {
       expect(fs.realpathSync(resolveSourceConfigPath({}))).toBe(fs.realpathSync(localConfigPath));
     } finally {
       process.chdir(originalCwd);
-      if (originalPaperclipConfig === undefined) {
+      if (originalOffwatchConfig === undefined) {
         delete process.env.PAPERCLIP_CONFIG;
       } else {
-        process.env.PAPERCLIP_CONFIG = originalPaperclipConfig;
+        process.env.PAPERCLIP_CONFIG = originalOffwatchConfig;
       }
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
   it("preserves the source config path across worktree:make cwd changes", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-worktree-source-override-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "offwatch-worktree-source-override-"));
     const sourceConfigPath = path.join(tempRoot, "source", "config.json");
     const targetRoot = path.join(tempRoot, "target");
     const originalCwd = process.cwd();
-    const originalPaperclipConfig = process.env.PAPERCLIP_CONFIG;
+    const originalOffwatchConfig = process.env.PAPERCLIP_CONFIG;
 
     try {
       fs.mkdirSync(path.dirname(sourceConfigPath), { recursive: true });
@@ -497,10 +497,10 @@ describe("worktree helpers", () => {
       );
     } finally {
       process.chdir(originalCwd);
-      if (originalPaperclipConfig === undefined) {
+      if (originalOffwatchConfig === undefined) {
         delete process.env.PAPERCLIP_CONFIG;
       } else {
-        process.env.PAPERCLIP_CONFIG = originalPaperclipConfig;
+        process.env.PAPERCLIP_CONFIG = originalOffwatchConfig;
       }
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
@@ -522,10 +522,10 @@ describe("worktree helpers", () => {
   });
 
   it("derives worktree reseed target paths from the adjacent env file", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-worktree-reseed-target-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "offwatch-worktree-reseed-target-"));
     const worktreeRoot = path.join(tempRoot, "repo");
-    const configPath = path.join(worktreeRoot, ".paperclip", "config.json");
-    const envPath = path.join(worktreeRoot, ".paperclip", ".env");
+    const configPath = path.join(worktreeRoot, ".offwatch", "config.json");
+    const envPath = path.join(worktreeRoot, ".offwatch", ".env");
 
     try {
       fs.mkdirSync(path.dirname(configPath), { recursive: true });
@@ -533,7 +533,7 @@ describe("worktree helpers", () => {
       fs.writeFileSync(
         envPath,
         [
-          "PAPERCLIP_HOME=/tmp/paperclip-worktrees",
+          "PAPERCLIP_HOME=/tmp/offwatch-worktrees",
           "PAPERCLIP_INSTANCE_ID=pap-1132-chat",
         ].join("\n"),
         "utf8",
@@ -545,7 +545,7 @@ describe("worktree helpers", () => {
         }),
       ).toMatchObject({
         cwd: worktreeRoot,
-        homeDir: "/tmp/paperclip-worktrees",
+        homeDir: "/tmp/offwatch-worktrees",
         instanceId: "pap-1132-chat",
       });
     } finally {
@@ -554,30 +554,30 @@ describe("worktree helpers", () => {
   });
 
   it("rejects reseed targets without worktree env metadata", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-worktree-reseed-target-missing-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "offwatch-worktree-reseed-target-missing-"));
     const worktreeRoot = path.join(tempRoot, "repo");
-    const configPath = path.join(worktreeRoot, ".paperclip", "config.json");
+    const configPath = path.join(worktreeRoot, ".offwatch", "config.json");
 
     try {
       fs.mkdirSync(path.dirname(configPath), { recursive: true });
       fs.writeFileSync(configPath, JSON.stringify(buildSourceConfig()), "utf8");
-      fs.writeFileSync(path.join(worktreeRoot, ".paperclip", ".env"), "", "utf8");
+      fs.writeFileSync(path.join(worktreeRoot, ".offwatch", ".env"), "", "utf8");
 
       expect(() =>
         resolveWorktreeReseedTargetPaths({
           configPath,
           rootPath: worktreeRoot,
-        })).toThrow("does not look like a worktree-local Paperclip instance");
+        })).toThrow("does not look like a worktree-local Offwatch instance");
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   });
 
   it("reseed preserves the current worktree ports, instance id, and branding", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-worktree-reseed-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "offwatch-worktree-reseed-"));
     const repoRoot = path.join(tempRoot, "repo");
     const sourceRoot = path.join(tempRoot, "source");
-    const homeDir = path.join(tempRoot, ".paperclip-worktrees");
+    const homeDir = path.join(tempRoot, ".offwatch-worktrees");
     const currentInstanceId = "existing-worktree";
     const currentPaths = resolveWorktreeLocalPaths({
       cwd: repoRoot,
@@ -586,11 +586,11 @@ describe("worktree helpers", () => {
     });
     const sourcePaths = resolveWorktreeLocalPaths({
       cwd: sourceRoot,
-      homeDir: path.join(tempRoot, ".paperclip-source"),
+      homeDir: path.join(tempRoot, ".offwatch-source"),
       instanceId: "default",
     });
     const originalCwd = process.cwd();
-    const originalPaperclipConfig = process.env.PAPERCLIP_CONFIG;
+    const originalOffwatchConfig = process.env.PAPERCLIP_CONFIG;
 
     try {
       fs.mkdirSync(path.dirname(currentPaths.configPath), { recursive: true });
@@ -644,20 +644,20 @@ describe("worktree helpers", () => {
       expect(rewrittenEnv).toContain("PAPERCLIP_WORKTREE_COLOR=\"#112233\"");
     } finally {
       process.chdir(originalCwd);
-      if (originalPaperclipConfig === undefined) {
+      if (originalOffwatchConfig === undefined) {
         delete process.env.PAPERCLIP_CONFIG;
       } else {
-        process.env.PAPERCLIP_CONFIG = originalPaperclipConfig;
+        process.env.PAPERCLIP_CONFIG = originalOffwatchConfig;
       }
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   }, 20_000);
 
   it("restores the current worktree config and instance data if reseed fails", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-worktree-reseed-rollback-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "offwatch-worktree-reseed-rollback-"));
     const repoRoot = path.join(tempRoot, "repo");
     const sourceRoot = path.join(tempRoot, "source");
-    const homeDir = path.join(tempRoot, ".paperclip-worktrees");
+    const homeDir = path.join(tempRoot, ".offwatch-worktrees");
     const currentInstanceId = "rollback-worktree";
     const currentPaths = resolveWorktreeLocalPaths({
       cwd: repoRoot,
@@ -666,11 +666,11 @@ describe("worktree helpers", () => {
     });
     const sourcePaths = resolveWorktreeLocalPaths({
       cwd: sourceRoot,
-      homeDir: path.join(tempRoot, ".paperclip-source"),
+      homeDir: path.join(tempRoot, ".offwatch-source"),
       instanceId: "default",
     });
     const originalCwd = process.cwd();
-    const originalPaperclipConfig = process.env.PAPERCLIP_CONFIG;
+    const originalOffwatchConfig = process.env.PAPERCLIP_CONFIG;
 
     try {
       fs.mkdirSync(path.dirname(currentPaths.configPath), { recursive: true });
@@ -699,7 +699,7 @@ describe("worktree helpers", () => {
             keyFilePath: sourcePaths.secretsKeyFilePath,
           },
         },
-      } as PaperclipConfig;
+      } as OffwatchConfig;
 
       fs.writeFileSync(currentPaths.configPath, JSON.stringify(currentConfig, null, 2), "utf8");
       fs.writeFileSync(currentPaths.envPath, `PAPERCLIP_HOME=${homeDir}\nPAPERCLIP_INSTANCE_ID=${currentInstanceId}\n`, "utf8");
@@ -725,10 +725,10 @@ describe("worktree helpers", () => {
       expect(restoredMarker).toBe("keep me");
     } finally {
       process.chdir(originalCwd);
-      if (originalPaperclipConfig === undefined) {
+      if (originalOffwatchConfig === undefined) {
         delete process.env.PAPERCLIP_CONFIG;
       } else {
-        process.env.PAPERCLIP_CONFIG = originalPaperclipConfig;
+        process.env.PAPERCLIP_CONFIG = originalOffwatchConfig;
       }
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
@@ -737,33 +737,33 @@ describe("worktree helpers", () => {
   it("rebinds same-repo workspace paths onto the current worktree root", () => {
     expect(
       rebindWorkspaceCwd({
-        sourceRepoRoot: "/Users/example/paperclip",
-        targetRepoRoot: "/Users/example/paperclip-pr-432",
-        workspaceCwd: "/Users/example/paperclip",
+        sourceRepoRoot: "/Users/example/offwatch",
+        targetRepoRoot: "/Users/example/offwatch-pr-432",
+        workspaceCwd: "/Users/example/offwatch",
       }),
-    ).toBe("/Users/example/paperclip-pr-432");
+    ).toBe("/Users/example/offwatch-pr-432");
 
     expect(
       rebindWorkspaceCwd({
-        sourceRepoRoot: "/Users/example/paperclip",
-        targetRepoRoot: "/Users/example/paperclip-pr-432",
-        workspaceCwd: "/Users/example/paperclip/packages/db",
+        sourceRepoRoot: "/Users/example/offwatch",
+        targetRepoRoot: "/Users/example/offwatch-pr-432",
+        workspaceCwd: "/Users/example/offwatch/packages/db",
       }),
-    ).toBe("/Users/example/paperclip-pr-432/packages/db");
+    ).toBe("/Users/example/offwatch-pr-432/packages/db");
   });
 
   it("does not rebind paths outside the source repo root", () => {
     expect(
       rebindWorkspaceCwd({
-        sourceRepoRoot: "/Users/example/paperclip",
-        targetRepoRoot: "/Users/example/paperclip-pr-432",
+        sourceRepoRoot: "/Users/example/offwatch",
+        targetRepoRoot: "/Users/example/offwatch-pr-432",
         workspaceCwd: "/Users/example/other-project",
       }),
     ).toBeNull();
   });
 
   it("copies shared git hooks into a linked worktree git dir", () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-worktree-hooks-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "offwatch-worktree-hooks-"));
     const repoRoot = path.join(tempRoot, "repo");
     const worktreePath = path.join(tempRoot, "repo-feature");
 
@@ -811,10 +811,10 @@ describe("worktree helpers", () => {
   });
 
   it("creates and initializes a worktree from the top-level worktree:make command", async () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-worktree-make-"));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "offwatch-worktree-make-"));
     const repoRoot = path.join(tempRoot, "repo");
     const fakeHome = path.join(tempRoot, "home");
-    const worktreePath = path.join(fakeHome, "paperclip-make-test");
+    const worktreePath = path.join(fakeHome, "offwatch-make-test");
     const originalCwd = process.cwd();
     const homedirSpy = vi.spyOn(os, "homedir").mockReturnValue(fakeHome);
 
@@ -830,14 +830,14 @@ describe("worktree helpers", () => {
 
       process.chdir(repoRoot);
 
-      await worktreeMakeCommand("paperclip-make-test", {
+      await worktreeMakeCommand("offwatch-make-test", {
         seed: false,
-        home: path.join(tempRoot, ".paperclip-worktrees"),
+        home: path.join(tempRoot, ".offwatch-worktrees"),
       });
 
       expect(fs.existsSync(path.join(worktreePath, ".git"))).toBe(true);
-      expect(fs.existsSync(path.join(worktreePath, ".paperclip", "config.json"))).toBe(true);
-      expect(fs.existsSync(path.join(worktreePath, ".paperclip", ".env"))).toBe(true);
+      expect(fs.existsSync(path.join(worktreePath, ".offwatch", "config.json"))).toBe(true);
+      expect(fs.existsSync(path.join(worktreePath, ".offwatch", ".env"))).toBe(true);
     } finally {
       process.chdir(originalCwd);
       homedirSpy.mockRestore();
@@ -848,7 +848,7 @@ describe("worktree helpers", () => {
 
 describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
   it("pauses only routines with enabled schedule triggers", async () => {
-    const tempDb = await startEmbeddedPostgresTestDatabase("paperclip-worktree-routines-");
+    const tempDb = await startEmbeddedPostgresTestDatabase("offwatch-worktree-routines-");
     const db = createDb(tempDb.connectionString);
     const companyId = randomUUID();
     const projectId = randomUUID();
@@ -860,15 +860,15 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
     const disabledScheduleRoutineId = randomUUID();
 
     try {
-      await db.insert(companies).values({
+      await db.insert(workspaces).values({
         id: companyId,
-        name: "Paperclip",
+        name: "Offwatch",
         issuePrefix: `T${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`,
         requireBoardApprovalForNewAgents: false,
       });
       await db.insert(agents).values({
         id: agentId,
-        companyId,
+        workspaceId: companyId,
         name: "Coder",
         adapterType: "process",
         adapterConfig: {},
@@ -877,14 +877,14 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
       });
       await db.insert(projects).values({
         id: projectId,
-        companyId,
+        workspaceId: companyId,
         name: "Project",
         status: "in_progress",
       });
       await db.insert(routines).values([
         {
           id: activeScheduledRoutineId,
-          companyId,
+          workspaceId: companyId,
           projectId,
           assigneeAgentId: agentId,
           title: "Active scheduled",
@@ -892,7 +892,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
         },
         {
           id: activeApiRoutineId,
-          companyId,
+          workspaceId: companyId,
           projectId,
           assigneeAgentId: agentId,
           title: "Active API",
@@ -900,7 +900,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
         },
         {
           id: pausedScheduledRoutineId,
-          companyId,
+          workspaceId: companyId,
           projectId,
           assigneeAgentId: agentId,
           title: "Paused scheduled",
@@ -908,7 +908,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
         },
         {
           id: archivedScheduledRoutineId,
-          companyId,
+          workspaceId: companyId,
           projectId,
           assigneeAgentId: agentId,
           title: "Archived scheduled",
@@ -916,7 +916,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
         },
         {
           id: disabledScheduleRoutineId,
-          companyId,
+          workspaceId: companyId,
           projectId,
           assigneeAgentId: agentId,
           title: "Disabled schedule",
@@ -925,7 +925,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
       ]);
       await db.insert(routineTriggers).values([
         {
-          companyId,
+          workspaceId: companyId,
           routineId: activeScheduledRoutineId,
           kind: "schedule",
           enabled: true,
@@ -933,13 +933,13 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
           timezone: "UTC",
         },
         {
-          companyId,
+          workspaceId: companyId,
           routineId: activeApiRoutineId,
           kind: "api",
           enabled: true,
         },
         {
-          companyId,
+          workspaceId: companyId,
           routineId: pausedScheduledRoutineId,
           kind: "schedule",
           enabled: true,
@@ -947,7 +947,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
           timezone: "UTC",
         },
         {
-          companyId,
+          workspaceId: companyId,
           routineId: archivedScheduledRoutineId,
           kind: "schedule",
           enabled: true,
@@ -955,7 +955,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
           timezone: "UTC",
         },
         {
-          companyId,
+          workspaceId: companyId,
           routineId: disabledScheduleRoutineId,
           kind: "schedule",
           enabled: false,

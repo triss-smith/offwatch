@@ -46,7 +46,6 @@ import {
   Github,
   Link2,
   ExternalLink,
-  Paperclip,
   Pencil,
   Plus,
   RefreshCw,
@@ -54,6 +53,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
+import { OffwatchIcon } from "@/components/OffwatchIcon";
 
 type SkillTreeNode = {
   name: string;
@@ -159,8 +159,8 @@ function sourceMeta(sourceBadge: WorkspaceSkillSourceBadge, sourceLabel: string 
       return { icon: Link2, label: sourceLabel ?? "URL", managedLabel: "URL managed" };
     case "local":
       return { icon: Folder, label: sourceLabel ?? "Folder", managedLabel: "Folder managed" };
-    case "paperclip":
-      return { icon: Paperclip, label: sourceLabel ?? "Paperclip", managedLabel: "Paperclip managed" };
+    case "offwatch":
+      return { icon: OffwatchIcon, label: sourceLabel ?? "Offwatch", managedLabel: "Offwatch managed" };
     default:
       return { icon: Boxes, label: sourceLabel ?? "Catalog", managedLabel: "Catalog managed" };
   }
@@ -919,7 +919,7 @@ export function WorkspaceSkills() {
       pushToast({
         tone: "success",
         title: "Skill created",
-        body: `${skill.name} is now editable in the Paperclip workspace.`,
+        body: `${skill.name} is now editable in the Offwatch workspace.`,
       });
     },
     onError: (error) => {

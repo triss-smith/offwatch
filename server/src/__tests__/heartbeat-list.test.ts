@@ -21,7 +21,7 @@ describeEmbeddedPostgres("heartbeat list", () => {
   let tempDb: Awaited<ReturnType<typeof startEmbeddedPostgresTestDatabase>> | null = null;
 
   beforeAll(async () => {
-    tempDb = await startEmbeddedPostgresTestDatabase("paperclip-heartbeat-list-");
+    tempDb = await startEmbeddedPostgresTestDatabase("offwatch-heartbeat-list-");
     db = createDb(tempDb.connectionString);
   }, 20_000);
 
@@ -42,14 +42,14 @@ describeEmbeddedPostgres("heartbeat list", () => {
 
     await db.insert(workspaces).values({
       id: companyId,
-      name: "Paperclip",
+      name: "Offwatch",
       issuePrefix: `T${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`,
       requireBoardApprovalForNewAgents: false,
     });
 
     await db.insert(agents).values({
       id: agentId,
-      companyId,
+      workspaceId: companyId,
       name: "CodexCoder",
       role: "engineer",
       status: "running",
@@ -61,7 +61,7 @@ describeEmbeddedPostgres("heartbeat list", () => {
 
     await db.insert(heartbeatRuns).values({
       id: runId,
-      companyId,
+      workspaceId: companyId,
       agentId,
       invocationSource: "assignment",
       status: "running",
