@@ -506,15 +506,15 @@ function formatSourceLabel(source: { type: "inline"; rootPath?: string | null } 
 }
 
 function formatTargetLabel(
-  target: { mode: "existing_workspace"; companyId?: string | null } | { mode: "new_workspace"; newCompanyName?: string | null },
+  target: { mode: "existing_workspace"; workspaceId?: string | null } | { mode: "new_workspace"; newWorkspaceName?: string | null },
   preview?: CompanyPortabilityPreviewResult,
 ): string {
   if (target.mode === "existing_workspace") {
-    const targetName = preview?.targetCompanyName?.trim();
-    const targetId = preview?.targetCompanyId?.trim() || target.companyId?.trim() || "unknown-company";
+    const targetName = preview?.targetWorkspaceName?.trim();
+    const targetId = preview?.targetWorkspaceId?.trim() || target.workspaceId?.trim() || "unknown-workspace";
     return targetName ? `${targetName} (${targetId})` : targetId;
   }
-  return target.newCompanyName?.trim() || preview?.manifest.company?.name || "new company";
+  return target.newWorkspaceName?.trim() || preview?.manifest.company?.name || "new workspace";
 }
 
 function pluralize(count: number, singular: string, plural = `${singular}s`): string {
@@ -737,16 +737,16 @@ function printCompanyImportView(title: string, body: string, opts?: { interactiv
 export function resolveCompanyImportApiPath(input: {
   dryRun: boolean;
   targetMode: "new_workspace" | "existing_workspace";
-  companyId?: string | null;
+  workspaceId?: string | null;
 }): string {
   if (input.targetMode === "existing_workspace") {
-    const companyId = input.companyId?.trim();
-    if (!companyId) {
-      throw new Error("Existing-company imports require a companyId to resolve the API route.");
+    const workspaceId = input.workspaceId?.trim();
+    if (!workspaceId) {
+      throw new Error("Existing-workspace imports require a workspaceId to resolve the API route.");
     }
     return input.dryRun
-      ? `/api/workspaces/${companyId}/imports/preview`
-      : `/api/workspaces/${companyId}/imports/apply`;
+      ? `/api/workspaces/${workspaceId}/imports/preview`
+      : `/api/workspaces/${workspaceId}/imports/apply`;
   }
 
   return input.dryRun ? "/api/workspaces/import/preview" : "/api/workspaces/import";
@@ -1308,15 +1308,15 @@ export function registerCompanyCommands(program: Command): void {
             target === "existing"
               ? {
                   mode: "existing_workspace" as const,
-                  companyId: existingTargetCompanyId,
+                  workspaceId: existingTargetCompanyId,
                 }
               : {
                   mode: "new_workspace" as const,
-                  newCompanyName: opts.newCompanyName?.trim() || null,
+                  newWorkspaceName: opts.newCompanyName?.trim() || null,
                 };
 
-          if (targetPayload.mode === "existing_workspace" && !targetPayload.companyId) {
-            throw new Error("Target existing company requires --company-id (or context default companyId).");
+          if (targetPayload.mode === "existing_workspace" && !targetPayload.workspaceId) {
+            throw new Error("Target existing workspace requires --company-id (or context default companyId).");
           }
 
           let sourcePayload:
@@ -1351,7 +1351,7 @@ export function registerCompanyCommands(program: Command): void {
           const previewApiPath = resolveCompanyImportApiPath({
             dryRun: true,
             targetMode: targetPayload.mode,
-            companyId: targetPayload.mode === "existing_workspace" ? targetPayload.companyId : null,
+            workspaceId: targetPayload.mode === "existing_workspace" ? targetPayload.workspaceId : null,
           });
 
           let selectedFiles: string[] | undefined;
@@ -1432,7 +1432,7 @@ export function registerCompanyCommands(program: Command): void {
           const importApiPath = resolveCompanyImportApiPath({
             dryRun: false,
             targetMode: targetPayload.mode,
-            companyId: targetPayload.mode === "existing_workspace" ? targetPayload.companyId : null,
+            workspaceId: targetPayload.mode === "existing_workspace" ? targetPayload.workspaceId : null,
           });
           const imported = await ctx.api.post<CompanyPortabilityImportResult>(importApiPath, {
             ...previewPayload,

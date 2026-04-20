@@ -18,7 +18,7 @@ describe("resolveCompanyImportApiPath", () => {
       resolveCompanyImportApiPath({
         dryRun: true,
         targetMode: "existing_workspace",
-        companyId: "company-123",
+        workspaceId: "company-123",
       }),
     ).toBe("/api/workspaces/company-123/imports/preview");
   });
@@ -28,7 +28,7 @@ describe("resolveCompanyImportApiPath", () => {
       resolveCompanyImportApiPath({
         dryRun: false,
         targetMode: "existing_workspace",
-        companyId: "company-123",
+        workspaceId: "company-123",
       }),
     ).toBe("/api/workspaces/company-123/imports/apply");
   });
@@ -54,9 +54,9 @@ describe("resolveCompanyImportApiPath", () => {
       resolveCompanyImportApiPath({
         dryRun: true,
         targetMode: "existing_workspace",
-        companyId: " ",
+        workspaceId: " ",
       })
-    ).toThrow(/require a companyId/i);
+    ).toThrow(/require a workspaceId/i);
   });
 });
 
