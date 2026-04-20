@@ -175,7 +175,7 @@ export async function resolveFeedbackCompanyId(
 ): Promise<string> {
   const direct = explicitCompanyId?.trim() || ctx.companyId?.trim();
   if (direct) return direct;
-  const companies = (await ctx.api.get<Company[]>("/api/companies")) ?? [];
+  const companies = (await ctx.api.get<Company[]>("/api/workspaces")) ?? [];
   const companyId = companies[0]?.id?.trim();
   if (!companyId) {
     throw new Error(
@@ -220,7 +220,7 @@ export async function fetchCompanyFeedbackTraces(
 ): Promise<FeedbackTrace[]> {
   return (
     (await ctx.api.get<FeedbackTrace[]>(
-      `/api/companies/${companyId}/feedback-traces${buildFeedbackTraceQuery(opts, true)}`,
+      `/api/workspaces/${companyId}/feedback-traces${buildFeedbackTraceQuery(opts, true)}`,
     )) ?? []
   );
 }

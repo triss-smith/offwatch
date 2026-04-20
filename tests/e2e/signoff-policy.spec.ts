@@ -124,12 +124,12 @@ async function setupCompany(boardRequest: APIRequestContext): Promise<TestContex
   }
 
   // Create company
-  const companyRes = await boardRequest.post(`${BASE_URL}/api/companies`, {
+  const companyRes = await boardRequest.post(`${BASE_URL}/api/workspaces`, {
     data: { name: COMPANY_NAME },
   });
   if (!companyRes.ok()) {
     const errBody = await companyRes.text();
-    throw new Error(`POST /api/companies → ${companyRes.status()}: ${errBody}`);
+    throw new Error(`POST /api/workspaces → ${companyRes.status()}: ${errBody}`);
   }
   const company = await companyRes.json();
   const companyId = company.id;
@@ -137,7 +137,7 @@ async function setupCompany(boardRequest: APIRequestContext): Promise<TestContex
 
   // Helper: create agent + API key + request context
   async function createAgent(name: string, role: string, title: string): Promise<AgentAuth> {
-    const agentRes = await boardRequest.post(`${BASE_URL}/api/companies/${companyId}/agents`, {
+    const agentRes = await boardRequest.post(`${BASE_URL}/api/workspaces/${companyId}/agents`, {
       data: {
         name,
         role,
@@ -186,7 +186,7 @@ async function createIssueWithPolicy(ctx: TestContext, title: string, stages?: u
     { type: "review", participants: [{ type: "agent", agentId: ctx.reviewer.agentId }] },
     { type: "approval", participants: [{ type: "agent", agentId: ctx.approver.agentId }] },
   ];
-  const res = await ctx.boardRequest.post(`${BASE_URL}/api/companies/${ctx.companyId}/issues`, {
+  const res = await ctx.boardRequest.post(`${BASE_URL}/api/workspaces/${ctx.companyId}/issues`, {
     data: {
       title,
       status: "in_progress",
@@ -227,7 +227,7 @@ test.describe("Signoff execution policy", () => {
       await board.delete(`${BASE_URL}/api/agents/${agent.agentId}/keys/${agent.keyId}`).catch(() => {});
       await board.delete(`${BASE_URL}/api/agents/${agent.agentId}`).catch(() => {});
     }
-    await board.delete(`${BASE_URL}/api/companies/${ctx.companyId}`).catch(() => {});
+    await board.delete(`${BASE_URL}/api/workspaces/${ctx.companyId}`).catch(() => {});
     await board.dispose();
   });
 

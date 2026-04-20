@@ -217,7 +217,7 @@ function buildConnectionErrorMessage(input: {
     "This usually means the Offwatch server is not running, the configured URL is wrong, or the request is being blocked before it reaches Offwatch.",
     "",
     "Try:",
-    "- Start Offwatch with `pnpm dev` or `pnpm offwatchai run`.",
+    "- Start Offwatch with `pnpm dev` or `pnpm offwatch run`.",
     `- Verify the server is reachable with \`curl ${healthUrl}\`.`,
     `- If Offwatch is running elsewhere, pass \`--api-base ${input.apiBase.replace(/\/+$/, "")}\` or set \`PAPERCLIP_API_URL\`.`,
   );

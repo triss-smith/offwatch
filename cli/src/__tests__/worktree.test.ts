@@ -868,7 +868,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
       });
       await db.insert(agents).values({
         id: agentId,
-        companyId,
+        workspaceId: companyId,
         name: "Coder",
         adapterType: "process",
         adapterConfig: {},
@@ -877,14 +877,14 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
       });
       await db.insert(projects).values({
         id: projectId,
-        companyId,
+        workspaceId: companyId,
         name: "Project",
         status: "in_progress",
       });
       await db.insert(routines).values([
         {
           id: activeScheduledRoutineId,
-          companyId,
+          workspaceId: companyId,
           projectId,
           assigneeAgentId: agentId,
           title: "Active scheduled",
@@ -892,7 +892,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
         },
         {
           id: activeApiRoutineId,
-          companyId,
+          workspaceId: companyId,
           projectId,
           assigneeAgentId: agentId,
           title: "Active API",
@@ -900,7 +900,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
         },
         {
           id: pausedScheduledRoutineId,
-          companyId,
+          workspaceId: companyId,
           projectId,
           assigneeAgentId: agentId,
           title: "Paused scheduled",
@@ -908,7 +908,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
         },
         {
           id: archivedScheduledRoutineId,
-          companyId,
+          workspaceId: companyId,
           projectId,
           assigneeAgentId: agentId,
           title: "Archived scheduled",
@@ -916,7 +916,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
         },
         {
           id: disabledScheduleRoutineId,
-          companyId,
+          workspaceId: companyId,
           projectId,
           assigneeAgentId: agentId,
           title: "Disabled schedule",
@@ -925,7 +925,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
       ]);
       await db.insert(routineTriggers).values([
         {
-          companyId,
+          workspaceId: companyId,
           routineId: activeScheduledRoutineId,
           kind: "schedule",
           enabled: true,
@@ -933,13 +933,13 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
           timezone: "UTC",
         },
         {
-          companyId,
+          workspaceId: companyId,
           routineId: activeApiRoutineId,
           kind: "api",
           enabled: true,
         },
         {
-          companyId,
+          workspaceId: companyId,
           routineId: pausedScheduledRoutineId,
           kind: "schedule",
           enabled: true,
@@ -947,7 +947,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
           timezone: "UTC",
         },
         {
-          companyId,
+          workspaceId: companyId,
           routineId: archivedScheduledRoutineId,
           kind: "schedule",
           enabled: true,
@@ -955,7 +955,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
           timezone: "UTC",
         },
         {
-          companyId,
+          workspaceId: companyId,
           routineId: disabledScheduleRoutineId,
           kind: "schedule",
           enabled: false,

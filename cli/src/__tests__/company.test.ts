@@ -20,7 +20,7 @@ describe("resolveCompanyImportApiPath", () => {
         targetMode: "existing_company",
         companyId: "company-123",
       }),
-    ).toBe("/api/companies/company-123/imports/preview");
+    ).toBe("/api/workspaces/company-123/imports/preview");
   });
 
   it("uses company-scoped apply route for existing-company imports", () => {
@@ -30,7 +30,7 @@ describe("resolveCompanyImportApiPath", () => {
         targetMode: "existing_company",
         companyId: "company-123",
       }),
-    ).toBe("/api/companies/company-123/imports/apply");
+    ).toBe("/api/workspaces/company-123/imports/apply");
   });
 
   it("keeps global routes for new-company imports", () => {
@@ -39,14 +39,14 @@ describe("resolveCompanyImportApiPath", () => {
         dryRun: true,
         targetMode: "new_company",
       }),
-    ).toBe("/api/companies/import/preview");
+    ).toBe("/api/workspaces/import/preview");
 
     expect(
       resolveCompanyImportApiPath({
         dryRun: false,
         targetMode: "new_company",
       }),
-    ).toBe("/api/companies/import");
+    ).toBe("/api/workspaces/import");
   });
 
   it("throws when an existing-company import is missing a company id", () => {

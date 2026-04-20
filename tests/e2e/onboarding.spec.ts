@@ -76,7 +76,7 @@ test.describe("Onboarding wizard", () => {
 
     const baseUrl = page.url().split("/").slice(0, 3).join("/");
 
-    const companiesRes = await page.request.get(`${baseUrl}/api/companies`);
+    const companiesRes = await page.request.get(`${baseUrl}/api/workspaces`);
     expect(companiesRes.ok()).toBe(true);
     const companies = await companiesRes.json();
     const company = companies.find(
@@ -85,7 +85,7 @@ test.describe("Onboarding wizard", () => {
     expect(company).toBeTruthy();
 
     const agentsRes = await page.request.get(
-      `${baseUrl}/api/companies/${company.id}/agents`
+      `${baseUrl}/api/workspaces/${company.id}/agents`
     );
     expect(agentsRes.ok()).toBe(true);
     const agents = await agentsRes.json();
@@ -106,7 +106,7 @@ test.describe("Onboarding wizard", () => {
     ).toEqual(["AGENTS.md", "HEARTBEAT.md", "SOUL.md", "TOOLS.md"]);
 
     const issuesRes = await page.request.get(
-      `${baseUrl}/api/companies/${company.id}/issues`
+      `${baseUrl}/api/workspaces/${company.id}/issues`
     );
     expect(issuesRes.ok()).toBe(true);
     const issues = await issuesRes.json();

@@ -144,7 +144,7 @@ describeEmbeddedPostgres("disableAllRoutinesInConfig", () => {
     await db.insert(agents).values([
       {
         id: agentId,
-        companyId,
+        workspaceId: companyId,
         name: "Coder",
         adapterType: "process",
         adapterConfig: {},
@@ -153,7 +153,7 @@ describeEmbeddedPostgres("disableAllRoutinesInConfig", () => {
       },
       {
         id: otherAgentId,
-        companyId: otherCompanyId,
+        workspaceId: otherCompanyId,
         name: "Other coder",
         adapterType: "process",
         adapterConfig: {},
@@ -165,13 +165,13 @@ describeEmbeddedPostgres("disableAllRoutinesInConfig", () => {
     await db.insert(projects).values([
       {
         id: projectId,
-        companyId,
+        workspaceId: companyId,
         name: "Project",
         status: "in_progress",
       },
       {
         id: otherProjectId,
-        companyId: otherCompanyId,
+        workspaceId: otherCompanyId,
         name: "Other project",
         status: "in_progress",
       },
@@ -180,7 +180,7 @@ describeEmbeddedPostgres("disableAllRoutinesInConfig", () => {
     await db.insert(routines).values([
       {
         id: activeRoutineId,
-        companyId,
+        workspaceId: companyId,
         projectId,
         assigneeAgentId: agentId,
         title: "Active routine",
@@ -188,7 +188,7 @@ describeEmbeddedPostgres("disableAllRoutinesInConfig", () => {
       },
       {
         id: pausedRoutineId,
-        companyId,
+        workspaceId: companyId,
         projectId,
         assigneeAgentId: agentId,
         title: "Paused routine",
@@ -196,7 +196,7 @@ describeEmbeddedPostgres("disableAllRoutinesInConfig", () => {
       },
       {
         id: archivedRoutineId,
-        companyId,
+        workspaceId: companyId,
         projectId,
         assigneeAgentId: agentId,
         title: "Archived routine",
@@ -204,7 +204,7 @@ describeEmbeddedPostgres("disableAllRoutinesInConfig", () => {
       },
       {
         id: otherCompanyRoutineId,
-        companyId: otherCompanyId,
+        workspaceId: otherCompanyId,
         projectId: otherProjectId,
         assigneeAgentId: otherAgentId,
         title: "Other company routine",
@@ -231,7 +231,7 @@ describeEmbeddedPostgres("disableAllRoutinesInConfig", () => {
         status: routines.status,
       })
       .from(routines)
-      .where(eq(routines.companyId, companyId));
+      .where(eq(routines.workspaceId, companyId));
     const statusById = new Map(companyRoutines.map((routine) => [routine.id, routine.status]));
 
     expect(statusById.get(activeRoutineId)).toBe("paused");

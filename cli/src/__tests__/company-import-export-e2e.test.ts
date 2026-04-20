@@ -282,7 +282,7 @@ describeEmbeddedPostgres("offwatch company import/export e2e", () => {
   it("exports a company package and imports it into new and existing companies", async () => {
     expect(serverProcess).not.toBeNull();
 
-    const sourceCompany = await api<{ id: string; name: string; issuePrefix: string }>(apiBase, "/api/companies", {
+    const sourceCompany = await api<{ id: string; name: string; issuePrefix: string }>(apiBase, "/api/workspaces", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ name: `CLI Export Source ${Date.now()}` }),
@@ -290,7 +290,7 @@ describeEmbeddedPostgres("offwatch company import/export e2e", () => {
 
     const sourceAgent = await api<{ id: string; name: string }>(
       apiBase,
-      `/api/companies/${sourceCompany.id}/agents`,
+      `/api/workspaces/${sourceCompany.id}/agents`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -307,7 +307,7 @@ describeEmbeddedPostgres("offwatch company import/export e2e", () => {
 
     const sourceProject = await api<{ id: string; name: string }>(
       apiBase,
-      `/api/companies/${sourceCompany.id}/projects`,
+      `/api/workspaces/${sourceCompany.id}/projects`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -322,7 +322,7 @@ describeEmbeddedPostgres("offwatch company import/export e2e", () => {
 
     const sourceIssue = await api<{ id: string; title: string; identifier: string }>(
       apiBase,
-      `/api/companies/${sourceCompany.id}/issues`,
+      `/api/workspaces/${sourceCompany.id}/issues`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -383,15 +383,15 @@ describeEmbeddedPostgres("offwatch company import/export e2e", () => {
 
     const importedAgents = await api<Array<{ id: string; name: string }>>(
       apiBase,
-      `/api/companies/${importedNew.company.id}/agents`,
+      `/api/workspaces/${importedNew.company.id}/agents`,
     );
     const importedProjects = await api<Array<{ id: string; name: string }>>(
       apiBase,
-      `/api/companies/${importedNew.company.id}/projects`,
+      `/api/workspaces/${importedNew.company.id}/projects`,
     );
     const importedIssues = await api<Array<{ id: string; title: string; identifier: string }>>(
       apiBase,
-      `/api/companies/${importedNew.company.id}/issues`,
+      `/api/workspaces/${importedNew.company.id}/issues`,
     );
 
     expect(importedAgents.map((agent) => agent.name)).toContain(sourceAgent.name);
@@ -456,15 +456,15 @@ describeEmbeddedPostgres("offwatch company import/export e2e", () => {
 
     const twiceImportedAgents = await api<Array<{ id: string; name: string }>>(
       apiBase,
-      `/api/companies/${importedNew.company.id}/agents`,
+      `/api/workspaces/${importedNew.company.id}/agents`,
     );
     const twiceImportedProjects = await api<Array<{ id: string; name: string }>>(
       apiBase,
-      `/api/companies/${importedNew.company.id}/projects`,
+      `/api/workspaces/${importedNew.company.id}/projects`,
     );
     const twiceImportedIssues = await api<Array<{ id: string; title: string; identifier: string }>>(
       apiBase,
-      `/api/companies/${importedNew.company.id}/issues`,
+      `/api/workspaces/${importedNew.company.id}/issues`,
     );
 
     expect(twiceImportedAgents).toHaveLength(2);

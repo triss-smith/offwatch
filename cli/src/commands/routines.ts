@@ -276,7 +276,7 @@ export async function disableAllRoutinesInConfig(
         status: routines.status,
       })
       .from(routines)
-      .where(eq(routines.companyId, companyId));
+      .where(eq(routines.workspaceId, companyId));
 
     const alreadyPausedCount = existing.filter((routine) => routine.status === "paused").length;
     const archivedCount = existing.filter((routine) => routine.status === "archived").length;

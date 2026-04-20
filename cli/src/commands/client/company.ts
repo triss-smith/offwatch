@@ -745,11 +745,11 @@ export function resolveCompanyImportApiPath(input: {
       throw new Error("Existing-company imports require a companyId to resolve the API route.");
     }
     return input.dryRun
-      ? `/api/companies/${companyId}/imports/preview`
-      : `/api/companies/${companyId}/imports/apply`;
+      ? `/api/workspaces/${companyId}/imports/preview`
+      : `/api/workspaces/${companyId}/imports/apply`;
   }
 
-  return input.dryRun ? "/api/companies/import/preview" : "/api/companies/import";
+  return input.dryRun ? "/api/workspaces/import/preview" : "/api/workspaces/import";
 }
 
 export function buildCompanyDashboardUrl(apiBase: string, issuePrefix: string): string {
@@ -1080,7 +1080,7 @@ export function registerCompanyCommands(program: Command): void {
       .action(async (opts: CompanyCommandOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const rows = (await ctx.api.get<Company[]>("/api/companies")) ?? [];
+          const rows = (await ctx.api.get<Company[]>("/api/workspaces")) ?? [];
           if (ctx.json) {
             printOutput(rows, { json: true });
             return;
@@ -1116,7 +1116,7 @@ export function registerCompanyCommands(program: Command): void {
       .action(async (companyId: string, opts: CompanyCommandOptions) => {
         try {
           const ctx = resolveCommandContext(opts);
-          const row = await ctx.api.get<Company>(`/api/companies/${companyId}`);
+          const row = await ctx.api.get<Company>(`/api/workspaces/${companyId}`);
           printOutput(row, { json: ctx.json });
         } catch (err) {
           handleCommandError(err);
@@ -1142,7 +1142,7 @@ export function registerCompanyCommands(program: Command): void {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
           const traces = (await ctx.api.get<FeedbackTrace[]>(
-            `/api/companies/${ctx.companyId}/feedback-traces${buildFeedbackTraceQuery(opts)}`,
+            `/api/workspaces/${ctx.companyId}/feedback-traces${buildFeedbackTraceQuery(opts)}`,
           )) ?? [];
           if (ctx.json) {
             printOutput(traces, { json: true });
@@ -1186,7 +1186,7 @@ export function registerCompanyCommands(program: Command): void {
         try {
           const ctx = resolveCommandContext(opts, { requireCompany: true });
           const traces = (await ctx.api.get<FeedbackTrace[]>(
-            `/api/companies/${ctx.companyId}/feedback-traces${buildFeedbackTraceQuery(opts, opts.includePayload ?? true)}`,
+            `/api/workspaces/${ctx.companyId}/feedback-traces${buildFeedbackTraceQuery(opts, opts.includePayload ?? true)}`,
           )) ?? [];
           const serialized = serializeFeedbackTraces(traces, opts.format);
           if (opts.out?.trim()) {
@@ -1226,7 +1226,7 @@ export function registerCompanyCommands(program: Command): void {
           const ctx = resolveCommandContext(opts);
           const include = parseInclude(opts.include);
           const exported = await ctx.api.post<CompanyPortabilityExportResult>(
-            `/api/companies/${companyId}/export`,
+            `/api/workspaces/${companyId}/export`,
             {
               include,
               skills: parseCsvValues(opts.skills),
@@ -1450,7 +1450,7 @@ export function registerCompanyCommands(program: Command): void {
           let companyUrl: string | undefined;
           if (!ctx.json) {
             try {
-              const importedCompany = await ctx.api.get<Company>(`/api/companies/${imported.company.id}`);
+              const importedCompany = await ctx.api.get<Company>(`/api/workspaces/${imported.company.id}`);
               const issuePrefix = importedCompany?.issuePrefix?.trim();
               if (issuePrefix) {
                 companyUrl = buildCompanyDashboardUrl(ctx.api.apiBase, issuePrefix);
@@ -1520,7 +1520,7 @@ export function registerCompanyCommands(program: Command): void {
           let target: Company | null = null;
           const shouldTryIdLookup = by === "id" || (by === "auto" && isUuidLike(normalizedSelector));
           if (shouldTryIdLookup) {
-            const byId = await ctx.api.get<Company>(`/api/companies/${normalizedSelector}`, { ignoreNotFound: true });
+            const byId = await ctx.api.get<Company>(`/api/workspaces/${normalizedSelector}`, { ignoreNotFound: true });
             if (byId) {
               target = byId;
             } else if (by === "id") {
@@ -1529,7 +1529,7 @@ export function registerCompanyCommands(program: Command): void {
           }
 
           if (!target && ctx.companyId) {
-            const scoped = await ctx.api.get<Company>(`/api/companies/${ctx.companyId}`, { ignoreNotFound: true });
+            const scoped = await ctx.api.get<Company>(`/api/workspaces/${ctx.companyId}`, { ignoreNotFound: true });
             if (scoped) {
               try {
                 target = resolveCompanyForDeletion([scoped], normalizedSelector, by);
@@ -1541,7 +1541,7 @@ export function registerCompanyCommands(program: Command): void {
 
           if (!target) {
             try {
-              const companies = (await ctx.api.get<Company[]>("/api/companies")) ?? [];
+              const companies = (await ctx.api.get<Company[]>("/api/workspaces")) ?? [];
               target = resolveCompanyForDeletion(companies, normalizedSelector, by);
             } catch (error) {
               if (error instanceof ApiRequestError && error.status === 403 && error.message.includes("Board access required")) {
@@ -1559,7 +1559,7 @@ export function registerCompanyCommands(program: Command): void {
 
           assertDeleteConfirmation(target, opts);
 
-          await ctx.api.delete<{ ok: true }>(`/api/companies/${target.id}`);
+          await ctx.api.delete<{ ok: true }>(`/api/workspaces/${target.id}`);
 
           printOutput(
             {
