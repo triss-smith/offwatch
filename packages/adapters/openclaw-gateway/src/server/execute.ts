@@ -468,7 +468,7 @@ function buildStandardPaperclipPayload(
   const templatePaperclip = parseObject(payloadTemplate.paperclip);
   const workspace = asRecord(ctx.context.offwatchWorkspace ?? ctx.context.paperclipWorkspace);
   const workspaces = Array.isArray(ctx.context.offwatchWorkspaces ?? ctx.context.paperclipWorkspaces)
-    ? (ctx.context.offwatchWorkspaces ?? ctx.context.paperclipWorkspaces as unknown[]).filter((entry): entry is Record<string, unknown> => Boolean(asRecord(entry)))
+    ? ((ctx.context.offwatchWorkspaces ?? ctx.context.paperclipWorkspaces) as unknown[]).filter((entry): entry is Record<string, unknown> => Boolean(asRecord(entry)))
     : [];
   const configuredWorkspaceRuntime = parseObject(ctx.config.workspaceRuntime);
   const runtimeServiceIntents = Array.isArray(ctx.context.offwatchRuntimeServiceIntents ?? ctx.context.paperclipRuntimeServiceIntents)

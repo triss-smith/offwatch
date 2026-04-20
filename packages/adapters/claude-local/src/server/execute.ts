@@ -105,7 +105,7 @@ async function buildClaudeRuntimeConfig(input: ClaudeExecutionInput): Promise<Cl
   const workspaceWorktreePath = asString(workspaceContext.worktreePath, "") || null;
   const agentHome = asString(workspaceContext.agentHome, "") || null;
   const workspaceHints = Array.isArray(context.offwatchWorkspaces ?? context.paperclipWorkspaces)
-    ? (context.offwatchWorkspaces ?? context.paperclipWorkspaces as unknown[]).filter(
+    ? ((context.offwatchWorkspaces ?? context.paperclipWorkspaces) as unknown[]).filter(
         (value): value is Record<string, unknown> => typeof value === "object" && value !== null,
       )
     : [];

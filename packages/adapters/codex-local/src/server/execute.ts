@@ -234,7 +234,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   const workspaceWorktreePath = asString(workspaceContext.worktreePath, "");
   const agentHome = asString(workspaceContext.agentHome, "");
   const workspaceHints = Array.isArray(context.offwatchWorkspaces ?? context.paperclipWorkspaces)
-    ? (context.offwatchWorkspaces ?? context.paperclipWorkspaces as unknown[]).filter(
+    ? ((context.offwatchWorkspaces ?? context.paperclipWorkspaces) as unknown[]).filter(
         (value): value is Record<string, unknown> => typeof value === "object" && value !== null,
       )
     : [];
