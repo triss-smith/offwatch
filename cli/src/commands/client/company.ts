@@ -506,10 +506,10 @@ function formatSourceLabel(source: { type: "inline"; rootPath?: string | null } 
 }
 
 function formatTargetLabel(
-  target: { mode: "existing_company"; companyId?: string | null } | { mode: "new_company"; newCompanyName?: string | null },
+  target: { mode: "existing_workspace"; companyId?: string | null } | { mode: "new_workspace"; newCompanyName?: string | null },
   preview?: CompanyPortabilityPreviewResult,
 ): string {
-  if (target.mode === "existing_company") {
+  if (target.mode === "existing_workspace") {
     const targetName = preview?.targetCompanyName?.trim();
     const targetId = preview?.targetCompanyId?.trim() || target.companyId?.trim() || "unknown-company";
     return targetName ? `${targetName} (${targetId})` : targetId;
@@ -736,10 +736,10 @@ function printCompanyImportView(title: string, body: string, opts?: { interactiv
 
 export function resolveCompanyImportApiPath(input: {
   dryRun: boolean;
-  targetMode: "new_company" | "existing_company";
+  targetMode: "new_workspace" | "existing_workspace";
   companyId?: string | null;
 }): string {
-  if (input.targetMode === "existing_company") {
+  if (input.targetMode === "existing_workspace") {
     const companyId = input.companyId?.trim();
     if (!companyId) {
       throw new Error("Existing-company imports require a companyId to resolve the API route.");
@@ -1307,15 +1307,15 @@ export function registerCompanyCommands(program: Command): void {
           const targetPayload =
             target === "existing"
               ? {
-                  mode: "existing_company" as const,
+                  mode: "existing_workspace" as const,
                   companyId: existingTargetCompanyId,
                 }
               : {
-                  mode: "new_company" as const,
+                  mode: "new_workspace" as const,
                   newCompanyName: opts.newCompanyName?.trim() || null,
                 };
 
-          if (targetPayload.mode === "existing_company" && !targetPayload.companyId) {
+          if (targetPayload.mode === "existing_workspace" && !targetPayload.companyId) {
             throw new Error("Target existing company requires --company-id (or context default companyId).");
           }
 
@@ -1351,7 +1351,7 @@ export function registerCompanyCommands(program: Command): void {
           const previewApiPath = resolveCompanyImportApiPath({
             dryRun: true,
             targetMode: targetPayload.mode,
-            companyId: targetPayload.mode === "existing_company" ? targetPayload.companyId : null,
+            companyId: targetPayload.mode === "existing_workspace" ? targetPayload.companyId : null,
           });
 
           let selectedFiles: string[] | undefined;
@@ -1432,7 +1432,7 @@ export function registerCompanyCommands(program: Command): void {
           const importApiPath = resolveCompanyImportApiPath({
             dryRun: false,
             targetMode: targetPayload.mode,
-            companyId: targetPayload.mode === "existing_company" ? targetPayload.companyId : null,
+            companyId: targetPayload.mode === "existing_workspace" ? targetPayload.companyId : null,
           });
           const imported = await ctx.api.post<CompanyPortabilityImportResult>(importApiPath, {
             ...previewPayload,

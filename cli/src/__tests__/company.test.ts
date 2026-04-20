@@ -17,7 +17,7 @@ describe("resolveCompanyImportApiPath", () => {
     expect(
       resolveCompanyImportApiPath({
         dryRun: true,
-        targetMode: "existing_company",
+        targetMode: "existing_workspace",
         companyId: "company-123",
       }),
     ).toBe("/api/workspaces/company-123/imports/preview");
@@ -27,7 +27,7 @@ describe("resolveCompanyImportApiPath", () => {
     expect(
       resolveCompanyImportApiPath({
         dryRun: false,
-        targetMode: "existing_company",
+        targetMode: "existing_workspace",
         companyId: "company-123",
       }),
     ).toBe("/api/workspaces/company-123/imports/apply");
@@ -37,14 +37,14 @@ describe("resolveCompanyImportApiPath", () => {
     expect(
       resolveCompanyImportApiPath({
         dryRun: true,
-        targetMode: "new_company",
+        targetMode: "new_workspace",
       }),
     ).toBe("/api/workspaces/import/preview");
 
     expect(
       resolveCompanyImportApiPath({
         dryRun: false,
-        targetMode: "new_company",
+        targetMode: "new_workspace",
       }),
     ).toBe("/api/workspaces/import");
   });
@@ -53,7 +53,7 @@ describe("resolveCompanyImportApiPath", () => {
     expect(() =>
       resolveCompanyImportApiPath({
         dryRun: true,
-        targetMode: "existing_company",
+        targetMode: "existing_workspace",
         companyId: " ",
       })
     ).toThrow(/require a companyId/i);
