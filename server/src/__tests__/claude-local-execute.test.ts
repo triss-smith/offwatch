@@ -516,7 +516,7 @@ describe("claude execute", () => {
         "instances",
         "default",
         "companies",
-        "company-1",
+        "workspace-1",
         "claude-prompt-cache",
       );
 

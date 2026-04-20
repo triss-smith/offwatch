@@ -55,7 +55,7 @@ describe("codex execute", () => {
       "instances",
       "default",
       "companies",
-      "company-1",
+      "workspace-1",
       "codex-home",
     );
     await fs.mkdir(workspace, { recursive: true });
@@ -119,7 +119,7 @@ describe("codex execute", () => {
       expect(await fs.realpath(managedAuth)).toBe(await fs.realpath(path.join(sharedCodexHome, "auth.json")));
       expect((await fs.lstat(managedConfig)).isFile()).toBe(true);
       expect(await fs.readFile(managedConfig, "utf8")).toBe('model = "codex-mini-latest"\n');
-      await expect(fs.lstat(path.join(sharedCodexHome, "companies", "company-1"))).rejects.toThrow();
+      await expect(fs.lstat(path.join(sharedCodexHome, "companies", "workspace-1"))).rejects.toThrow();
       expect(logs).toContainEqual(
         expect.objectContaining({
           stream: "stdout",
@@ -738,7 +738,7 @@ describe("codex execute", () => {
       "instances",
       "worktree-1",
       "companies",
-      "company-1",
+      "workspace-1",
       "codex-home",
     );
     const homeSkill = path.join(isolatedCodexHome, "skills", "offwatch");

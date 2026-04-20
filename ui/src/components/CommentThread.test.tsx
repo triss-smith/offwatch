@@ -197,7 +197,7 @@ describe("CommentThread", () => {
     const approval: Approval = {
       id: "approval-1",
       workspaceId: "company-1",
-      type: "tracker_issue_proposal",
+      type: "request_board_approval",
       requestedByAgentId: "agent-1",
       requestedByUserId: null,
       status: "pending",

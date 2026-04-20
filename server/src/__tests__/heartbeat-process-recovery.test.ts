@@ -187,7 +187,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
 
     await db.insert(agents).values({
       id: agentId,
-      companyId,
+      workspaceId: companyId,
       name: "CodexCoder",
       role: "engineer",
       status: input?.agentStatus ?? "paused",
@@ -199,7 +199,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
 
     await db.insert(agentWakeupRequests).values({
       id: wakeupRequestId,
-      companyId,
+      workspaceId: companyId,
       agentId,
       source: "assignment",
       triggerDetail: "system",
@@ -212,7 +212,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
 
     await db.insert(heartbeatRuns).values({
       id: runId,
-      companyId,
+      workspaceId: companyId,
       agentId,
       invocationSource: "assignment",
       triggerDetail: "system",
@@ -231,7 +231,7 @@ describeEmbeddedPostgres("heartbeat orphaned process recovery", () => {
     if (input?.includeIssue !== false) {
       await db.insert(issues).values({
         id: issueId,
-        companyId,
+        workspaceId: companyId,
         title: "Recover local adapter after lost process",
         status: "in_progress",
         priority: "medium",

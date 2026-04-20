@@ -111,7 +111,7 @@ describe("cursor execute", () => {
           "OFFWATCH_AGENT_ID",
           "OFFWATCH_API_KEY",
           "OFFWATCH_API_URL",
-          "OFFWATCH_COMPANY_ID",
+          "OFFWATCH_WORKSPACE_ID",
           "OFFWATCH_RUN_ID",
         ]),
       );

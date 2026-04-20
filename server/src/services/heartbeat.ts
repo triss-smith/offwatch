@@ -1972,7 +1972,7 @@ export function heartbeatService(db: Db) {
 
     const retryRun = await db.transaction(async (tx) => {
       await tx.execute(
-        sql`select id from issues where company_id = ${run.workspaceId} and execution_run_id = ${run.id} for update`,
+        sql`select id from issues where workspace_id = ${run.workspaceId} and execution_run_id = ${run.id} for update`,
       );
 
       const issue = await tx
@@ -3581,7 +3581,7 @@ export function heartbeatService(db: Db) {
   async function releaseIssueExecutionAndPromote(run: typeof heartbeatRuns.$inferSelect) {
     const promotedRun = await db.transaction(async (tx) => {
       await tx.execute(
-        sql`select id from issues where company_id = ${run.workspaceId} and execution_run_id = ${run.id} for update`,
+        sql`select id from issues where workspace_id = ${run.workspaceId} and execution_run_id = ${run.id} for update`,
       );
 
       const issue = await tx
@@ -3840,7 +3840,7 @@ export function heartbeatService(db: Db) {
 
       const outcome = await db.transaction(async (tx) => {
         await tx.execute(
-          sql`select id from issues where id = ${issueId} and company_id = ${agent.workspaceId} for update`,
+          sql`select id from issues where id = ${issueId} and workspace_id = ${agent.workspaceId} for update`,
         );
 
         const issue = await tx

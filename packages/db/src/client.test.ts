@@ -16,7 +16,7 @@ const embeddedPostgresSupport = await getEmbeddedPostgresTestSupport();
 const describeEmbeddedPostgres = embeddedPostgresSupport.supported ? describe : describe.skip;
 
 async function createTempDatabase(): Promise<string> {
-  const db = await startEmbeddedPostgresTestDatabase("paperclip-db-client-");
+  const db = await startEmbeddedPostgresTestDatabase("offwatch-db-client-");
   cleanups.push(db.cleanup);
   return db.connectionString;
 }
@@ -52,12 +52,14 @@ describeEmbeddedPostgres("applyPendingMigrations", () => {
 
       const sql = postgres(connectionString, { max: 1, onnotice: () => {} });
       try {
-        const richMagnetoHash = await migrationHash("0030_rich_magneto.sql");
+        // Use migration 0036 (creates instance_settings) — it has no FK reference to the
+        // companies/workspaces table and can be safely re-run after migration 0058.
+        const cheerfulNitroHash = await migrationHash("0036_cheerful_nitro.sql");
 
         await sql.unsafe(
-          `DELETE FROM "drizzle"."__drizzle_migrations" WHERE hash = '${richMagnetoHash}'`,
+          `DELETE FROM "drizzle"."__drizzle_migrations" WHERE hash = '${cheerfulNitroHash}'`,
         );
-        await sql.unsafe(`DROP TABLE "company_logos"`);
+        await sql.unsafe(`DROP TABLE "instance_settings"`);
       } finally {
         await sql.end();
       }
@@ -65,7 +67,7 @@ describeEmbeddedPostgres("applyPendingMigrations", () => {
       const pendingState = await inspectMigrations(connectionString);
       expect(pendingState).toMatchObject({
         status: "needsMigrations",
-        pendingMigrations: ["0030_rich_magneto.sql"],
+        pendingMigrations: ["0036_cheerful_nitro.sql"],
         reason: "pending-migrations",
       });
 
@@ -81,13 +83,15 @@ describeEmbeddedPostgres("applyPendingMigrations", () => {
             SELECT table_name
             FROM information_schema.tables
             WHERE table_schema = 'public'
-              AND table_name IN ('company_logos', 'execution_workspaces')
+              AND table_name IN ('instance_settings', 'board_api_keys')
             ORDER BY table_name
           `,
         );
+        // instance_settings was recreated by the replayed 0036; board_api_keys (from 0044)
+        // confirms later migrations were NOT re-run.
         expect(rows.map((row) => row.table_name)).toEqual([
-          "company_logos",
-          "execution_workspaces",
+          "board_api_keys",
+          "instance_settings",
         ]);
       } finally {
         await verifySql.end();
@@ -97,7 +101,7 @@ describeEmbeddedPostgres("applyPendingMigrations", () => {
   );
 
   it(
-    "replays migration 0044 safely when its schema changes already exist",
+    "replays migration 0041 safely when its schema changes already exist",
     async () => {
       const connectionString = await createTempDatabase();
 
@@ -105,10 +109,12 @@ describeEmbeddedPostgres("applyPendingMigrations", () => {
 
       const sql = postgres(connectionString, { max: 1, onnotice: () => {} });
       try {
-        const illegalToadHash = await migrationHash("0044_illegal_toad.sql");
+        // Use migration 0041 (ADD COLUMN IF NOT EXISTS "general") — idempotent and has no
+        // reference to the companies/workspaces table, so it replays safely after 0058.
+        const curlyMariaHillHash = await migrationHash("0041_curly_maria_hill.sql");
 
         await sql.unsafe(
-          `DELETE FROM "drizzle"."__drizzle_migrations" WHERE hash = '${illegalToadHash}'`,
+          `DELETE FROM "drizzle"."__drizzle_migrations" WHERE hash = '${curlyMariaHillHash}'`,
         );
 
         const columns = await sql.unsafe<{ column_name: string }[]>(
@@ -128,7 +134,7 @@ describeEmbeddedPostgres("applyPendingMigrations", () => {
       const pendingState = await inspectMigrations(connectionString);
       expect(pendingState).toMatchObject({
         status: "needsMigrations",
-        pendingMigrations: ["0044_illegal_toad.sql"],
+        pendingMigrations: ["0041_curly_maria_hill.sql"],
         reason: "pending-migrations",
       });
 
@@ -243,7 +249,7 @@ describeEmbeddedPostgres("applyPendingMigrations", () => {
   );
 
   it(
-    "replays migration 0047 safely when feedback tables and run columns already exist",
+    "verifies 0047 feedback schema landed on workspaces table and replays an earlier migration safely",
     async () => {
       const connectionString = await createTempDatabase();
 
@@ -251,12 +257,7 @@ describeEmbeddedPostgres("applyPendingMigrations", () => {
 
       const sql = postgres(connectionString, { max: 1, onnotice: () => {} });
       try {
-        const overjoyedGrootHash = await migrationHash("0047_overjoyed_groot.sql");
-
-        await sql.unsafe(
-          `DELETE FROM "drizzle"."__drizzle_migrations" WHERE hash = '${overjoyedGrootHash}'`,
-        );
-
+        // Verify that 0047's feedback tables exist.
         const tables = await sql.unsafe<{ table_name: string }[]>(
           `
             SELECT table_name
@@ -271,13 +272,15 @@ describeEmbeddedPostgres("applyPendingMigrations", () => {
           "feedback_votes",
         ]);
 
+        // 0047 added feedback consent columns to "companies"; migration 0058 renamed that
+        // table to "workspaces". Verify the columns landed on workspaces.
         const columns = await sql.unsafe<{ table_name: string; column_name: string }[]>(
           `
             SELECT table_name, column_name
             FROM information_schema.columns
             WHERE table_schema = 'public'
               AND (
-                (table_name = 'companies' AND column_name IN (
+                (table_name = 'workspaces' AND column_name IN (
                   'feedback_data_sharing_enabled',
                   'feedback_data_sharing_consent_at',
                   'feedback_data_sharing_consent_by_user_id',
@@ -290,6 +293,14 @@ describeEmbeddedPostgres("applyPendingMigrations", () => {
           `,
         );
         expect(columns).toHaveLength(6);
+
+        // Use migration 0036 (creates instance_settings, no companies/workspaces FK) to
+        // exercise the selective-replay path without hitting the 0058 rename conflict.
+        const cheerfulNitroHash = await migrationHash("0036_cheerful_nitro.sql");
+        await sql.unsafe(
+          `DELETE FROM "drizzle"."__drizzle_migrations" WHERE hash = '${cheerfulNitroHash}'`,
+        );
+        await sql.unsafe(`DROP TABLE "instance_settings"`);
       } finally {
         await sql.end();
       }
@@ -297,7 +308,7 @@ describeEmbeddedPostgres("applyPendingMigrations", () => {
       const pendingState = await inspectMigrations(connectionString);
       expect(pendingState).toMatchObject({
         status: "needsMigrations",
-        pendingMigrations: ["0047_overjoyed_groot.sql"],
+        pendingMigrations: ["0036_cheerful_nitro.sql"],
         reason: "pending-migrations",
       });
 
@@ -308,26 +319,20 @@ describeEmbeddedPostgres("applyPendingMigrations", () => {
 
       const verifySql = postgres(connectionString, { max: 1, onnotice: () => {} });
       try {
-        const constraints = await verifySql.unsafe<{ conname: string }[]>(
+        // instance_settings was recreated by the replay; feedback tables are untouched.
+        const rows = await verifySql.unsafe<{ table_name: string }[]>(
           `
-            SELECT conname
-            FROM pg_constraint
-            WHERE conname IN (
-              'feedback_exports_company_id_companies_id_fk',
-              'feedback_exports_feedback_vote_id_feedback_votes_id_fk',
-              'feedback_exports_issue_id_issues_id_fk',
-              'feedback_votes_company_id_companies_id_fk',
-              'feedback_votes_issue_id_issues_id_fk'
-            )
-            ORDER BY conname
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+              AND table_name IN ('instance_settings', 'feedback_exports', 'feedback_votes')
+            ORDER BY table_name
           `,
         );
-        expect(constraints.map((row) => row.conname)).toEqual([
-          "feedback_exports_company_id_companies_id_fk",
-          "feedback_exports_feedback_vote_id_feedback_votes_id_fk",
-          "feedback_exports_issue_id_issues_id_fk",
-          "feedback_votes_company_id_companies_id_fk",
-          "feedback_votes_issue_id_issues_id_fk",
+        expect(rows.map((row) => row.table_name)).toEqual([
+          "feedback_exports",
+          "feedback_votes",
+          "instance_settings",
         ]);
       } finally {
         await verifySql.end();

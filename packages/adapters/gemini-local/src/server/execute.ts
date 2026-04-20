@@ -55,7 +55,7 @@ function renderPaperclipEnvNote(env: Record<string, string>): string {
     .sort();
   if (paperclipKeys.length === 0) return "";
   return [
-    "Paperclip runtime note:",
+    "Offwatch runtime note:",
     `The following OFFWATCH_* environment variables are available in this run: ${paperclipKeys.join(", ")}`,
     "Do not assume these variables are missing without checking your shell environment.",
     "",
@@ -66,12 +66,12 @@ function renderPaperclipEnvNote(env: Record<string, string>): string {
 function renderApiAccessNote(env: Record<string, string>): string {
   if (!hasNonEmptyEnvValue(env, "OFFWATCH_API_URL") || !hasNonEmptyEnvValue(env, "OFFWATCH_API_KEY")) return "";
   return [
-    "Paperclip API access note:",
-    "Use run_shell_command with curl to make Paperclip API requests.",
+    "Offwatch API access note:",
+    "Use run_shell_command with curl to make Offwatch API requests.",
     "GET example:",
     `  run_shell_command({ command: "curl -s -H \\"Authorization: Bearer $OFFWATCH_API_KEY\\" \\"$OFFWATCH_API_URL/api/agents/me\\"" })`,
     "POST/PATCH example:",
-    `  run_shell_command({ command: "curl -s -X POST -H \\"Authorization: Bearer $OFFWATCH_API_KEY\\" -H 'Content-Type: application/json' -H \\"X-Paperclip-Run-Id: $OFFWATCH_RUN_ID\\" -d '{...}' \\"$OFFWATCH_API_URL/api/issues/{id}/checkout\\"" })`,
+    `  run_shell_command({ command: "curl -s -X POST -H \\"Authorization: Bearer $OFFWATCH_API_KEY\\" -H 'Content-Type: application/json' -H \\"X-Offwatch-Run-Id: $OFFWATCH_RUN_ID\\" -d '{...}' \\"$OFFWATCH_API_URL/api/issues/{id}/checkout\\"" })`,
     "",
     "",
   ].join("\n");
