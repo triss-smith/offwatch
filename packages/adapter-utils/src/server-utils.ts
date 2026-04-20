@@ -1183,6 +1183,7 @@ export const buildOffwatchEnv = buildPaperclipEnv;
 export const readOffwatchSkillSyncPreference = readPaperclipSkillSyncPreference;
 export const writeOffwatchSkillSyncPreference = writePaperclipSkillSyncPreference;
 export const listOffwatchSkillEntries = listPaperclipSkillEntries;
+export const resolveOffwatchSkillsDir = resolvePaperclipSkillsDir;
 
 // Alias for the skill entry type
 export type { PaperclipSkillEntry as OffwatchSkillEntry };
