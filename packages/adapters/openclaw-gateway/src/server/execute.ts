@@ -472,7 +472,7 @@ function buildStandardPaperclipPayload(
     : [];
   const configuredWorkspaceRuntime = parseObject(ctx.config.workspaceRuntime);
   const runtimeServiceIntents = Array.isArray(ctx.context.offwatchRuntimeServiceIntents ?? ctx.context.paperclipRuntimeServiceIntents)
-    ? (ctx.context.offwatchRuntimeServiceIntents ?? ctx.context.paperclipRuntimeServiceIntents as unknown[]).filter(
+    ? ((ctx.context.offwatchRuntimeServiceIntents ?? ctx.context.paperclipRuntimeServiceIntents) as unknown[]).filter(
         (entry): entry is Record<string, unknown> => Boolean(asRecord(entry)),
       )
     : [];

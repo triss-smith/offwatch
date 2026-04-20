@@ -239,12 +239,12 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
       )
     : [];
   const runtimeServiceIntents = Array.isArray(context.offwatchRuntimeServiceIntents ?? context.paperclipRuntimeServiceIntents)
-    ? (context.offwatchRuntimeServiceIntents ?? context.paperclipRuntimeServiceIntents as unknown[]).filter(
+    ? ((context.offwatchRuntimeServiceIntents ?? context.paperclipRuntimeServiceIntents) as unknown[]).filter(
         (value): value is Record<string, unknown> => typeof value === "object" && value !== null,
       )
     : [];
   const runtimeServices = Array.isArray(context.offwatchRuntimeServices ?? context.paperclipRuntimeServices)
-    ? (context.offwatchRuntimeServices ?? context.paperclipRuntimeServices as unknown[]).filter(
+    ? ((context.offwatchRuntimeServices ?? context.paperclipRuntimeServices) as unknown[]).filter(
         (value): value is Record<string, unknown> => typeof value === "object" && value !== null,
       )
     : [];
