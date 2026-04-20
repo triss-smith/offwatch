@@ -112,12 +112,14 @@ const downloadRelease = async (versionDir) => {
   if (ext) {
     fs.renameSync(tempPath, filePath);
   } else {
+    // On Windows, spawn("tar") resolves to System32\tar.exe which uses native
+    // paths; only convert to Git-style paths on non-Windows platforms.
     const toGitPath = (p) =>
       p
         .replace(/\\/g, "/")
         .replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`);
-    const tarPath = toGitPath(tempPath);
-    const tarCwd = toGitPath(versionDir);
+    const tarPath = process.platform === "win32" ? tempPath : toGitPath(tempPath);
+    const tarCwd = process.platform === "win32" ? versionDir : toGitPath(versionDir);
 
     await new Promise((resolve, reject) => {
       const args = ["-xzf", tarPath, "-C", tarCwd];

@@ -117,8 +117,8 @@ const downloadRelease = async (versionDir) => {
       p
         .replace(/\\/g, "/")
         .replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`);
-    const tarPath = toGitPath(tempPath);
-    const tarCwd = toGitPath(versionDir);
+    const tarPath = process.platform === "win32" ? tempPath : toGitPath(tempPath);
+    const tarCwd = process.platform === "win32" ? versionDir : toGitPath(versionDir);
 
     await new Promise((resolve, reject) => {
       const args = ["-xzf", tarPath, "-C", tarCwd];
