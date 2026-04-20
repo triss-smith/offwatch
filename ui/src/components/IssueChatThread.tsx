@@ -32,7 +32,7 @@ import type {
 } from "@offwatch/shared";
 import type { ActiveRunForIssue, LiveRunForIssue } from "../api/heartbeats";
 import { useLiveRunTranscripts } from "./transcript/useLiveRunTranscripts";
-import { useOffwatchIssueRuntime, type OffwatchIssueRuntimeReassignment } from "../hooks/usePaperclipIssueRuntime";
+import { useOffwatchIssueRuntime, type OffwatchIssueRuntimeReassignment } from "../hooks/useOffwatchIssueRuntime";
 import {
   buildIssueChatMessages,
   formatDurationWords,

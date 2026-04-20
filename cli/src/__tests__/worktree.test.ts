@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   agents,
-  companies,
+  workspaces,
   createDb,
   projects,
   routines,
@@ -860,7 +860,7 @@ describeEmbeddedPostgres("pauseSeededScheduledRoutines", () => {
     const disabledScheduleRoutineId = randomUUID();
 
     try {
-      await db.insert(companies).values({
+      await db.insert(workspaces).values({
         id: companyId,
         name: "Offwatch",
         issuePrefix: `T${companyId.replace(/-/g, "").slice(0, 6).toUpperCase()}`,

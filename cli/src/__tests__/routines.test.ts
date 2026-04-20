@@ -6,7 +6,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import {
   agents,
-  companies,
+  workspaces,
   createDb,
   projects,
   routines,
@@ -104,7 +104,7 @@ describeEmbeddedPostgres("disableAllRoutinesInConfig", () => {
     await db.delete(routines);
     await db.delete(projects);
     await db.delete(agents);
-    await db.delete(companies);
+    await db.delete(workspaces);
   });
 
   afterAll(async () => {
@@ -126,7 +126,7 @@ describeEmbeddedPostgres("disableAllRoutinesInConfig", () => {
     const archivedRoutineId = randomUUID();
     const otherCompanyRoutineId = randomUUID();
 
-    await db.insert(companies).values([
+    await db.insert(workspaces).values([
       {
         id: companyId,
         name: "Offwatch",
