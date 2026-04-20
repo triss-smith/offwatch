@@ -5,10 +5,10 @@ import { formatDatabaseBackupResult, runDatabaseBackup } from "@offwatch/db";
 import {
   expandHomePrefix,
   resolveDefaultBackupDir,
-  resolvePaperclipInstanceId,
+  resolveOffwatchInstanceId,
 } from "../config/home.js";
 import { readConfig, resolveConfigPath } from "../config/store.js";
-import { printPaperclipCliBanner } from "../utils/banner.js";
+import { printOffwatchCliBanner } from "../utils/banner.js";
 
 type DbBackupOptions = {
   config?: string;
@@ -29,7 +29,7 @@ function resolveConnectionString(configPath?: string): { value: string; source: 
 
   const port = config?.database.embeddedPostgresPort ?? 54329;
   return {
-    value: `postgres://paperclip:paperclip@127.0.0.1:${port}/paperclip`,
+    value: `postgres://offwatch:offwatch@127.0.0.1:${port}/offwatch`,
     source: `embedded-postgres@${port}`,
   };
 }
@@ -47,20 +47,20 @@ function resolveBackupDir(raw: string): string {
 }
 
 export async function dbBackupCommand(opts: DbBackupOptions): Promise<void> {
-  printPaperclipCliBanner();
-  p.intro(pc.bgCyan(pc.black(" paperclip db:backup ")));
+  printOffwatchCliBanner();
+  p.intro(pc.bgCyan(pc.black(" offwatch db:backup ")));
 
   const configPath = resolveConfigPath(opts.config);
   const config = readConfig(opts.config);
   const connection = resolveConnectionString(opts.config);
-  const defaultDir = resolveDefaultBackupDir(resolvePaperclipInstanceId());
+  const defaultDir = resolveDefaultBackupDir(resolveOffwatchInstanceId());
   const configuredDir = opts.dir?.trim() || config?.database.backup.dir || defaultDir;
   const backupDir = resolveBackupDir(configuredDir);
   const retentionDays = normalizeRetentionDays(
     opts.retentionDays,
     config?.database.backup.retentionDays ?? 30,
   );
-  const filenamePrefix = opts.filenamePrefix?.trim() || "paperclip";
+  const filenamePrefix = opts.filenamePrefix?.trim() || "offwatch";
 
   p.log.message(pc.dim(`Config: ${configPath}`));
   p.log.message(pc.dim(`Connection source: ${connection.source}`));

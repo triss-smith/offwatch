@@ -1,7 +1,7 @@
 import type { Agent } from "@offwatch/shared";
 
-export const AGENT_ORDER_UPDATED_EVENT = "paperclip:agent-order-updated";
-const AGENT_ORDER_STORAGE_PREFIX = "paperclip.agentOrder";
+export const AGENT_ORDER_UPDATED_EVENT = "offwatch:agent-order-updated";
+const AGENT_ORDER_STORAGE_PREFIX = "offwatch.agentOrder";
 const ANONYMOUS_USER_ID = "anonymous";
 
 type AgentOrderUpdatedDetail = {

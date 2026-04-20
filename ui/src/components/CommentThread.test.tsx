@@ -229,7 +229,7 @@ describe("CommentThread", () => {
 
     const approvalRow = container.querySelector("#approval-approval-1") as HTMLDivElement | null;
     expect(approvalRow).not.toBeNull();
-    expect(container.textContent).toContain("request_board_approval");
+    expect(container.textContent).toContain("tracker_issue_proposal");
     expect(container.textContent).toContain("Approve hosting spend");
     expect(container.textContent).toContain("Approve");
     expect(container.textContent).toContain("Reject");

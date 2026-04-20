@@ -24,7 +24,7 @@
 
 import type { Db } from "@offwatch/db";
 import type {
-  PaperclipPluginManifestV1,
+  OffwatchPluginManifestV1,
   PluginRecord,
 } from "@offwatch/shared";
 import type { ToolRunContext, ToolResult } from "@offwatch/plugin-sdk";
@@ -155,7 +155,7 @@ export interface PluginToolDispatcher {
    */
   registerPluginTools(
     pluginId: string,
-    manifest: PaperclipPluginManifestV1,
+    manifest: OffwatchPluginManifestV1,
   ): void;
 
   /**
@@ -428,7 +428,7 @@ export function createPluginToolDispatcher(
 
     registerPluginTools(
       pluginId: string,
-      manifest: PaperclipPluginManifestV1,
+      manifest: OffwatchPluginManifestV1,
     ): void {
       registry.registerPlugin(pluginId, manifest);
     },

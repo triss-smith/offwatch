@@ -1146,7 +1146,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
         const created = await createWebhookSecret(routine.workspaceId, routine.id, actor);
         secretId = created.secret.id;
         secretMaterial = {
-          webhookUrl: `${process.env.PAPERCLIP_API_URL}/api/routine-triggers/public/${publicId}/fire`,
+          webhookUrl: `${process.env.OFFWATCH_API_URL}/api/routine-triggers/public/${publicId}/fire`,
           webhookSecret: created.secretValue,
         };
       }
@@ -1263,7 +1263,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
       return {
         trigger: updated as RoutineTrigger,
         secretMaterial: {
-          webhookUrl: `${process.env.PAPERCLIP_API_URL}/api/routine-triggers/public/${existing.publicId}/fire`,
+          webhookUrl: `${process.env.OFFWATCH_API_URL}/api/routine-triggers/public/${existing.publicId}/fire`,
           webhookSecret: secretValue,
         },
       };
@@ -1319,7 +1319,7 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
         const secretValue = await resolveTriggerSecret(trigger, routine.workspaceId);
         const rawBody = input.rawBody ?? Buffer.from(JSON.stringify(input.payload ?? {}));
         // Accept X-Hub-Signature-256 (GitHub/Sentry) or fall back to the
-        // generic X-Paperclip-Signature header so operators can use github_hmac
+        // generic X-Offwatch-Signature header so operators can use github_hmac
         // mode with either header convention.
         const providedSignature = (input.hubSignatureHeader ?? input.signatureHeader)?.trim() ?? "";
         if (!providedSignature) throw unauthorized();

@@ -75,8 +75,8 @@ describe("cli auth routes", () => {
     const res = await request(app)
       .post("/api/cli-auth/challenges")
       .send({
-        command: "paperclipai company import",
-        clientName: "paperclipai cli",
+        command: "offwatchai company import",
+        clientName: "offwatchai cli",
         requestedAccess: "board",
       });
 
@@ -96,8 +96,8 @@ describe("cli auth routes", () => {
     mockBoardAuthService.describeCliAuthChallenge.mockResolvedValue({
       id: "challenge-1",
       status: "pending",
-      command: "paperclipai company import",
-      clientName: "paperclipai cli",
+      command: "offwatchai company import",
+      clientName: "offwatchai cli",
       requestedAccess: "board",
       requestedWorkspaceId: null,
       requestedCompanyName: null,

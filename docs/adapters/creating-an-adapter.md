@@ -3,7 +3,7 @@ title: Creating an Adapter
 summary: Guide to building a custom adapter
 ---
 
-Build a custom adapter to connect Paperclip to any agent runtime.
+Build a custom adapter to connect Offwatch to any agent runtime.
 
 <Tip>
 If you're using Claude Code, the `.agents/skills/create-agent-adapter` skill can guide you through the full adapter creation process interactively. Just ask Claude to create a new adapter and it will walk you through each step.
@@ -13,13 +13,13 @@ If you're using Claude Code, the `.agents/skills/create-agent-adapter` skill can
 
 | | Built-in | External Plugin |
 |---|---|---|
-| Source | Inside `paperclip-fork` | Separate npm package |
-| Distribution | Ships with Paperclip | Independent npm publish |
+| Source | Inside `offwatch-fork` | Separate npm package |
+| Distribution | Ships with Offwatch | Independent npm publish |
 | UI parser | Static import | Dynamic load from API |
 | Registration | Edit 3 registries | Auto-loaded at startup |
 | Best for | Core adapters, contributors | Third-party adapters, internal tools |
 
-For most cases, **build an external adapter plugin**. It's cleaner, independently versioned, and doesn't require modifying Paperclip's source. See [External Adapters](/adapters/external-adapters) for the full guide.
+For most cases, **build an external adapter plugin**. It's cleaner, independently versioned, and doesn't require modifying Offwatch's source. See [External Adapters](/adapters/external-adapters) for the full guide.
 
 The rest of this page covers the shared internals that both paths use.
 
@@ -74,8 +74,8 @@ export { createServerAdapter } from "./server/index.js";
 
 Key responsibilities:
 
-1. Read config using safe helpers (`asString`, `asNumber`, etc.) from `@paperclipai/adapter-utils/server-utils`
-2. Build environment with `buildPaperclipEnv(agent)` plus context vars
+1. Read config using safe helpers (`asString`, `asNumber`, etc.) from `@offwatchai/adapter-utils/server-utils`
+2. Build environment with `buildOffwatchEnv(agent)` plus context vars
 3. Resolve session state from `runtime.sessionParams`
 4. Render prompt with `renderTemplate(template, data)`
 5. Spawn the process with `runChildProcess()` or call via `fetch()`
@@ -86,11 +86,11 @@ Key responsibilities:
 
 | Helper | Source | Purpose |
 |--------|--------|---------|
-| `runChildProcess(cmd, opts)` | `@paperclipai/adapter-utils/server-utils` | Spawn with timeout, grace, streaming |
-| `buildPaperclipEnv(agent)` | `@paperclipai/adapter-utils/server-utils` | Inject `PAPERCLIP_*` env vars |
-| `renderTemplate(tpl, data)` | `@paperclipai/adapter-utils/server-utils` | `{{variable}}` substitution |
-| `asString(v)` | `@paperclipai/adapter-utils` | Safe config value extraction |
-| `asNumber(v)` | `@paperclipai/adapter-utils` | Safe number extraction |
+| `runChildProcess(cmd, opts)` | `@offwatchai/adapter-utils/server-utils` | Spawn with timeout, grace, streaming |
+| `buildOffwatchEnv(agent)` | `@offwatchai/adapter-utils/server-utils` | Inject `PAPERCLIP_*` env vars |
+| `renderTemplate(tpl, data)` | `@offwatchai/adapter-utils/server-utils` | `{{variable}}` substitution |
+| `asString(v)` | `@offwatchai/adapter-utils` | Safe config value extraction |
+| `asNumber(v)` | `@offwatchai/adapter-utils` | Safe number extraction |
 
 ### AdapterExecutionContext
 
@@ -155,7 +155,7 @@ export async function testEnvironment(
 
 ## Step 4: UI Module (Built-in Only)
 
-For built-in adapters registered in Paperclip's source:
+For built-in adapters registered in Offwatch's source:
 
 - `parse-stdout.ts` — converts stdout lines to `TranscriptEntry[]` for the run viewer
 - `build-config.ts` — converts form values to `adapterConfig` JSON
@@ -165,7 +165,7 @@ For external adapters, use a self-contained `ui-parser.ts` instead. See the [UI 
 
 ## Step 5: CLI Module
 
-`format-event.ts` — pretty-prints stdout for `paperclipai run --watch` using `picocolors`.
+`format-event.ts` — pretty-prints stdout for `offwatchai run --watch` using `picocolors`.
 
 ```ts
 export function formatStdoutEvent(line: string, debug: boolean): void {
@@ -205,7 +205,7 @@ export const sessionCodec: AdapterSessionCodec = {
 
 ## Skills Injection
 
-Make Paperclip skills discoverable to your agent runtime without writing to the agent's working directory:
+Make Offwatch skills discoverable to your agent runtime without writing to the agent's working directory:
 
 1. **Best: tmpdir + flag** — create tmpdir, symlink skills, pass via CLI flag, clean up after
 2. **Acceptable: global config dir** — symlink to the runtime's global plugins directory

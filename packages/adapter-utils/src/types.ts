@@ -161,6 +161,7 @@ export type AdapterSkillState =
 export type AdapterSkillOrigin =
   | "company_managed"
   | "paperclip_required"
+  | "offwatch_required"
   | "user_installed"
   | "external_unknown";
 

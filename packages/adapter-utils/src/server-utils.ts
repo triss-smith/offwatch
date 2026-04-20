@@ -61,7 +61,7 @@ export const runningProcesses = new Map<string, RunningProcess>();
 export const MAX_CAPTURE_BYTES = 4 * 1024 * 1024;
 export const MAX_EXCERPT_BYTES = 32 * 1024;
 const SENSITIVE_ENV_KEY = /(key|token|secret|password|passwd|authorization|cookie)/i;
-const PAPERCLIP_SKILL_ROOT_RELATIVE_CANDIDATES = [
+const OFFWATCH_SKILL_ROOT_RELATIVE_CANDIDATES = [
   "../../skills",
   "../../../../../skills",
 ];
@@ -397,9 +397,9 @@ export function renderPaperclipWakePrompt(
 
   const lines = resumedSession
       ? [
-        "## Paperclip Resume Delta",
+        "## Offwatch Resume Delta",
         "",
-        "You are resuming an existing Paperclip session.",
+        "You are resuming an existing Offwatch session.",
         "This heartbeat is scoped to the issue below. Do not switch to another issue until you have handled this wake.",
         "Focus on the new wake delta below and continue the current task without restating the full heartbeat boilerplate.",
         "Fetch the API thread only when `fallbackFetchNeeded` is true or you need broader history than this batch.",
@@ -411,7 +411,7 @@ export function renderPaperclipWakePrompt(
         `- fallback fetch needed: ${normalized.fallbackFetchNeeded ? "yes" : "no"}`,
       ]
     : [
-        "## Paperclip Wake Payload",
+        "## Offwatch Wake Payload",
         "",
         "Treat this wake payload as the highest-priority change for the current heartbeat.",
         "This heartbeat is scoped to the issue below. Do not switch to another issue until you have handled this wake.",
@@ -515,7 +515,7 @@ export function buildInvocationEnvForLogs(
 
   const resolvedCommand = options.resolvedCommand?.trim();
   if (resolvedCommand) {
-    merged[options.resolvedCommandEnvKey ?? "PAPERCLIP_RESOLVED_COMMAND"] = resolvedCommand;
+    merged[options.resolvedCommandEnvKey ?? "OFFWATCH_RESOLVED_COMMAND"] = resolvedCommand;
   }
 
   return redactEnvForLogs(merged);
@@ -529,15 +529,16 @@ export function buildPaperclipEnv(agent: { id: string; workspaceId: string }): R
     return host;
   };
   const vars: Record<string, string> = {
-    PAPERCLIP_AGENT_ID: agent.id,
-    PAPERCLIP_WORKSPACE_ID: agent.workspaceId,
+    OFFWATCH_AGENT_ID: agent.id,
+    OFFWATCH_WORKSPACE_ID: agent.workspaceId,
+    OFFWATCH_COMPANY_ID: agent.workspaceId,
   };
   const runtimeHost = resolveHostForUrl(
-    process.env.PAPERCLIP_LISTEN_HOST ?? process.env.HOST ?? "localhost",
+    process.env.OFFWATCH_LISTEN_HOST ?? process.env.HOST ?? "localhost",
   );
-  const runtimePort = process.env.PAPERCLIP_LISTEN_PORT ?? process.env.PORT ?? "3100";
-  const apiUrl = process.env.PAPERCLIP_API_URL ?? `http://${runtimeHost}:${runtimePort}`;
-  vars.PAPERCLIP_API_URL = apiUrl;
+  const runtimePort = process.env.OFFWATCH_LISTEN_PORT ?? process.env.PORT ?? "3100";
+  const apiUrl = process.env.OFFWATCH_API_URL ?? `http://${runtimeHost}:${runtimePort}`;
+  vars.OFFWATCH_API_URL = apiUrl;
   return vars;
 }
 
@@ -679,7 +680,7 @@ export async function resolvePaperclipSkillsDir(
   additionalCandidates: string[] = [],
 ): Promise<string | null> {
   const candidates = [
-    ...PAPERCLIP_SKILL_ROOT_RELATIVE_CANDIDATES.map((relativePath) => path.resolve(moduleDir, relativePath)),
+    ...OFFWATCH_SKILL_ROOT_RELATIVE_CANDIDATES.map((relativePath) => path.resolve(moduleDir, relativePath)),
     ...additionalCandidates.map((candidate) => path.resolve(candidate)),
   ];
   const seenRoots = new Set<string>();
@@ -706,11 +707,11 @@ export async function listPaperclipSkillEntries(
     return entries
       .filter((entry) => entry.isDirectory())
       .map((entry) => ({
-        key: `paperclipai/paperclip/${entry.name}`,
+        key: `offwatchai/offwatch/${entry.name}`,
         runtimeName: entry.name,
         source: path.join(root, entry.name),
         required: true,
-        requiredReason: "Bundled Paperclip skills are always available for local adapters.",
+        requiredReason: "Bundled Offwatch skills are always available for local adapters.",
       }));
   } catch {
     return [];
@@ -858,7 +859,7 @@ export async function readPaperclipRuntimeSkillEntries(
   moduleDir: string,
   additionalCandidates: string[] = [],
 ): Promise<PaperclipSkillEntry[]> {
-  const configuredEntries = normalizeConfiguredPaperclipRuntimeSkills(config.paperclipRuntimeSkills);
+  const configuredEntries = normalizeConfiguredPaperclipRuntimeSkills(config.offwatchRuntimeSkills ?? config.paperclipRuntimeSkills);
   if (configuredEntries.length > 0) return configuredEntries;
   return listPaperclipSkillEntries(moduleDir, additionalCandidates);
 }
@@ -885,7 +886,7 @@ export function readPaperclipSkillSyncPreference(config: Record<string, unknown>
   explicit: boolean;
   desiredSkills: string[];
 } {
-  const raw = config.paperclipSkillSync;
+  const raw = config.offwatchSkillSync ?? config.paperclipSkillSync;
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
     return { explicit: false, desiredSkills: [] };
   }
@@ -948,7 +949,7 @@ export function writePaperclipSkillSyncPreference(
   desiredSkills: string[],
 ): Record<string, unknown> {
   const next = { ...config };
-  const raw = next.paperclipSkillSync;
+  const raw = next.offwatchSkillSync ?? next.paperclipSkillSync;
   const current =
     typeof raw === "object" && raw !== null && !Array.isArray(raw)
       ? { ...(raw as Record<string, unknown>) }
@@ -960,7 +961,8 @@ export function writePaperclipSkillSyncPreference(
         .filter(Boolean),
     ),
   );
-  next.paperclipSkillSync = current;
+  delete next.paperclipSkillSync;
+  next.offwatchSkillSync = current;
   return next;
 }
 
@@ -1068,8 +1070,8 @@ export async function runChildProcess(
 
     // Strip Claude Code nesting-guard env vars so spawned `claude` processes
     // don't refuse to start with "cannot be launched inside another session".
-    // These vars leak in when the Paperclip server itself is started from
-    // within a Claude Code session (e.g. `npx paperclipai run` in a terminal
+    // These vars leak in when the Offwatch server itself is started from
+    // within a Claude Code session (e.g. `npx offwatch run` in a terminal
     // owned by Claude Code) or when cron inherits a contaminated shell env.
     const CLAUDE_CODE_NESTING_VARS = [
       "CLAUDECODE",
@@ -1175,3 +1177,14 @@ export async function runChildProcess(
       .catch(reject);
   });
 }
+
+// Aliases for offwatch rename (original functions remain for compatibility)
+export const buildOffwatchEnv = buildPaperclipEnv;
+export const readOffwatchSkillSyncPreference = readPaperclipSkillSyncPreference;
+export const writeOffwatchSkillSyncPreference = writePaperclipSkillSyncPreference;
+export const listOffwatchSkillEntries = listPaperclipSkillEntries;
+export const resolveOffwatchSkillsDir = resolvePaperclipSkillsDir;
+
+// Alias for the skill entry type
+export type { PaperclipSkillEntry as OffwatchSkillEntry };
+

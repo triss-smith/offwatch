@@ -175,7 +175,7 @@ export async function resolveFeedbackCompanyId(
 ): Promise<string> {
   const direct = explicitCompanyId?.trim() || ctx.companyId?.trim();
   if (direct) return direct;
-  const companies = (await ctx.api.get<Company[]>("/api/companies")) ?? [];
+  const companies = (await ctx.api.get<Company[]>("/api/workspaces")) ?? [];
   const companyId = companies[0]?.id?.trim();
   if (!companyId) {
     throw new Error(
@@ -220,7 +220,7 @@ export async function fetchCompanyFeedbackTraces(
 ): Promise<FeedbackTrace[]> {
   return (
     (await ctx.api.get<FeedbackTrace[]>(
-      `/api/companies/${companyId}/feedback-traces${buildFeedbackTraceQuery(opts, true)}`,
+      `/api/workspaces/${companyId}/feedback-traces${buildFeedbackTraceQuery(opts, true)}`,
     )) ?? []
   );
 }
@@ -267,7 +267,7 @@ export function renderFeedbackReport(input: {
 }): string {
   const lines: string[] = [];
   lines.push("");
-  lines.push(pc.bold(pc.magenta("Paperclip Feedback Report")));
+  lines.push(pc.bold(pc.magenta("Offwatch Feedback Report")));
   lines.push(pc.dim(new Date().toISOString()));
   lines.push(horizontalRule());
   lines.push(`${pc.dim("Server:")}  ${input.apiBase}`);
@@ -439,7 +439,7 @@ export async function writeFeedbackExportBundle(input: {
 export function renderFeedbackExportSummary(exported: FeedbackExportResult): string {
   const lines: string[] = [];
   lines.push("");
-  lines.push(pc.bold(pc.magenta("Paperclip Feedback Export")));
+  lines.push(pc.bold(pc.magenta("Offwatch Feedback Export")));
   lines.push(pc.dim(exported.manifest.exportedAt));
   lines.push(horizontalRule());
   lines.push(`${pc.dim("Company:")} ${exported.manifest.companyId}`);

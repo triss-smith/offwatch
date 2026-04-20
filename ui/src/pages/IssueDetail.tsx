@@ -82,11 +82,11 @@ import {
   ListTree,
   MessageSquare,
   MoreHorizontal,
-  Paperclip,
   Repeat,
   SlidersHorizontal,
   Trash2,
 } from "lucide-react";
+import { OffwatchIcon } from "@/components/OffwatchIcon";
 import {
   getClosedIsolatedExecutionWorkspaceMessage,
   isClosedIsolatedExecutionWorkspace,
@@ -107,7 +107,7 @@ type IssueDetailComment = (IssueComment | OptimisticIssueComment) & {
   queueTargetRunId?: string | null;
 };
 
-const FEEDBACK_TERMS_URL = import.meta.env.VITE_FEEDBACK_TERMS_URL?.trim() || "https://paperclip.ing/tos";
+const FEEDBACK_TERMS_URL = import.meta.env.VITE_FEEDBACK_TERMS_URL?.trim() || "https://offwatch.ing/tos";
 const ISSUE_COMMENT_PAGE_SIZE = 50;
 
 function keepPreviousData<T>(previousData: T | undefined) {
@@ -1614,7 +1614,7 @@ export function IssueDetail() {
           attachmentDragActive && "border-primary bg-primary/5",
         )}
       >
-        <Paperclip className="h-3.5 w-3.5 mr-1.5" />
+        <OffwatchIcon className="h-3.5 w-3.5 mr-1.5" />
         {uploadAttachment.isPending || importMarkdownDocument.isPending ? "Uploading..." : (
           <>
             <span className="hidden sm:inline">Upload attachment</span>
@@ -2146,7 +2146,7 @@ export function IssueDetail() {
                 enableLiveTranscriptPolling={false}
                 transcriptsByRunId={issueChatTranscriptByRun}
                 hasOutputForRun={issueChatHasOutputForRun}
-                draftKey={`paperclip:issue-comment-draft:${issue.id}`}
+                draftKey={`offwatch:issue-comment-draft:${issue.id}`}
                 enableReassign
                 reassignOptions={commentReassignOptions}
                 currentAssigneeValue={actualAssigneeValue}

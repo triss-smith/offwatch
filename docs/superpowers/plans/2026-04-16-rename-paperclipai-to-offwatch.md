@@ -1,10 +1,10 @@
-# Rename @paperclipai/* to @offwatch/* Implementation Plan
+# Rename @offwatchai/* to @offwatch/* Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Rename all packages from @paperclipai/* scope to @offwatch/* scope, eliminating workspace:* dependency issues and aligning package names with the CLI product name.
+**Goal:** Rename all packages from @offwatchai/* scope to @offwatch/* scope, eliminating workspace:* dependency issues and aligning package names with the CLI product name.
 
-**Architecture:** This is a monorepo refactor. All @paperclipai/* packages are renamed to @offwatch/* and all internal imports are updated. The monorepo structure remains the same; only package names and imports change. Published npm packages will use the @offwatch/* scope.
+**Architecture:** This is a monorepo refactor. All @offwatchai/* packages are renamed to @offwatch/* and all internal imports are updated. The monorepo structure remains the same; only package names and imports change. Published npm packages will use the @offwatch/* scope.
 
 **Tech Stack:** pnpm monorepo, TypeScript, Node.js
 
@@ -31,7 +31,7 @@
 ```bash
 cd packages/shared
 git add package.json
-git commit -m "refactor: rename @paperclipai/shared to @offwatch/shared"
+git commit -m "refactor: rename @offwatchai/shared to @offwatch/shared"
 ```
 
 ---
@@ -49,7 +49,7 @@ git commit -m "refactor: rename @paperclipai/shared to @offwatch/shared"
 }
 ```
 
-- [ ] **Step 2: Update dependency on @paperclipai/shared → @offwatch/shared**
+- [ ] **Step 2: Update dependency on @offwatchai/shared → @offwatch/shared**
 
 ```json
 {
@@ -63,7 +63,7 @@ git commit -m "refactor: rename @paperclipai/shared to @offwatch/shared"
 
 ```bash
 git add package.json
-git commit -m "refactor: rename @paperclipai/adapter-utils to @offwatch/adapter-utils"
+git commit -m "refactor: rename @offwatchai/adapter-utils to @offwatch/adapter-utils"
 ```
 
 ---
@@ -88,7 +88,7 @@ git commit -m "refactor: rename @paperclipai/adapter-utils to @offwatch/adapter-
 
 ```bash
 git add package.json
-git commit -m "refactor: rename @paperclipai/db to @offwatch/db"
+git commit -m "refactor: rename @offwatchai/db to @offwatch/db"
 ```
 
 ---
@@ -113,7 +113,7 @@ git commit -m "refactor: rename @paperclipai/db to @offwatch/db"
 
 ```bash
 git add package.json
-git commit -m "refactor: rename @paperclipai/mcp-server to @offwatch/mcp-server"
+git commit -m "refactor: rename @offwatchai/mcp-server to @offwatch/mcp-server"
 ```
 
 ---
@@ -146,7 +146,7 @@ For each adapter (claude-local, codex-local, cursor-local, gemini-local, opencla
 
 ```bash
 git add packages/adapters/*/package.json
-git commit -m "refactor: rename @paperclipai/adapter-* to @offwatch/adapter-*"
+git commit -m "refactor: rename @offwatchai/adapter-* to @offwatch/adapter-*"
 ```
 
 ---
@@ -171,15 +171,15 @@ git commit -m "refactor: rename @paperclipai/adapter-* to @offwatch/adapter-*"
 
 ```bash
 git add packages/plugins/sdk/package.json
-git commit -m "refactor: rename @paperclipai/plugin-sdk to @offwatch/plugin-sdk"
+git commit -m "refactor: rename @offwatchai/plugin-sdk to @offwatch/plugin-sdk"
 ```
 
 ---
 
-### Task 7: Rename create-paperclip-plugin package
+### Task 7: Rename create-offwatch-plugin package
 
 **Files:**
-- Modify: `packages/plugins/create-paperclip-plugin/package.json`
+- Modify: `packages/plugins/create-offwatch-plugin/package.json`
 
 - [ ] **Step 1: Update package.json name and dependency**
 
@@ -189,13 +189,13 @@ git commit -m "refactor: rename @paperclipai/plugin-sdk to @offwatch/plugin-sdk"
 }
 ```
 
-Note: Renaming from "create-paperclip-plugin" to "create-offwatch-plugin" for consistency.
+Note: Renaming from "create-offwatch-plugin" to "create-offwatch-plugin" for consistency.
 
 - [ ] **Step 2: Commit**
 
 ```bash
-git add packages/plugins/create-paperclip-plugin/package.json
-git commit -m "refactor: rename @paperclipai/create-paperclip-plugin to @offwatch/create-offwatch-plugin"
+git add packages/plugins/create-offwatch-plugin/package.json
+git commit -m "refactor: rename @offwatchai/create-offwatch-plugin to @offwatch/create-offwatch-plugin"
 ```
 
 ---
@@ -241,13 +241,13 @@ git commit -m "refactor: rename plugin examples to @offwatch/*"
 }
 ```
 
-Update all workspace:* dependencies from @paperclipai/* to @offwatch/*.
+Update all workspace:* dependencies from @offwatchai/* to @offwatch/*.
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add server/package.json
-git commit -m "refactor: rename @paperclipai/server to @offwatch/server"
+git commit -m "refactor: rename @offwatchai/server to @offwatch/server"
 ```
 
 ---
@@ -265,13 +265,13 @@ git commit -m "refactor: rename @paperclipai/server to @offwatch/server"
 }
 ```
 
-Update all workspace:* dependencies from @paperclipai/* to @offwatch/*.
+Update all workspace:* dependencies from @offwatchai/* to @offwatch/*.
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add ui/package.json
-git commit -m "refactor: rename @paperclipai/ui to @offwatch/ui"
+git commit -m "refactor: rename @offwatchai/ui to @offwatch/ui"
 ```
 
 ---
@@ -283,7 +283,7 @@ git commit -m "refactor: rename @paperclipai/ui to @offwatch/ui"
 
 - [ ] **Step 1: Update all pnpm --filter references**
 
-Change all `@paperclipai/*` to `@offwatch/*` in scripts:
+Change all `@offwatchai/*` to `@offwatch/*` in scripts:
 
 ```json
 {
@@ -311,7 +311,7 @@ git commit -m "refactor: update root package.json to use @offwatch/*"
 ### Task 12: Update CLI source imports
 
 **Files:**
-- Modify: `cli/src/adapters/registry.ts` (all @paperclipai imports)
+- Modify: `cli/src/adapters/registry.ts` (all @offwatchai imports)
 - Modify: `cli/src/adapters/process/index.ts`
 - Modify: `cli/src/adapters/http/index.ts`
 - Modify: `cli/src/adapters/index.ts`
@@ -344,17 +344,17 @@ git commit -m "refactor: update root package.json to use @offwatch/*"
 - Modify: `cli/src/__tests__/worktree.test.ts`
 - Modify: `cli/esbuild.config.mjs` (monorepoScopes array)
 
-- [ ] **Step 1: Bulk replace all @paperclipai/ imports to @offwatch/**
+- [ ] **Step 1: Bulk replace all @offwatchai/ imports to @offwatch/**
 
 ```bash
 cd cli
-grep -r "@paperclipai/" --include="*.ts" --include="*.mjs" src/ -l | xargs sed -i 's/@paperclipai\//@offwatch\//g'
+grep -r "@offwatchai/" --include="*.ts" --include="*.mjs" src/ -l | xargs sed -i 's/@offwatchai\//@offwatch\//g'
 ```
 
 - [ ] **Step 2: Verify imports updated**
 
 ```bash
-grep -r "@paperclipai/" cli/src/ cli/esbuild.config.mjs 2>/dev/null | grep -v node_modules
+grep -r "@offwatchai/" cli/src/ cli/esbuild.config.mjs 2>/dev/null | grep -v node_modules
 ```
 
 Expected: no output
@@ -363,7 +363,7 @@ Expected: no output
 
 ```bash
 git add cli/src cli/esbuild.config.mjs
-git commit -m "refactor: update CLI imports from @paperclipai/* to @offwatch/*"
+git commit -m "refactor: update CLI imports from @offwatchai/* to @offwatch/*"
 ```
 
 ---
@@ -377,17 +377,17 @@ git commit -m "refactor: update CLI imports from @paperclipai/* to @offwatch/*"
 - Modify: `packages/adapters/cursor-local/src/ui/build-config.ts`
 - Modify: `packages/mcp-server/src/tools.ts`
 
-- [ ] **Step 1: Bulk replace @paperclipai/ imports to @offwatch/**
+- [ ] **Step 1: Bulk replace @offwatchai/ imports to @offwatch/**
 
 ```bash
 cd packages
-grep -r "@paperclipai/" --include="*.ts" --include="*.tsx" --include="*.mjs" . -l | xargs sed -i 's/@paperclipai\//@offwatch\//g'
+grep -r "@offwatchai/" --include="*.ts" --include="*.tsx" --include="*.mjs" . -l | xargs sed -i 's/@offwatchai\//@offwatch\//g'
 ```
 
 - [ ] **Step 2: Verify imports updated**
 
 ```bash
-grep -r "@paperclipai/" packages/ --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v node_modules
+grep -r "@offwatchai/" packages/ --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v node_modules
 ```
 
 Expected: no output
@@ -396,7 +396,7 @@ Expected: no output
 
 ```bash
 git add packages
-git commit -m "refactor: update packages/* imports from @paperclipai/* to @offwatch/*"
+git commit -m "refactor: update packages/* imports from @offwatchai/* to @offwatch/*"
 ```
 
 ---
@@ -411,17 +411,17 @@ git commit -m "refactor: update packages/* imports from @paperclipai/* to @offwa
 - Modify: `ui/src/context/LiveUpdatesProvider.tsx`
 - Modify: `ui/src/plugins/slots.tsx`
 
-- [ ] **Step 1: Bulk replace @paperclipai/ imports to @offwatch/**
+- [ ] **Step 1: Bulk replace @offwatchai/ imports to @offwatch/**
 
 ```bash
 cd ui
-grep -r "@paperclipai/" --include="*.ts" --include="*.tsx" src/ -l | xargs sed -i 's/@paperclipai\//@offwatch\//g'
+grep -r "@offwatchai/" --include="*.ts" --include="*.tsx" src/ -l | xargs sed -i 's/@offwatchai\//@offwatch\//g'
 ```
 
 - [ ] **Step 2: Verify imports updated**
 
 ```bash
-grep -r "@paperclipai/" ui/src/ 2>/dev/null
+grep -r "@offwatchai/" ui/src/ 2>/dev/null
 ```
 
 Expected: no output
@@ -430,7 +430,7 @@ Expected: no output
 
 ```bash
 git add ui/src
-git commit -m "refactor: update ui imports from @paperclipai/* to @offwatch/*"
+git commit -m "refactor: update ui imports from @offwatchai/* to @offwatch/*"
 ```
 
 ---
@@ -625,10 +625,10 @@ npm publish --access public
 
 ## Self-Review Checklist
 
-- [ ] All 15+ package.json files renamed from @paperclipai/* to @offwatch/*
-- [ ] All source file imports updated (run `grep -r "@paperclipai/" . --include="*.ts" --include="*.tsx" | grep -v node_modules` - should return nothing)
+- [ ] All 15+ package.json files renamed from @offwatchai/* to @offwatch/*
+- [ ] All source file imports updated (run `grep -r "@offwatchai/" . --include="*.ts" --include="*.tsx" | grep -v node_modules` - should return nothing)
 - [ ] All pnpm filter scripts updated in root package.json
-- [ ] All workspace:* dependencies updated from @paperclipai/* to @offwatch/*
+- [ ] All workspace:* dependencies updated from @offwatchai/* to @offwatch/*
 - [ ] pnpm install runs without errors
 - [ ] All packages build successfully
 - [ ] Typecheck passes
@@ -642,5 +642,5 @@ npm publish --access public
 
 - The bundled CLI binary in `cli/bin/0.5.17/offwatch.js` is generated and should NOT be manually edited - it will be regenerated during build
 - Plugin examples depend on plugin-sdk and may need additional updates after SDK is renamed
-- The "create-paperclip-plugin" is being renamed to "create-offwatch-plugin" for consistency
+- The "create-offwatch-plugin" is being renamed to "create-offwatch-plugin" for consistency
 - This plan assumes all packages are published with matching versions initially (0.1.0 or similar)

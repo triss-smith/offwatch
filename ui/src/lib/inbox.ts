@@ -15,13 +15,13 @@ import {
 export const RECENT_ISSUES_LIMIT = 100;
 export const FAILED_RUN_STATUSES = new Set(["failed", "timed_out"]);
 export const ACTIONABLE_APPROVAL_STATUSES = new Set(["pending", "revision_requested"]);
-export const DISMISSED_KEY = "paperclip:inbox:dismissed";
-export const READ_ITEMS_KEY = "paperclip:inbox:read-items";
-export const INBOX_LAST_TAB_KEY = "paperclip:inbox:last-tab";
-export const INBOX_ISSUE_COLUMNS_KEY = "paperclip:inbox:issue-columns";
-export const INBOX_NESTING_KEY = "paperclip:inbox:nesting";
-export const INBOX_GROUP_BY_KEY = "paperclip:inbox:group-by";
-export const INBOX_FILTER_PREFERENCES_KEY_PREFIX = "paperclip:inbox:filters";
+export const DISMISSED_KEY = "offwatch:inbox:dismissed";
+export const READ_ITEMS_KEY = "offwatch:inbox:read-items";
+export const INBOX_LAST_TAB_KEY = "offwatch:inbox:last-tab";
+export const INBOX_ISSUE_COLUMNS_KEY = "offwatch:inbox:issue-columns";
+export const INBOX_NESTING_KEY = "offwatch:inbox:nesting";
+export const INBOX_GROUP_BY_KEY = "offwatch:inbox:group-by";
+export const INBOX_FILTER_PREFERENCES_KEY_PREFIX = "offwatch:inbox:filters";
 export type InboxTab = "mine" | "recent" | "unread" | "all";
 export type InboxCategoryFilter =
   | "everything"
