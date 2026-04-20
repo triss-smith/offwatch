@@ -41,13 +41,13 @@ async function buildClaudeSkillSnapshot(config: Record<string, unknown>): Promis
     desired: desiredSet.has(entry.key),
     managed: true,
     state: desiredSet.has(entry.key) ? "configured" : "available",
-    origin: entry.required ? "paperclip_required" : "company_managed",
-    originLabel: entry.required ? "Required by Paperclip" : "Managed by Paperclip",
+    origin: entry.required ? "offwatch_required" : "company_managed",
+    originLabel: entry.required ? "Required by Offwatch" : "Managed by Offwatch",
     readOnly: false,
     sourcePath: entry.source,
     targetPath: null,
     detail: desiredSet.has(entry.key)
-      ? "Will be materialized into the stable Paperclip-managed Claude prompt bundle on the next run."
+      ? "Will be materialized into the stable Offwatch-managed Claude prompt bundle on the next run."
       : null,
     required: Boolean(entry.required),
     requiredReason: entry.requiredReason ?? null,
@@ -56,7 +56,7 @@ async function buildClaudeSkillSnapshot(config: Record<string, unknown>): Promis
 
   for (const desiredSkill of desiredSkills) {
     if (availableByKey.has(desiredSkill)) continue;
-    warnings.push(`Desired skill "${desiredSkill}" is not available from the Paperclip skills directory.`);
+    warnings.push(`Desired skill "${desiredSkill}" is not available from the Offwatch skills directory.`);
     entries.push({
       key: desiredSkill,
       runtimeName: null,
@@ -68,7 +68,7 @@ async function buildClaudeSkillSnapshot(config: Record<string, unknown>): Promis
       readOnly: false,
       sourcePath: undefined,
       targetPath: undefined,
-      detail: "Paperclip cannot find this skill in the local runtime skills directory.",
+      detail: "Offwatch cannot find this skill in the local runtime skills directory.",
     });
   }
 
@@ -86,7 +86,7 @@ async function buildClaudeSkillSnapshot(config: Record<string, unknown>): Promis
       readOnly: true,
       sourcePath: null,
       targetPath: installedEntry.targetPath ?? path.join(skillsHome, name),
-      detail: "Installed outside Paperclip management in the Claude skills home.",
+      detail: "Installed outside Offwatch management in the Claude skills home.",
     });
   }
 
