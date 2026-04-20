@@ -388,7 +388,7 @@ function buildWakeText(
   const apiBaseHint = paperclipEnv.OFFWATCH_API_URL ?? "<set OFFWATCH_API_URL>";
 
   const lines = [
-    "Paperclip wake event for a cloud adapter.",
+    "Offwatch wake event for a cloud adapter.",
     "",
     "Run this procedure now. Do not guess undocumented endpoints and do not ask for additional heartbeat docs.",
     "",
@@ -1132,7 +1132,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     idempotencyKey: ctx.runId,
   };
   delete agentParams.text;
-  agentParams.paperclip = paperclipPayload;
+  agentParams.offwatch = paperclipPayload;
 
   const configuredAgentId = nonEmpty(ctx.config.agentId);
   if (configuredAgentId && !nonEmpty(agentParams.agentId)) {

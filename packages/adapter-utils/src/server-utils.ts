@@ -397,9 +397,9 @@ export function renderPaperclipWakePrompt(
 
   const lines = resumedSession
       ? [
-        "## Paperclip Resume Delta",
+        "## Offwatch Resume Delta",
         "",
-        "You are resuming an existing Paperclip session.",
+        "You are resuming an existing Offwatch session.",
         "This heartbeat is scoped to the issue below. Do not switch to another issue until you have handled this wake.",
         "Focus on the new wake delta below and continue the current task without restating the full heartbeat boilerplate.",
         "Fetch the API thread only when `fallbackFetchNeeded` is true or you need broader history than this batch.",
@@ -411,7 +411,7 @@ export function renderPaperclipWakePrompt(
         `- fallback fetch needed: ${normalized.fallbackFetchNeeded ? "yes" : "no"}`,
       ]
     : [
-        "## Paperclip Wake Payload",
+        "## Offwatch Wake Payload",
         "",
         "Treat this wake payload as the highest-priority change for the current heartbeat.",
         "This heartbeat is scoped to the issue below. Do not switch to another issue until you have handled this wake.",
@@ -531,6 +531,7 @@ export function buildPaperclipEnv(agent: { id: string; workspaceId: string }): R
   const vars: Record<string, string> = {
     OFFWATCH_AGENT_ID: agent.id,
     OFFWATCH_WORKSPACE_ID: agent.workspaceId,
+    OFFWATCH_COMPANY_ID: agent.workspaceId,
   };
   const runtimeHost = resolveHostForUrl(
     process.env.OFFWATCH_LISTEN_HOST ?? process.env.HOST ?? "localhost",
