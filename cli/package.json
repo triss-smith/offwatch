@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
-    "@offwatch/server": "0.3.3",
+    "@offwatch/server": "0.3.4",
     "commander": "^13.0.0",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.38.0",
