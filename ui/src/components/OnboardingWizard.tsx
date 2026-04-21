@@ -59,11 +59,11 @@ import {
 type Step = 1 | 2 | 3 | 4;
 type AdapterType = string;
 
-const DEFAULT_TASK_DESCRIPTION = `You are the CEO. You set the direction for the company.
+const DEFAULT_TASK_DESCRIPTION = `Get oriented in the workspace and start making progress.
 
-- hire a founding engineer
-- write a hiring plan
-- break the roadmap into concrete tasks and start delegating work`;
+- review the current goals and any existing work
+- identify the most important next steps
+- break down work into concrete tasks and start executing`;
 
 export function OnboardingWizard() {
   const { onboardingOpen, onboardingOptions, closeOnboarding } = useDialog();
@@ -105,7 +105,7 @@ export function OnboardingWizard() {
   const [companyGoal, setCompanyGoal] = useState("");
 
   // Step 2
-  const [agentName, setAgentName] = useState("CEO");
+  const [agentName, setAgentName] = useState("Agent");
   const [adapterType, setAdapterType] = useState<AdapterType>("claude_local");
   const [model, setModel] = useState("");
   const [command, setCommand] = useState("");
@@ -284,7 +284,7 @@ export function OnboardingWizard() {
     setError(null);
     setCompanyName("");
     setCompanyGoal("");
-    setAgentName("CEO");
+    setAgentName("Agent");
     setAdapterType("claude_local");
     setModel("");
     setCommand("");
@@ -638,7 +638,7 @@ export function OnboardingWizard() {
               <div className="flex items-center gap-0 mb-8 border-b border-border">
                 {(
                   [
-                    { step: 1 as Step, label: "Company", icon: Building2 },
+                    { step: 1 as Step, label: "Workspace", icon: Building2 },
                     { step: 2 as Step, label: "Agent", icon: Bot },
                     { step: 3 as Step, label: "Task", icon: ListTodo },
                     { step: 4 as Step, label: "Launch", icon: Rocket }
@@ -669,9 +669,9 @@ export function OnboardingWizard() {
                       <Building2 className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-medium">Name your company</h3>
+                      <h3 className="font-medium">Name your workspace</h3>
                       <p className="text-xs text-muted-foreground">
-                        This is the organization your agents will work for.
+                        This is the workspace your agents will operate in.
                       </p>
                     </div>
                   </div>
@@ -684,7 +684,7 @@ export function OnboardingWizard() {
                           : "text-muted-foreground group-focus-within:text-foreground"
                       )}
                     >
-                      Company name
+                      Workspace name
                     </label>
                     <input
                       className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
@@ -707,7 +707,7 @@ export function OnboardingWizard() {
                     </label>
                     <textarea
                       className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50 resize-none min-h-[60px]"
-                      placeholder="What is this company trying to achieve?"
+                      placeholder="What is this workspace trying to achieve?"
                       value={companyGoal}
                       onChange={(e) => setCompanyGoal(e.target.value)}
                     />
@@ -734,7 +734,7 @@ export function OnboardingWizard() {
                     </label>
                     <input
                       className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
-                      placeholder="CEO"
+                      placeholder="Agent"
                       value={agentName}
                       onChange={(e) => setAgentName(e.target.value)}
                       autoFocus
@@ -1148,7 +1148,7 @@ export function OnboardingWizard() {
                         <p className="text-sm font-medium truncate">
                           {companyName}
                         </p>
-                        <p className="text-xs text-muted-foreground">Company</p>
+                        <p className="text-xs text-muted-foreground">Workspace</p>
                       </div>
                       <Check className="h-4 w-4 text-green-500 shrink-0" />
                     </div>

@@ -57,7 +57,7 @@ export function Sidebar() {
           />
         )}
         <span className="flex-1 text-sm font-bold text-foreground truncate pl-1">
-          {selectedCompany?.name ?? "Select company"}
+          {selectedCompany?.name ?? "Select workspace"}
         </span>
         <Button
           variant="ghost"
@@ -107,12 +107,12 @@ export function Sidebar() {
 
         <SidebarAgents />
 
-        <SidebarSection label="Company">
+        <SidebarSection label="Workspace">
           <SidebarNavItem to="/org" label="Org" icon={Network} />
           <SidebarNavItem to="/skills" label="Skills" icon={Boxes} />
           <SidebarNavItem to="/costs" label="Costs" icon={DollarSign} />
           <SidebarNavItem to="/activity" label="Activity" icon={History} />
-          <SidebarNavItem to="/company/settings" label="Settings" icon={Settings} />
+          <SidebarNavItem to="/workspace/settings" label="Settings" icon={Settings} />
         </SidebarSection>
 
         <PluginSlotOutlet
