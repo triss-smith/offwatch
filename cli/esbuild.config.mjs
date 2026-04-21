@@ -79,10 +79,4 @@ export default {
   external: [...externals].sort(),
   treeShaking: true,
   sourcemap: true,
-  // Alias workspace packages that aren't declared as CLI dependencies so
-  // esbuild can resolve and bundle them (pnpm isolated linker won't symlink
-  // them into cli/node_modules).
-  alias: {
-    "@offwatch/server": resolve(repoRoot, "server/src/index.ts"),
-  },
 };

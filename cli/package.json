@@ -1,6 +1,6 @@
 {
   "name": "offwatch",
-  "version": "0.5.25",
+  "version": "0.5.26",
   "description": "Offwatch — orchestrate AI agent teams to automate dev work",
   "type": "module",
   "bin": {
@@ -32,16 +32,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
-    "@offwatch/adapter-claude-local": "workspace:*",
-    "@offwatch/adapter-codex-local": "workspace:*",
-    "@offwatch/adapter-cursor-local": "workspace:*",
-    "@offwatch/adapter-gemini-local": "workspace:*",
-    "@offwatch/adapter-openclaw-gateway": "workspace:*",
-    "@offwatch/adapter-opencode-local": "workspace:*",
-    "@offwatch/adapter-pi-local": "workspace:*",
-    "@offwatch/adapter-utils": "workspace:*",
-    "@offwatch/db": "workspace:*",
-    "@offwatch/shared": "workspace:*",
+    "@offwatch/server": "0.3.2",
     "commander": "^13.0.0",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.38.0",
@@ -55,8 +46,5 @@
     "undici": "^6.21.0",
     "ws": "^8.19.0",
     "zod": "^3.24.0"
-  },
-  "devDependencies": {
-    "tsx": "^4.19.2"
   }
 }
